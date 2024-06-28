@@ -43,6 +43,10 @@ zinit snippet OMZP::command-not-found
 zinit snippet OMZP::bun
 # Mac Only
 #zinit snippet OMZP::brew
+# Load completions
+autoload -Uz compinit && compinit
+
+zinit cdreplay -q
 
 # History
 HISTSIZE=5000
@@ -59,8 +63,9 @@ setopt hist_find_no_dups
 
 # completion using arrow keys (based on history)
 bindkey -e
-bindkey '^[[A' history-search-backward
-bindkey '^[[B' history-search-forward
+bindkey '^p' history-search-backward
+bindkey '^n' history-search-forward
+bindkey '^[w' kill-region
 
 # Completion styling
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
@@ -73,6 +78,9 @@ zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 alias ls='ls --color'
 alias vim='nvim'
 alias c='clear'
+alias reload-zsh="source ~/.zshrc"
+alias edit-zsh="nvim ~/.zshrc"
+
 
 # Shell integrations
 
@@ -100,3 +108,4 @@ alias tree="exa --tree"
 
 #--- bat ---
 alias cat="batcat -p"
+
