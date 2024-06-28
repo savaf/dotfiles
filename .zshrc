@@ -109,10 +109,10 @@ export FZF_DEFAULT_OPTS="--color=fg:${fg},bg:${bg},hl:${purple},fg+:${fg},bg+:${
 
 
 #--- EXA ---
-alias ls="exa"
-alias l="exa"
-alias ll="exa -alh"
-alias tree="exa --tree"
+alias ls="eza"
+alias l="eza"
+alias ll="eza -alh"
+alias tree="eza --tree"
 
 #--- bat ---
 alias cat="batcat -p"
