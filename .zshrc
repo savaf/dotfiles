@@ -6,9 +6,17 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 
 # brew linux
-eval "$(/home/savaf/homebrew/bin/brew shellenv)"
+if [[ -f "/home/savaf/homebrew/bin/brew" ]] then
+  eval "$(/home/savaf/homebrew/bin/brew shellenv)"
+fi
 
-# Set the directory we want to store zinit and plugins
+# macOS
+if [[ -f "/opt/homebrew/bin/brew" ]] then
+  # If you're using macOS, you'll want this enabled
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
+# Set the directory we want to store zinit and pluginsi
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 
 # Download Zinit, if it's not there yet
