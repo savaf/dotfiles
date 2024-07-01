@@ -221,3 +221,6 @@ alias tag='git tag'
 alias newtag='git tag -a'
 
 
+
+test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+
