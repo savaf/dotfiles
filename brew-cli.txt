@@ -16,7 +16,6 @@ luv
 msgpack
 neofetch
 neovim
-nvm
 openssl@3
 pcre2
 powerlevel10k
