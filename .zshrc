@@ -24,7 +24,7 @@ ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 # Download Zinit, if it's not there yet
 if [ ! -d "$ZINIT_HOME" ]; then
    mkdir -p "$(dirname $ZINIT_HOME)"
-   git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+   git clone --depth=1 https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
 fi
 
 # Source/Load zinit
@@ -227,11 +227,12 @@ alias newtag='git tag -a'
 
 ##-- NVM --
 # Set the directory we want to store nvm
-export NVM_DIR="$HOME/.nvm"
+NVM_DIR="$HOME/.nvm"
 if [ ! -d "$NVM_DIR" ]; then
-  echo "Installing nvm"
+  echo "nvm is not installed. Installing nvm..."
   mkdir -p "$(dirname $NVM_DIR)"
   git clone --depth=1 https://github.com/nvm-sh/nvm.git "$NVM_DIR"
+  echo "nvm installed successfully."
 fi
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
