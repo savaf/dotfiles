@@ -1,3 +1,5 @@
+neofetch
+
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
@@ -6,8 +8,8 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 
 # brew linux
-if [[ -f "/home/savaf/homebrew/bin/brew" ]] then
-  eval "$(/home/savaf/homebrew/bin/brew shellenv)"
+if [[ -f "$HOME/homebrew/bin/brew" ]] then
+  eval "$($HOME/homebrew/bin/brew shellenv)"
 fi
 
 # macOS
@@ -52,7 +54,9 @@ zinit snippet OMZP::command-not-found
 zinit snippet OMZP::bun
 
 # Mac Only
-#zinit snippet OMZP::brew
+if [[ $OSTYPE == darwin* ]]; then
+  zinit snippet OMZP::brew
+fi
 
 # Load completions
 autoload -Uz compinit && compinit
@@ -85,8 +89,49 @@ zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
 zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 
 
-# Shell integrations
+### ARCHIVE EXTRACTION
+# usage: ex <file>
+function ex {
+ if [ -z "$1" ]; then
+    # display usage if no parameters given
+    echo "Usage: ex <path/file_name>.<zip|rar|bz2|gz|tar|tbz2|tgz|Z|7z|xz|ex|tar.bz2|tar.gz|tar.xz>"
+    echo "       extract <path/file_name_1.ext> [path/file_name_2.ext] [path/file_name_3.ext]"
+ else
+    for n in "$@"
+    do
+      if [ -f "$n" ] ; then
+          case "${n%,}" in
+            *.cbt|*.tar.bz2|*.tar.gz|*.tar.xz|*.tbz2|*.tgz|*.txz|*.tar)
+                         tar xvf "$n"       ;;
+            *.lzma)      unlzma ./"$n"      ;;
+            *.bz2)       bunzip2 ./"$n"     ;;
+            *.cbr|*.rar)       unrar x -ad ./"$n" ;;
+            *.gz)        gunzip ./"$n"      ;;
+            *.cbz|*.epub|*.zip)       unzip ./"$n"       ;;
+            *.z)         uncompress ./"$n"  ;;
+            *.7z|*.arj|*.cab|*.cb7|*.chm|*.deb|*.dmg|*.iso|*.lzh|*.msi|*.pkg|*.rpm|*.udf|*.wim|*.xar)
+                         7z x ./"$n"        ;;
+            *.xz)        unxz ./"$n"        ;;
+            *.exe)       cabextract ./"$n"  ;;
+            *.cpio)      cpio -id < ./"$n"  ;;
+            *.cba|*.ace)      unace x ./"$n"      ;;
+            *)
+                         echo "ex: '$n' - unknown archive method"
+                         return 1
+                         ;;
+          esac
+      else
+          echo "'$n' - file does not exist"
+          return 1
+      fi
+    done
+fi
+}
 
+
+
+
+# Shell integrations
 # ---- FZF -----
 # Set up fzf key bindings and fuzzy completion
 eval "$(fzf --zsh)"
@@ -97,20 +142,37 @@ bg="#011628"
 bg_highlight="#143652"
 purple="#B388FF"
 blue="#06BCE4"
-cyan="#2CF9ED" 
+cyan="#2CF9ED"
 
 export FZF_DEFAULT_OPTS="--color=fg:${fg},bg:${bg},hl:${purple},fg+:${fg},bg+:${bg_highlight},hl+:${purple},info:${blue},prompt:${cyan},pointer:${cyan},marker:${cyan},spinner:${cyan},header:${cyan}"
 
 #--- zoxide ---
-eval "$(zoxide init --cmd cd zsh)"
+eval "$(zoxide init zsh)"
+
 
 # Aliases
 alias ls='ls --color'
 alias vim='nvim'
 alias vi='nvim'
+alias v='nvim'
 alias c='clear'
-alias reload-zsh="source ~/.zshrc"
-alias edit-zsh="nvim ~/.zshrc"
+
+
+alias rzsh='source ~/.zshrc'
+alias ezsh='nvim ~/.zshrc'
+
+# navigation
+alias ..='cd ..'
+alias ...='cd ../..'
+alias .3='cd ../../..'
+alias .4='cd ../../../..'
+alias .5='cd ../../../../..'
+
+# ps
+alias psa="ps auxf"
+alias psgrep="ps aux | grep -v grep | grep -i -e VSZ -e"
+alias psmem='ps auxf | sort -nr -k 4'
+alias pscpu='ps auxf | sort -nr -k 3'
 
 # Colorize grep output (good for log files)
 alias grep='grep --color=auto'
@@ -123,13 +185,38 @@ alias mv='mv -i'
 alias rm='rm -i'
 
 #-- EXA ---
-alias ls="eza"
-alias l="eza"
-alias ll="eza -alh"
-alias tree="eza --tree"
+alias tree='eza --tree'
+alias l='eza -al --color=always --group-directories-first'
+alias ls='eza -al --color=always --group-directories-first' # my preferred listing
+alias la='eza -a --color=always --group-directories-first'  # all files and dirs
+alias ll='eza -l --color=always --group-directories-first'  # long format
+alias lt='eza -aT --color=always --group-directories-first' # tree listing
+alias l.='eza -al --color=always --group-directories-first ../' # ls on the PARENT directory
+alias l..='eza -al --color=always --group-directories-first ../../' # ls on directory 2 levels up
+alias l...='eza -al --color=always --group-directories-first ../../../' # ls on directory 3 levels up
 
 #--- bat ---
-alias cat="batcat -p"
+alias cat='batcat -p'
 
 #-- zoxide --
 alias cd="z"
+
+#-- files --
+alias -s md=code
+alias -s {css,ts,html}=code
+
+# git
+alias addup='git add -u'
+alias addall='git add .'
+alias branch='git branch'
+alias checkout='git checkout'
+alias clone='git clone'
+alias commit='git commit -m'
+alias fetch='git fetch'
+alias pull='git pull origin'
+alias push='git push origin'
+alias stat='git status'  # 'status' is protected name so using 'stat' instead
+alias tag='git tag'
+alias newtag='git tag -a'
+
+
