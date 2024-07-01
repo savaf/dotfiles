@@ -1,8 +1,11 @@
 ca-certificates
+curl
 eza
+ffmpeg
 fzf
 gettext
 git
+imagemagick
 libgit2
 libssh2
 libuv
@@ -19,6 +22,9 @@ pcre2
 powerlevel10k
 screenresolution
 stow
+telnet
+tldr
 tree-sitter
 unibilium
+wget
 zoxide
