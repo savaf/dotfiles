@@ -1,65 +1,76 @@
-## My Mac Setup
+# My PC Setup Guide
 
-This repo contains info on all the apps / tools / settings I use on my Mac.
+This guide covers the basics of setting up a development environment on a new PC. Whether you are an experienced programmer or not, this guide is intended for everyone to use as a reference for setting up your environment or installing languages/libraries.
+
+Some environments we will set up are Node (JavaScript) and Dart. Even if you don't program in all of them, they are useful to have as many command-line tools rely on them. We'll also show you some useful daily use applications. As you read and follow these steps, feel free to post any feedback or comments you may have.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-
-- [What Macbook do I have?](#what-macbook-do-i-have)
-- [OS Settings](#os-settings)
-  - [Desktop](#desktop)
-  - [Finder](#finder)
-  - [Dock](#dock)
-- [Quick Launching](#quick-launching)
-- [Homebrew](#homebrew)
-  - [Homebrew](#homebrew-1)
-  - [RayCast Homebrew Plugin](#raycast-homebrew-plugin)
-- [Window Management](#window-management)
-- [App Switching](#app-switching)
-- [Menu Bar Utilities](#menu-bar-utilities)
-  - [Hidden Bar](#hidden-bar)
-  - [System Stats Widgets](#system-stats-widgets)
-  - [Menu Bar Calendar](#menu-bar-calendar)
-- [Break Timer](#break-timer)
-- [Web Browser](#web-browser)
-  - [Firefox](#firefox)
-- [Other Apps I Use Daily](#other-apps-i-use-daily)
-  - [Docker](#docker)
-- [Terminal](#terminal)
-  - [Shell](#shell)
-    - [Load dotfiles](#load-dotfiles)
-  - [Github SSH Setup](#github-ssh-setup)
-    - [Other command line tools I use](#other-command-line-tools-i-use)
-- [Node.js](#nodejs)
-  - [Global Modules](#global-modules)
-- [VS Code](#vs-code)
+- [My PC Setup Guide](#my-pc-setup-guide)
+  - [What setup PC do I have?](#what-setup-pc-do-i-have)
+  - [Mac OS System Preferences](#mac-os-system-preferences)
+    - [Users \& Groups](#users--groups)
+    - [Desktop](#desktop)
+    - [Finder](#finder)
+    - [Dock](#dock)
+    - [Trackpad](#trackpad)
+    - [Menubar](#menubar)
+    - [Spotlight](#spotlight)
+    - [Accounts](#accounts)
+    - [User Defaults](#user-defaults)
+  - [Quick Launching](#quick-launching)
+  - [Homebrew](#homebrew)
+    - [RayCast Homebrew Plugin](#raycast-homebrew-plugin)
+  - [Window Management](#window-management)
+  - [App Switching](#app-switching)
+  - [Menu Bar Utilities](#menu-bar-utilities)
+    - [Hidden Bar](#hidden-bar)
+    - [System Stats Widgets](#system-stats-widgets)
+    - [Menu Bar Calendar](#menu-bar-calendar)
+  - [Other Apps I Use Daily](#other-apps-i-use-daily)
+    - [Docker](#docker)
+  - [Terminal](#terminal)
+    - [Shell](#shell)
+      - [Load dotfiles](#load-dotfiles)
+    - [Github SSH Setup](#github-ssh-setup)
+      - [Other command line tools I use](#other-command-line-tools-i-use)
+  - [Node.js](#nodejs)
+    - [Global Modules](#global-modules)
+  - [VS Code](#vs-code)
+- [My dotfies](#my-dotfies)
+  - [Requirements](#requirements)
+    - [Git](#git)
+    - [Stow](#stow)
+  - [Installation](#installation)
+  - [Install desktop apps](#install-desktop-apps)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-## What Macbook do I have?
 
-I am using a 2020 13" Macbook Pro for work and a 2021 14" Macbook Pro for personal stuff.
+## What setup PC do I have?
 
-The specs for both machines:
-* 2020
-  * Apple M1
-* 2021
-  * Apple M1 Pro
-* 16GB RAM
-* 500GB SSD
+- Laptop: Macbook M1 Pro 2021 | 16" | Ram 16GB
+- Case: Corsair 4000D Airflow
+- Motherboard: MSI MPG Z690 FORCE WIFI ATX LGA1700
+- CPUI: Intel Core i7-12700K 3.6 GHz
+- CPU: ZOTAC Gaming GeForce RTX™ 3080 Trinity OC White Edition LHR 10GB
+- RAM: Corsair Dominator Platinum RGB 64 GB (4 x 16 GB) DDR5-5200
+- Cooling: NZXT Kraken Z73 RGB 52.44 CFM Liquid CPU Cooler
+- Storage: WD Black SN850 500 GB M.2-2280 NVME | WD Black SN850 1 TB M.2-2280 NVME | 2 Samsung M.2 980 PRO 2TB PCIe NVMe Gen4
+- Mouse: Logitech G Mouse 305 LIGHTSPEED
+- Keyboard: Keychron K2
 
-Read more about these Macbooks here:
 
-* [2020](https://everymac.com/systems/apple/macbook_pro/specs/macbook-pro-m1-8-core-13-2020-specs.html)
-* [2021](https://everymac.com/systems/apple/macbook_pro/specs/macbook-pro-m1-pro-8-core-cpu-14-core-gpu-14-2021-specs.html)
+## Mac OS System Preferences
 
-## OS Settings
+These are my preferred settings for  `Users & Groups`, `Trackpad`, `Desktop`, `Finder`, the `Dock`.
 
-These are my preferred settings for `Desktop`, `Finder` and the `Dock`.
+### Users & Groups
+* Login Options -> Change fast user switching menu as Icon
+* Set up Password, Apple ID, Picture, etc.
 
 ### Desktop
-
 I don't like the new Desktop, Stage Manager or Widget features in Sonoma, so I disable them.
 
 * System Preferences
@@ -84,10 +95,13 @@ I don't like the new Desktop, Stage Manager or Widget features in Sonoma, so I d
   * Advanced -> Show all filename extensions -> Yes
   * Advanced -> Show warning before changing an extension -> No
   * Advanced -> When performing a search -> Search the current folder
+  * Sidebar -> uncheck Movies, Music, Tags, Pictures, None of iCloud Stuff, Airdrop
 * View
   * Show Status Bar
   * Show Path Bar
   * Show Tab Bar
+  * Change view to List
+* Change the toolbar -> remove Tags, Groups, add Airdrop and edit share options
 
 ### Dock
 
@@ -96,10 +110,40 @@ I don't use the Dock at all. It takes up screen space, and I can use RayCast to 
 * System Preferences
   * Desktop & Dock
     * Size -> Small as possible
-    * Position on screen -> Left
     * Automatically hide and show the Dock -> Yes
     * Animate opening applications -> No
     * Show suggested and recent apps in the Dock -> No
+    * Other settings
+      * Remove workspace auto-switching by running the following command:
+```
+defaults write com.apple.dock workspaces-auto-swoosh -bool NO
+killall Dock # Restart the Dock process
+```
+
+### Trackpad
+- Point & Click
+  - Enable Tap to click with one finger
+  - Change Secondary click to Right corner
+  - Uncheck Three Finger Drag
+- Scroll & Zoom
+  - Uncheck all apart from Zoom in and out
+
+### Menubar
+- Remove the Display and Bluetooth, Battery icons
+- Change clock minimal size
+
+### Spotlight
+- Uncheck fonts, images, files etc.
+- Uncheck the keyboard shortcuts as we'll be replacing them with Alfred or RayCast
+
+### Accounts
+- Add an iCloud account and sync Calendar, Find my Mac, Contacts etc.
+
+### User Defaults
+- Enable repeating keys by pressing and holding down keys: `defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false` (and restart any app that you need to repeat keys in)
+- Change the default folder for screenshots
+Open the terminal and create the folder where you would like to store your screenshots: `mkdir -p /path/to/screenshots/`
+Then run the following command: `defaults write com.apple.screencapture location /path/to/screenshots/ && killall SystemUIServer`
 
 ## Quick Launching
 
@@ -112,8 +156,6 @@ brew install raycast
 ```
 
 ## Homebrew
-
-### Homebrew
 
 [Homebrew](https://brew.sh/) allows us to install tools and apps from the command line.
 
@@ -202,48 +244,6 @@ itsycal shows the date, so I hide the date in the system menu bar widget:
           * Show Date -> Never
           * Show Day of Week -> No
 
-## Break Timer
-
-I use an app called [Time Out](https://www.dejal.com/timeout/).
-
-I have it setup to show:
-* 10 second micro break every 15 minutes
-* 5 minute long break every 60 minutes
-
-There is also a cross platform break timer call [Stretchly](https://hovancik.net/stretchly/). I have not used it but a lot of people have recommended it.
-
-## Web Browser
-
-### Firefox
-
-I use Firefox because it is open source and comes from the [Mozilla Foundation](https://www.mozilla.org/en-US/about/manifesto/), a non profit company that [respects my privacy](https://www.mozilla.org/en-US/firefox/privacy/).
-
-I use Firefox Developer Edition. To install this with `brew` you will need to tap [a cask](https://github.com/Homebrew/homebrew-cask-versions) first:
-
-```sh
-brew tap homebrew/cask-versions
-```
-
-You can then install Firefox Developer Edition with brew:
-
-```sh
-brew install homebrew/cask-versions/firefox-developer-edition
-```
-
-I use the following extensions to stay productive:
-
-* [Tabliss](https://tabliss.io/) - simple new tab page
-* [OneTab](https://www.one-tab.com/) - consolidate a bunch of open tabs into a shareable list of links
-* [Dark Reader](https://darkreader.org/) - turn any site into dark mode
-
-I use the following extensions to protect my privacy while browsing the web:
-
-* Adblocker - [uBlock Origin](https://github.com/gorhill/uBlock)
-* Tracker Blocker - [Privacy Badger](https://privacybadger.org/)
-  * Firefox now includes tracker blocking, but I leave Privacy Badger enabled.
-* [Decentraleyes](https://decentraleyes.org/)
-  * Caches CDN links locally and intercepts requests to serve from the cache. Prevents CDNs from tracking you across websites.
-
 ## Other Apps I Use Daily
 
 * android-file-transfer - Transfer files to / from my android phone
@@ -255,7 +255,7 @@ I use the following extensions to protect my privacy while browsing the web:
 * [kap](https://getkap.co/) - Screen recorder / gif maker
 * [figma](https://www.figma.com/) - Image editor
 * [visual-studio-code](https://code.visualstudio.com/) - Code Editor
-* [sublime-text](https://www.sublimetext.com/) - Note taking (I know there are better apps...)
+* 
 
 You can install them in one go by placing them all into a text file and then running brew install:
 
@@ -312,11 +312,10 @@ Once installed, launch it and customize the settings / preferences to your likin
   * Default
       * General -> Working Directory -> Reuse previous session's directory
       * Colors -> Basic Colors -> Foreground -> Lime Green
-      * Text -> Font -> Anonymous Pro
-          * You can download this font [here](https://www.marksimonson.com/fonts/view/anonymous-pro).
+      * Text -> Font -> MonaspiceAr Nerd Font
+          * You can download this font [here](https://www.nerdfonts.com/).
           * I use this font in VS Code as well
-      * Text -> Font Size -> 36
-          * I use my Macbook to present / teach, so a big font size is important so everyone can see the commands I'm typing
+      * Text -> Font Size -> 16
       * Keys -> Key Mappings -> Presets -> Natural Text Editing
           * This allows me to use the [keyboard shortcuts](https://gist.github.com/w3cj/022081eda22081b82c52) I know and love inside of iTerm2
 

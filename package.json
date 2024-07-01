@@ -4,9 +4,18 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "toc": "doctoc README.md --github"
   },
   "keywords": [],
   "author": "",
-  "license": "WTFPL"
+  "license": "WTFPL",
+  "dependencies": {
+    "doctoc": "^2.2.1",
+    "husky": "^9.0.11"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run toc && git add README.md"
+    }
+  }
 }
