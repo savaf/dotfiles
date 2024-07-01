@@ -224,3 +224,13 @@ alias push='git push origin'
 alias stat='git status'  # 'status' is protected name so using 'stat' instead
 alias tag='git tag'
 alias newtag='git tag -a'
+
+##-- NVM --
+# Set the directory we want to store nvm
+export NVM_DIR="$HOME/.nvm"
+if [ ! -d "$NVM_DIR" ]; then
+  mkdir -p "$(dirname $NVM_DIR)"
+  git clone --depth=1 https://github.com/nvm-sh/nvm.git "$NVM_DIR"
+fi
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
