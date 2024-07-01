@@ -42,6 +42,7 @@ zinit light zsh-users/zsh-completions
 zinit light zsh-users/zsh-autosuggestions
 zinit light Aloxaf/fzf-tab
 zinit light zap-zsh/fzf
+zinit light MichaelAquilina/zsh-you-should-use
 
 # Add in snippets
 zinit snippet OMZP::git
