@@ -229,6 +229,7 @@ alias newtag='git tag -a'
 # Set the directory we want to store nvm
 export NVM_DIR="$HOME/.nvm"
 if [ ! -d "$NVM_DIR" ]; then
+  echo "Installing nvm"
   mkdir -p "$(dirname $NVM_DIR)"
   git clone --depth=1 https://github.com/nvm-sh/nvm.git "$NVM_DIR"
 fi
