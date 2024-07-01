@@ -39,6 +39,7 @@ zinit light zsh-users/zsh-syntax-highlighting
 zinit light zsh-users/zsh-completions
 zinit light zsh-users/zsh-autosuggestions
 zinit light Aloxaf/fzf-tab
+zinit light zap-zsh/fzf
 
 # Add in snippets
 zinit snippet OMZP::git
@@ -49,8 +50,10 @@ zinit snippet OMZP::node
 zinit snippet OMZP::pm2
 zinit snippet OMZP::command-not-found
 zinit snippet OMZP::bun
+
 # Mac Only
 #zinit snippet OMZP::brew
+
 # Load completions
 autoload -Uz compinit && compinit
 
@@ -70,9 +73,8 @@ setopt hist_ignore_dups
 setopt hist_find_no_dups
 
 # completion using arrow keys (based on history)
-bindkey -e
-bindkey '^p' history-search-backward
-bindkey '^n' history-search-forward
+bindkey '^[[A' history-search-backward
+bindkey '^[[B' history-search-forward
 bindkey '^[w' kill-region
 
 # Completion styling
@@ -82,19 +84,10 @@ zstyle ':completion:*' menu no
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
 zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 
-# Aliases
-alias ls='ls --color'
-alias vim='nvim'
-alias vi='nvim'
-alias c='clear'
-alias reload-zsh="source ~/.zshrc"
-alias edit-zsh="nvim ~/.zshrc"
-
 
 # Shell integrations
 
 # ---- FZF -----
-
 # Set up fzf key bindings and fuzzy completion
 eval "$(fzf --zsh)"
 
@@ -108,8 +101,28 @@ cyan="#2CF9ED"
 
 export FZF_DEFAULT_OPTS="--color=fg:${fg},bg:${bg},hl:${purple},fg+:${fg},bg+:${bg_highlight},hl+:${purple},info:${blue},prompt:${cyan},pointer:${cyan},marker:${cyan},spinner:${cyan},header:${cyan}"
 
+#--- zoxide ---
+eval "$(zoxide init --cmd cd zsh)"
 
-#--- EXA ---
+# Aliases
+alias ls='ls --color'
+alias vim='nvim'
+alias vi='nvim'
+alias c='clear'
+alias reload-zsh="source ~/.zshrc"
+alias edit-zsh="nvim ~/.zshrc"
+
+# Colorize grep output (good for log files)
+alias grep='grep --color=auto'
+alias egrep='egrep --color=auto'
+alias fgrep='fgrep --color=auto'
+
+# confirm before overwriting something
+alias cp="cp -i"
+alias mv='mv -i'
+alias rm='rm -i'
+
+#-- EXA ---
 alias ls="eza"
 alias l="eza"
 alias ll="eza -alh"
@@ -118,3 +131,5 @@ alias tree="eza --tree"
 #--- bat ---
 alias cat="batcat -p"
 
+#-- zoxide --
+alias cd="z"
