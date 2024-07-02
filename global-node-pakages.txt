@@ -1,5 +1,5 @@
 lite-server
 http-server
 license
-doctop
+doctoc
 gitconfig

@@ -45,6 +45,7 @@ fi
 zinit light zsh-users/zsh-syntax-highlighting
 zinit light zsh-users/zsh-completions
 zinit light zsh-users/zsh-autosuggestions
+
 zinit light Aloxaf/fzf-tab
 zinit light zap-zsh/fzf
 zinit light MichaelAquilina/zsh-you-should-use
@@ -58,10 +59,12 @@ zinit snippet OMZP::node
 zinit snippet OMZP::pm2
 zinit snippet OMZP::command-not-found
 zinit snippet OMZP::bun
+zinit snippet OMZP::colored-man-pages
+zinit snippet OMZP::colorize
 
 # Mac Only
 if [[ $OSTYPE == darwin* ]]; then
-  zinit snippet OMZP::brew
+  zinit light zsh-users/osx
 fi
 
 # Load completions
