@@ -32,6 +32,7 @@ Some environments we will set up are Node (JavaScript) and Dart. Even if you don
     - [Docker](#docker)
   - [Terminal](#terminal)
     - [Shell](#shell)
+    - [zsh](#zsh)
       - [Load dotfiles](#load-dotfiles)
     - [Github SSH Setup](#github-ssh-setup)
       - [Other command line tools I use](#other-command-line-tools-i-use)
@@ -322,6 +323,22 @@ Once installed, launch it and customize the settings / preferences to your likin
 ### Shell
 
 Mac now comes with `zsh` as the default [shell](https://en.wikipedia.org/wiki/Comparison_of_command_shells). I've switched to using this with [Oh My Zsh](https://ohmyz.sh/).
+
+### zsh
+The Z shell (also known as zsh) is a Unix shell that is built on top of bash (the default shell for macOS) with additional features. It's recommended to use zsh over bash. It's also highly recommended to install a framework with zsh as it makes dealing with configuration, plugins and themes a lot nicer.
+
+We've also included an env.sh file where we store our aliases, exports, path changes etc. We put this in a separate file to not pollute our main configuration file too much. This file is found in the bottom of this page.
+
+Install zsh using Homebrew:
+```
+brew install zsh
+```
+The configuration file for `zsh` is called `.zshrc` and lives in your home folder (`~/.zshrc`).
+
+Change shell to zsh
+```
+chsh -s $(which zsh)
+```
 
 #### Load dotfiles
 
