@@ -1,0 +1,6 @@
+curl
+eza
+fzf
+tldr
+wget
+zoxide
