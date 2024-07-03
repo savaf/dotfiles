@@ -20,8 +20,6 @@
     * Integrates ESLint JS
   * [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
     * Automatically format javascript, JSON, CSS, Sass
-  * [Paste JSON as Code](https://marketplace.visualstudio.com/items?itemName=quicktype.quicktype)
-    * Auto generate TypeScript (and other languages) types from JSON data., and HTML files.
   * [PostCSS Intellisense and Highlighting](https://marketplace.visualstudio.com/items?itemName=vunguyentuan.vscode-postcss)
     * Works better than the other more popular one of a similar name.
   * [Code Spell Checker](https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker)
@@ -63,48 +61,64 @@
 ### Extension package names for easy install
 
 ```
-nur.just-black
-fosshaas.fontsize-shortcuts
-vscode-icons-team.vscode-icons
-dbaeumer.vscode-eslint
-esbenp.prettier-vscode
-quicktype.quicktype
-vunguyentuan.vscode-postcss
-streetsidesoftware.code-spell-checker
-yoavbls.pretty-ts-errors
-quicktype.quicktype
-adpyke.codesnap
-rangav.vscode-thunder-client
-DotJoshJohnson.xml
+Extensions installed on WSL: Ubuntu:
+aaron-bond.better-comments
+amphtml.amphtml-validator
+antfu.iconify
+aykutsarac.jsoncrack-vscode
 bradlc.vscode-tailwindcss
-dsznajder.es7-react-js-snippets
-infarkt.css-to-jss
-paulmolluzzo.convert-css-in-js
-styled-components.vscode-styled-components
-Vue.volar
-svelte.svelte-vscode
-Prisma.prisma
-otovo-oss.htmx-tags
-bierner.markdown-mermaid
+christian-kohler.npm-intellisense
+christian-kohler.path-intellisense
+dbaeumer.vscode-eslint
+deerawan.vscode-faker
+eamodio.gitlens
+editorconfig.editorconfig
+emmanuelbeziat.vscode-great-icons
+esbenp.prettier-vscode
+fib.beautyamp
+fosshaas.fontsize-shortcuts
+gamunu.vscode-yarn
+github.copilot
+github.copilot-chat
+github.vscode-github-actions
+jock.svg
+kisstkondoros.vscode-codemetrics
+kisstkondoros.vscode-gutter-preview
+mikestead.dotenv
+ms-azuretools.vscode-docker
+ms-dotnettools.vscode-dotnet-runtime
+ms-vscode.vscode-typescript-next
+ms-vsliveshare.vsliveshare
+nuxt.mdc
+prisma.prisma
+redhat.vscode-yaml
+rvest.vs-code-prettier-eslint
+snappify.snappify
+streetsidesoftware.code-spell-checker
+streetsidesoftware.code-spell-checker-spanish
+tamasfe.even-better-toml
+teabyii.ayu
+unifiedjs.vscode-mdx
+usernamehw.errorlens
+vue.volar
+waifuproject.icns-preview
+wix.vscode-import-cost
+xnerd.ampscript-language
+yoavbls.pretty-ts-errors
+yzhang.markdown-all-in-one
 ```
 
 # Settings
 
 ```json
 {
-  "codesnap.backgroundColor": "#000000",
-  "codesnap.containerPadding": "0px",
-  "codesnap.showWindowControls": false,
-  "codesnap.transparentBackground": true,
-  "cSpell.enabled": true,
-  "cSpell.enableFiletypes": [
-    "mdx"
-  ],
+  "files.trimTrailingWhitespace": true,
   "diffEditor.ignoreTrimWhitespace": false,
   "editor.detectIndentation": true,
-  "editor.fontFamily": "Anonymous Pro",
+  "editor.fontFamily": "\"MonaspiceAr Nerd Font\", \"Monaspace Argon SemiWide\", \"Fira Code\", \"Courier New\", monospace",
+  "editor.fontWeight": "500",
   "editor.fontLigatures": true,
-  "editor.fontSize": 13,
+  "editor.fontSize": 16,
   "editor.formatOnPaste": false,
   "editor.inlineSuggest.enabled": true,
   "editor.lineHeight": 0,
@@ -114,22 +128,21 @@ bierner.markdown-mermaid
   "editor.snippetSuggestions": "top",
   "editor.suggestSelection": "first",
   "editor.tabSize": 2,
+  "editor.indentSize": "tabSize",
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": true,
+  "editor.guides.highlightActiveIndentation": true,
+  "editor.guides.bracketPairsHorizontal": "active",
   "editor.tokenColorCustomizations": {
     "textMateRules": [
       {
-        "scope": [
-          "keyword.operator",
-          "punctuation.separator"
-        ],
+        "scope": ["keyword.operator", "punctuation.separator"],
         "settings": {
           "fontStyle": ""
         }
       },
       {
-        "scope": [
-          "comment",
-          "comment.block"
-        ],
+        "scope": ["comment", "comment.block"],
         "settings": {
           "fontStyle": "italic",
           "foreground": "#F5F"
@@ -147,13 +160,7 @@ bierner.markdown-mermaid
   "editor.unicodeHighlight.invisibleCharacters": false,
   "emmet.showAbbreviationSuggestions": false,
   "eslint.enable": true,
-  "eslint.validate": [
-    "vue",
-    "react",
-    "typescript",
-    "html",
-    "javascript"
-  ],
+  "eslint.validate": ["vue", "react", "typescript", "html", "javascript"],
   "explorer.openEditors.visible": 1,
   "extensions.ignoreRecommendations": true,
   "files.autoSave": "onWindowChange",
@@ -173,17 +180,40 @@ bierner.markdown-mermaid
     "**/node_modules": true
   },
   "search.useIgnoreFiles": false,
-  "svelte.enable-ts-plugin": true,
   "terminal.integrated.fontSize": 14,
-  "vsicons.dontShowNewVersionMessage": true,
-  "window.zoomLevel": 4,
-  "workbench.colorTheme": "Just Black",
+  "window.zoomLevel": 1,
+  "workbench.colorTheme": "Ayu Dark",
   "workbench.editor.labelFormat": "medium",
-  "workbench.editor.showTabs": "none",
-  "workbench.iconTheme": "vscode-icons",
+  "workbench.editor.showTabs": "multiple",
+  "workbench.iconTheme": "vscode-great-icons",
   "workbench.sideBar.location": "right",
   "workbench.startupEditor": "newUntitledFile",
-  "workbench.statusBar.visible": false,
+  "workbench.statusBar.visible": true,
+  "workbench.colorCustomizations": {
+    "[Panda Syntax]": {
+      "editorBracketHighlight.foreground1": "#E6E6E6",
+      "editorBracketHighlight.foreground2": "#FF75B5",
+      "editorBracketHighlight.foreground3": "#19f9d8",
+      "editorBracketHighlight.foreground4": "#B084EB",
+      "editorBracketHighlight.foreground5": "#45A9F9",
+      "editorBracketHighlight.foreground6": "#FFB86C",
+      "editorBracketHighlight.unexpectedBracket.foreground": "#FF2C6D",
+
+      "editorBracketPairGuide.background1": "#FFB86C",
+      "editorBracketPairGuide.background2": "#FF75B5",
+      "editorBracketPairGuide.background3": "#45A9F9",
+      "editorBracketPairGuide.background4": "#B084EB",
+      "editorBracketPairGuide.background5": "#E6E6E6",
+      "editorBracketPairGuide.background6": "#19f9d8",
+
+      "editorBracketPairGuide.activeBackground1": "#FFB86C",
+      "editorBracketPairGuide.activeBackground2": "#FF75B5",
+      "editorBracketPairGuide.activeBackground3": "#45A9F9",
+      "editorBracketPairGuide.activeBackground4": "#B084EB",
+      "editorBracketPairGuide.activeBackground5": "#E6E6E6",
+      "editorBracketPairGuide.activeBackground6": "#19f9d8"
+    }
+  },
   "[css]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
@@ -206,13 +236,14 @@ bierner.markdown-mermaid
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[markdown]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "files.trimTrailingWhitespace": false
   },
   "[scss]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "[svelte]": {
-    "editor.defaultFormatter": "svelte.svelte-vscode"
+  "[vue]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
@@ -220,6 +251,61 @@ bierner.markdown-mermaid
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
+  "[svg]": {
+    "editor.defaultFormatter": "jock.svg"
+  },
+  "[amp]": {
+    "editor.defaultFormatter": "FiB.beautyAmp"
+  },
+  "html.autoClosingTags": true,
+  "javascript.autoClosingTags": true,
+  "typescript.autoClosingTags": true,
+  "javascript.preferences.renameMatchingJsxTags" : true,
+  "typescript.preferences.renameMatchingJsxTags" : true,
+  "cSpell.enabled": true,
+  "cSpell.userWords": [
+    "acumatica",
+    "baka",
+    "barcode",
+    "bigint",
+    "composables",
+    "corotos",
+    "customely",
+    "dansek",
+    "headlessui",
+    "heroicons",
+    "icon",
+    "initialize",
+    "intras",
+    "Klassy",
+    "letsbld",
+    "memod",
+    "Memod",
+    "middlewares",
+    "mixins",
+    "nuxt",
+    "nuxtjs",
+    "nzxt",
+    "pcpartpicker",
+    "phalcon",
+    "Pinia",
+    "prebuild",
+    "Quisquella",
+    "shopify",
+    "smallint",
+    "splash",
+    "spock",
+    "STRAPI",
+    "supabase",
+    "tailwindcss",
+    "tinyint",
+    "trpc",
+    "tsup",
+    "typecheck",
+    "typeorm",
+    "uniqid",
+    "varchar"
+  ],
 }
 ```
 
@@ -365,10 +451,3 @@ bierner.markdown-mermaid
   }
 ]
 ```
-
-## Past Themes
-
-* Original theme I use in some videos:
-  * [Seti-Monokai](https://marketplace.visualstudio.com/items?itemName=SmukkeKim.theme-setimonokai)
-* I used this darker modification of the above theme for a few videos:
-  * [Seti-Black](https://marketplace.visualstudio.com/items?itemName=bobsparadox.seti-black)
