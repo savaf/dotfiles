@@ -195,8 +195,8 @@ alias rm='rm -i'
 
 #-- EXA ---
 alias tree='eza --tree'
-alias l='eza -al --color=always --group-directories-first'
-alias ls='eza -al --color=always --group-directories-first' # my preferred listing
+alias l='eza -F --grid --color=always --group-directories-first'
+alias ls='eza -alF --color=always --group-directories-first' # my preferred listing
 alias la='eza -a --color=always --group-directories-first'  # all files and dirs
 alias ll='eza -l --color=always --group-directories-first'  # long format
 alias lt='eza -aT --color=always --group-directories-first' # tree listing
