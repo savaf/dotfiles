@@ -45,6 +45,8 @@ Some environments we will set up are Node (JavaScript) and Dart. Even if you don
     - [Stow](#stow)
   - [Installation](#installation)
   - [Install desktop apps](#install-desktop-apps)
+  - [Install cli apps](#install-cli-apps)
+  - [Install ubuntu cli apps](#install-ubuntu-cli-apps)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -444,4 +446,15 @@ $ stow .
 ## Install desktop apps
 ```
 $ xargs brew install < app-cask.txt
+```
+
+
+## Install cli apps
+```
+$ xargs brew install < brew-cli.txt
+```
+
+## Install ubuntu cli apps
+```
+$ sudo xargs -a apt-cli.txt apt-get install -y
 ```
