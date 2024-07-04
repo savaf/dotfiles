@@ -87,6 +87,10 @@ I don't like the new Desktop, Stage Manager or Widget features in Sonoma, so I d
       * Widgets
         * On Desktop -> uncheck
         * In Stage Manager -> uncheck
+### Finder
+- Appearance
+  - Accent Color -> Purple
+  - Highlight -> Yellow
 
 ### Finder
 
@@ -104,7 +108,7 @@ I don't like the new Desktop, Stage Manager or Widget features in Sonoma, so I d
   * Show Path Bar
   * Show Tab Bar
   * Change view to List
-* Change the toolbar -> remove Tags, Groups, add Airdrop and edit share options
+* Change the toolbar -> remove Tags, Groups, and Actions, add Airdrop and edit share options
 
 ### Dock
 
@@ -131,9 +135,9 @@ killall Dock # Restart the Dock process
 - Scroll & Zoom
   - Uncheck all apart from Zoom in and out
 
-### Menubar
-- Remove the Display and Bluetooth, Battery icons
-- Change clock minimal size
+### Menubar / Control Central
+- Remove the Display and Bluetooth, Battery icons, Spotlight
+- Change clock minimal size (just Analog icon)
 
 ### Spotlight
 - Uncheck fonts, images, files etc.
@@ -156,6 +160,17 @@ I recently switched from [Alfred](https://www.alfredapp.com/) to [RayCast](https
 
 ```sh
 brew install raycast
+```
+
+## Xcode
+[Xcode](https://developer.apple.com/xcode/) is an integrated development environment for macOS containing a suite of software development tools developed by Apple for developing software for macOS, iOS, watchOS and tvOS.
+
+Download and install it from the App Store or from [Apple's website](https://developer.apple.com/xcode/).
+
+For installing Xcode command line tools run:
+
+```sh
+xcode-select --install
 ```
 
 ## Homebrew
@@ -251,7 +266,7 @@ itsycal shows the date, so I hide the date in the system menu bar widget:
 
 * android-file-transfer - Transfer files to / from my android phone
 * android-platform-tools - Installs `adb` without the need for the full android studio.
-* [keepingyouawake](https://keepingyouawake.app/) - Prevents my Mac from going to sleep when I'm presenting / live streaming
+* [Amphetamine](https://apps.apple.com/us/app/amphetamine) - can keep your Mac, and optionally its display(s), awake through a super simple on/off switch, or automatically through easy-to-configure Triggers.
 * [discord](https://discord.com/) - Messaging / Community
 * [vlc](https://www.videolan.org/) - I use VLC to watch videos instead of the built in QuickTime.
 * [keka](https://www.keka.io/en/) - Can extract 7z / rar and other types of archives
@@ -263,23 +278,32 @@ itsycal shows the date, so I hide the date in the system menu bar widget:
 You can install them in one go by placing them all into a text file and then running brew install:
 
 ```
-android-file-transfer
-android-platform-tools
-keepingyouawake
+alt-tab
+brave-browser
 discord
-slack
-vlc
+font-monaspace-nerd-font
+google-chrome
+hiddenbar
+iterm2
+itsycal
 keka
-kap
-time-out
-figma
+notion
+quicklook-csv
+quicklook-json
+raycast
+rectangle
+slack
+stats
+suspicious-package
+telegram-desktop
 visual-studio-code
-sublime-text
-insomnia
+vlc
+webpquicklook
+whatsapp
 ```
 
 ```sh
-xargs brew install < apps.txt
+xargs brew install < brew-casks.txt
 ```
 
 ### Docker
@@ -320,7 +344,7 @@ Once installed, launch it and customize the settings / preferences to your likin
           * I use this font in VS Code as well
       * Text -> Font Size -> 16
       * Keys -> Key Mappings -> Presets -> Natural Text Editing
-          * This allows me to use the [keyboard shortcuts](https://gist.github.com/w3cj/022081eda22081b82c52) I know and love inside of iTerm2
+          * This allows me to use the [keyboard shortcuts](https://gist.github.com/w3cj/022081eda22081b82c52)
 
 ### Shell
 
@@ -404,9 +428,255 @@ npm install -g lite-server http-server license gitignore
 
 VS Code is my preferred code editor.
 
-You can view all of my VS Code settings / extensions [here](https://github.com/CodingGarden/vscode-settings).
+You can view all of my VS Code settings / extensions here.
 
+###  Extension package names for easy install
+```
+aaron-bond.better-comments
+amphtml.amphtml-validator
+antfu.iconify
+aykutsarac.jsoncrack-vscode
+bradlc.vscode-tailwindcss
+christian-kohler.npm-intellisense
+christian-kohler.path-intellisense
+dbaeumer.vscode-eslint
+deerawan.vscode-faker
+eamodio.gitlens
+editorconfig.editorconfig
+emmanuelbeziat.vscode-great-icons
+esbenp.prettier-vscode
+fib.beautyamp
+fosshaas.fontsize-shortcuts
+gamunu.vscode-yarn
+github.copilot
+github.copilot-chat
+github.vscode-github-actions
+jock.svg
+kisstkondoros.vscode-codemetrics
+kisstkondoros.vscode-gutter-preview
+mikestead.dotenv
+ms-azuretools.vscode-docker
+ms-dotnettools.vscode-dotnet-runtime
+ms-vscode.vscode-typescript-next
+ms-vsliveshare.vsliveshare
+nuxt.mdc
+prisma.prisma
+redhat.vscode-yaml
+rvest.vs-code-prettier-eslint
+snappify.snappify
+streetsidesoftware.code-spell-checker
+streetsidesoftware.code-spell-checker-spanish
+tamasfe.even-better-toml
+teabyii.ayu
+unifiedjs.vscode-mdx
+usernamehw.errorlens
+vue.volar
+waifuproject.icns-preview
+wix.vscode-import-cost
+xnerd.ampscript-language
+yoavbls.pretty-ts-errors
+yzhang.markdown-all-in-one
+```
 
+### VS Code Settings
+```json
+{
+  "files.trimTrailingWhitespace": true,
+  "diffEditor.ignoreTrimWhitespace": false,
+  "editor.detectIndentation": true,
+  "editor.fontFamily": "\"MonaspiceAr Nerd Font\", \"Monaspace Argon SemiWide\", \"Fira Code\", \"Courier New\", monospace",
+  "editor.fontWeight": "500",
+  "editor.fontLigatures": true,
+  "editor.fontSize": 15,
+  "editor.formatOnPaste": false,
+  "editor.inlineSuggest.enabled": true,
+  "editor.lineHeight": 0,
+  "editor.linkedEditing": true,
+  "editor.minimap.enabled": false,
+  "editor.multiCursorModifier": "ctrlCmd",
+  "editor.snippetSuggestions": "top",
+  "editor.suggestSelection": "first",
+  "editor.tabSize": 2,
+  "editor.indentSize": "tabSize",
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": true,
+  "editor.guides.highlightActiveIndentation": true,
+  "editor.guides.bracketPairsHorizontal": "active",
+  "editor.tokenColorCustomizations": {
+    "textMateRules": [
+      {
+        "scope": ["keyword.operator", "punctuation.separator"],
+        "settings": {
+          "fontStyle": ""
+        }
+      },
+      {
+        "scope": ["comment", "comment.block"],
+        "settings": {
+          "fontStyle": "italic",
+          "foreground": "#F5F"
+        }
+      },
+      {
+        "name": "envKeys",
+        "scope": "string.quoted.double.env,source.env,constant.numeric.env",
+        "settings": {
+          "foreground": "#19354900"
+        }
+      }
+    ]
+  },
+  "editor.unicodeHighlight.invisibleCharacters": false,
+  "emmet.showAbbreviationSuggestions": false,
+  "eslint.enable": true,
+  "eslint.validate": ["vue", "react", "typescript", "html", "javascript"],
+  "explorer.openEditors.visible": 1,
+  "extensions.ignoreRecommendations": true,
+  "files.autoSave": "onWindowChange",
+  "git.autofetch": true,
+  "git.openRepositoryInParentFolders": "never",
+  "markdown.preview.fontSize": 36,
+  "screencastMode.keyboardOptions": {
+    "showCommandGroups": false,
+    "showCommands": false,
+    "showKeybindings": true,
+    "showKeys": false,
+    "showSingleEditorCursorMoves": true
+  },
+  "search.exclude": {
+    "**/*.code-search": true,
+    "**/bower_components": true,
+    "**/node_modules": true
+  },
+  "search.useIgnoreFiles": false,
+  "terminal.integrated.fontSize": 14,
+  "window.zoomLevel": 1,
+  "workbench.colorTheme": "Ayu Dark",
+  "workbench.editor.labelFormat": "medium",
+  "workbench.editor.showTabs": "multiple",
+  "workbench.iconTheme": "vscode-great-icons",
+  "workbench.sideBar.location": "right",
+  "workbench.startupEditor": "newUntitledFile",
+  "workbench.statusBar.visible": true,
+  "workbench.colorCustomizations": {
+    "[Panda Syntax]": {
+      "editorBracketHighlight.foreground1": "#E6E6E6",
+      "editorBracketHighlight.foreground2": "#FF75B5",
+      "editorBracketHighlight.foreground3": "#19f9d8",
+      "editorBracketHighlight.foreground4": "#B084EB",
+      "editorBracketHighlight.foreground5": "#45A9F9",
+      "editorBracketHighlight.foreground6": "#FFB86C",
+      "editorBracketHighlight.unexpectedBracket.foreground": "#FF2C6D",
+
+      "editorBracketPairGuide.background1": "#FFB86C",
+      "editorBracketPairGuide.background2": "#FF75B5",
+      "editorBracketPairGuide.background3": "#45A9F9",
+      "editorBracketPairGuide.background4": "#B084EB",
+      "editorBracketPairGuide.background5": "#E6E6E6",
+      "editorBracketPairGuide.background6": "#19f9d8",
+
+      "editorBracketPairGuide.activeBackground1": "#FFB86C",
+      "editorBracketPairGuide.activeBackground2": "#FF75B5",
+      "editorBracketPairGuide.activeBackground3": "#45A9F9",
+      "editorBracketPairGuide.activeBackground4": "#B084EB",
+      "editorBracketPairGuide.activeBackground5": "#E6E6E6",
+      "editorBracketPairGuide.activeBackground6": "#19f9d8"
+    }
+  },
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[handlebars]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "files.trimTrailingWhitespace": false
+  },
+  "[scss]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[vue]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[svg]": {
+    "editor.defaultFormatter": "jock.svg"
+  },
+  "[amp]": {
+    "editor.defaultFormatter": "FiB.beautyAmp"
+  },
+  "html.autoClosingTags": true,
+  "javascript.autoClosingTags": true,
+  "typescript.autoClosingTags": true,
+  "javascript.preferences.renameMatchingJsxTags" : true,
+  "typescript.preferences.renameMatchingJsxTags" : true,
+  "cSpell.enabled": true,
+  "cSpell.userWords": [
+    "acumatica",
+    "baka",
+    "barcode",
+    "bigint",
+    "composables",
+    "corotos",
+    "customely",
+    "dansek",
+    "headlessui",
+    "heroicons",
+    "icon",
+    "initialize",
+    "intras",
+    "Klassy",
+    "letsbld",
+    "memod",
+    "Memod",
+    "middlewares",
+    "mixins",
+    "nuxt",
+    "nuxtjs",
+    "nzxt",
+    "pcpartpicker",
+    "phalcon",
+    "Pinia",
+    "prebuild",
+    "Quisquella",
+    "shopify",
+    "smallint",
+    "splash",
+    "spock",
+    "STRAPI",
+    "supabase",
+    "tailwindcss",
+    "tinyint",
+    "trpc",
+    "tsup",
+    "typecheck",
+    "typeorm",
+    "uniqid",
+    "varchar"
+  ],
+}
+```
 
 # My dotfies
 
@@ -419,13 +689,15 @@ Ensure you have the following installed on your system
 ### Git
 
 ```
-pacman -S git
+$ sudo apt get install  git # ubuntu
+brew install git # Mac
 ```
 
 ### Stow
 
 ```
-pacman -S stow
+$ sudo apt get install stow # Ubuntu
+$ brew install stow # Mac
 ```
 
 ## Installation
@@ -433,7 +705,7 @@ pacman -S stow
 First, check out the dotfiles repo in your $HOME directory using git
 
 ```
-$ git clone git@github.com/dreamsofautonomy/dotfiles.git
+$ git clone git@github.com:savaf/dotfiles.git
 $ cd dotfiles
 ```
 
@@ -443,18 +715,8 @@ then use GNU stow to create symlinks
 $ stow .
 ```
 
-## Install desktop apps
-```
-$ xargs brew install < app-cask.txt
-```
-
-
 ## Install cli apps
 ```
-$ xargs brew install < brew-cli.txt
-```
-
-## Install ubuntu cli apps
-```
-$ sudo xargs -a apt-cli.txt apt-get install -y
+$ xargs brew install < brew-cli.txt # Mac
+$ sudo xargs -a apt-cli.txt apt-get install -y # Ubuntu
 ```
