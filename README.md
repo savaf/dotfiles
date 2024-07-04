@@ -690,7 +690,7 @@ Ensure you have the following installed on your system
 
 ```
 $ sudo apt get install  git # ubuntu
-brew install git # Mac
+$ brew install git # Mac
 ```
 
 ### Stow
