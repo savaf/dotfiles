@@ -188,6 +188,7 @@ This will also install the xcode build tools which is needed by many other devel
 After Homebrew is done installing, we will use it (via RayCast) to install everything else we need.
 
 
+
 ### RayCast Homebrew Plugin
 
 Install the [RayCast Homebrew Plugin](https://www.raycast.com/nhojb/brew) so we can easily install formulae and casks directly from RayCast.
