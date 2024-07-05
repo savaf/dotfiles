@@ -5,3 +5,4 @@ fzf
 tldr
 wget
 zoxide
+neovim
