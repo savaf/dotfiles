@@ -356,20 +356,21 @@ The Z shell (also known as zsh) is a Unix shell that is built on top of bash (th
 
 We've also included an env.sh file where we store our aliases, exports, path changes etc. We put this in a separate file to not pollute our main configuration file too much. This file is found in the bottom of this page.
 
-Install zsh using Homebrew:
-```
-brew install zsh
+Install zsh:
+```sh
+brew install zsh # Mac
+sudo apt install zsh # ubuntu
 ```
 The configuration file for `zsh` is called `.zshrc` and lives in your home folder (`~/.zshrc`).
 
 Change shell to zsh
-```
-chsh -s $(which zsh)
+```sh
+chsh -s $(which zsh) <username>
 ```
 
 #### Load dotfiles
 
-All my dotfiles are stored on [github](https://github.com/w3cj/dotfiles).
+All my dotfiles are stored on this repo.
 
 I clone this repo to my machine and copy the files into my home directory.
 
@@ -736,6 +737,7 @@ Before adding a new SSH key to the ssh-agent to manage your keys, you should hav
   ssh-add ~/.ssh/id_ed25519
   ```
 3. Add the SSH public key to your account on GitHub. For more information, see "[Adding a new SSH key to your GitHub account.](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)"
+
 
 # My dotfiles
 
