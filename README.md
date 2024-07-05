@@ -679,6 +679,14 @@ yzhang.markdown-all-in-one
 }
 ```
 
+# Ubuntu Setup
+
+Update Ubuntu.
+```sh
+sudo apt update && sudo apt upgrade -y
+```
+
+
 # My dotfiles
 
 This directory contains the dotfiles for my system
@@ -689,14 +697,14 @@ Ensure you have the following installed on your system
 
 ### Git
 
-```
+```sh
 $ sudo apt install  git # ubuntu
 $ brew install git # Mac
 ```
 
 ### Stow
 
-```
+```sh
 $ sudo apt install stow # Ubuntu
 $ brew install stow # Mac
 ```
@@ -705,19 +713,19 @@ $ brew install stow # Mac
 
 First, check out the dotfiles repo in your $HOME directory using git
 
-```
+```sh
 $ git clone git@github.com:savaf/dotfiles.git
 $ cd dotfiles
 ```
 
 then use GNU stow to create symlinks
 
-```
+```sh
 $ stow .
 ```
 
 ## Install cli apps
-```
+```sh
 $ xargs brew install < brew-cli.txt # Mac
 $ sudo xargs -a apt-cli.txt apt install -y # Ubuntu
 ```
