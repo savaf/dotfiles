@@ -690,14 +690,14 @@ Ensure you have the following installed on your system
 ### Git
 
 ```
-$ sudo apt get install  git # ubuntu
+$ sudo apt install  git # ubuntu
 $ brew install git # Mac
 ```
 
 ### Stow
 
 ```
-$ sudo apt get install stow # Ubuntu
+$ sudo apt install stow # Ubuntu
 $ brew install stow # Mac
 ```
 
@@ -719,5 +719,5 @@ $ stow .
 ## Install cli apps
 ```
 $ xargs brew install < brew-cli.txt # Mac
-$ sudo xargs -a apt-cli.txt apt-get install -y # Ubuntu
+$ sudo xargs -a apt-cli.txt apt install -y # Ubuntu
 ```
