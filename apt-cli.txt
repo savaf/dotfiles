@@ -1,4 +1,5 @@
 neofetch
+batcat
 curl
 eza
 fzf
