@@ -64,7 +64,7 @@ zinit snippet OMZP::colorize
 
 # Mac Only
 if [[ $OSTYPE == darwin* ]]; then
-  zinit light zsh-users/osx
+#  zinit snippet OMZP:osx
 fi
 
 # Load completions
@@ -206,6 +206,9 @@ alias l...='eza -al --color=always --group-directories-first ../../../' # ls on 
 
 #--- bat ---
 alias cat='batcat -p'
+if [[ $OSTYPE == darwin* ]]; then
+  alias cat='bat -p'
+fi
 
 #-- zoxide --
 alias cd="z"
