@@ -8,9 +8,10 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 
 # brew linux
-if [[ -f "$HOME/homebrew/bin/brew" ]] then
-  eval "$($HOME/homebrew/bin/brew shellenv)"
+if [[ -f "$HOME/linuxhomebrew/.linuxbrew/bin/brew" ]] then
+  eval "$($HOME/linuxhomebrew/.linuxbrew/bin/brew shellenv)"
 fi
+
 
 # macOS
 if [[ -f "/opt/homebrew/bin/brew" ]] then
@@ -242,3 +243,5 @@ if [ ! -d "$NVM_DIR" ]; then
 fi
 export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+
+
