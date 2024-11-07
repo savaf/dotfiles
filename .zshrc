@@ -8,8 +8,8 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 
 # brew linux
-if [[ -f "$HOME/linuxhomebrew/.linuxbrew/bin/brew" ]] then
-  eval "$($HOME/linuxhomebrew/.linuxbrew/bin/brew shellenv)"
+if [[ -f "/home/linuxbrew/.linuxbrew/bin/brew" ]] then
+  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi
 
 
