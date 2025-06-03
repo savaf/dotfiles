@@ -248,4 +248,6 @@ export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || pr
 [[ -e ~/.phpbrew/bashrc ]] && source ~/.phpbrew/bashrc
 [[ -e ~/.phpbrew/bashrc ]] && source ~/.phpbrew/bashrcecho
 
-export PATH="/snap/bin:$PATH"
+if [[ -f "/snap/bin" ]] then
+ export PATH="/snap/bin:$PATH" 
+fi
