@@ -1,5 +1,4 @@
 neofetch
-batcat
 curl
 eza
 fzf
@@ -7,3 +6,4 @@ tldr
 wget
 zoxide
 neovim
+net-tools
