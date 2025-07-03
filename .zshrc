@@ -1,29 +1,16 @@
-neofetch
-
 # ============================================================================
-# ENVIRONMENT VARIABLES
+# POWERLEVEL10K INSTANT PROMPT
 # ============================================================================
-
-# Default editor
-export EDITOR='nvim'
-export VISUAL='nvim'
-
-# Language and locale
-export LANG=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
-
-# Colors for ls and completion
-export CLICOLOR=1
-export LSCOLORS=ExFxBxDxCxegedabagacad
-
-# History timestamp format
-export HISTTIMEFORMAT="[%F %T] "
-
-# FZF default options
-export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
-export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
+# Suppress instant prompt warnings for cleaner startup
+typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
@@ -71,6 +58,49 @@ zinit ice depth=1; zinit light romkatv/powerlevel10k
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # ============================================================================
+# LOCALE CHECK AND SETUP
+# ============================================================================
+
+# Function to check and set the best available locale
+setup_locale() {
+  local locales=("C.UTF-8" "en_US.UTF-8" "POSIX")
+
+  for loc in "${locales[@]}"; do
+    if locale -a 2>/dev/null | grep -q "^${loc}$"; then
+      export LANG="$loc"
+      export LC_ALL="$loc"
+      return 0
+    fi
+  done
+
+  # Fallback to system default
+  unset LC_ALL
+  export LANG=C
+}
+
+# Set up locale quietly
+setup_locale 2>/dev/null
+
+# ============================================================================
+# ENVIRONMENT VARIABLES
+# ============================================================================
+
+# Default editor
+export EDITOR='nvim'
+export VISUAL='nvim'
+
+# Colors for ls and completion
+export CLICOLOR=1
+export LSCOLORS=ExFxBxDxCxegedabagacad
+
+# History timestamp format
+export HISTTIMEFORMAT="[%F %T] "
+
+# FZF default options
+export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+
+# ============================================================================
 # PLATFORM-SPECIFIC INTEGRATIONS
 # ============================================================================
 
@@ -115,19 +145,40 @@ zinit snippet OMZP::ubuntu
 
 # macOS specific
 if [[ $OSTYPE == darwin* ]]; then
-  # zinit snippet OMZP::macos
-  :
+  zinit snippet OMZP::macos
 fi
 
 # ============================================================================
 # COMPLETION SYSTEM
 # ============================================================================
 
-# Load completions
-autoload -Uz compinit && compinit
+# Load completions with better performance and error handling
+autoload -Uz compinit
+if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.mh+24) ]]; then
+  compinit 2>/dev/null
+else
+  compinit -C 2>/dev/null
+fi
 
-# Replay cached completions
-zinit cdreplay -q
+# Ignore missing completion files silently
+zstyle ':completion:*:warnings' format ' %F{red}-- no matches found --%f'
+zstyle ':completion:*' accept-exact '*(N)'
+zstyle ':completion:*' use-cache on
+zstyle ':completion:*' cache-path ~/.zsh/cache
+
+# Create cache directory if it doesn't exist
+[[ ! -d ~/.zsh/cache ]] && mkdir -p ~/.zsh/cache
+
+# Replay cached completions (suppress errors)
+zinit cdreplay -q 2>/dev/null
+
+# ============================================================================
+# ERROR SUPPRESSION
+# ============================================================================
+
+# Suppress completion errors for missing files
+# This prevents compinit from showing errors about missing completion files
+setopt NO_NOMATCH 2>/dev/null
 
 # ============================================================================
 # HISTORY CONFIGURATION
@@ -136,7 +187,7 @@ zinit cdreplay -q
 HISTSIZE=5000
 HISTFILE=~/.zsh_history
 SAVEHIST=$HISTSIZE
-HIST
+HISTDUP=999
 
 # History options
 setopt appendhistory
@@ -342,13 +393,8 @@ fi
 # PERFORMANCE OPTIMIZATIONS
 # ============================================================================
 
-# Reduce startup time by loading completions only when needed
-autoload -Uz compinit
-if [[ -n ${ZDOTDIR}/.zcompdump(#qN.mh+24) ]]; then
-  compinit;
-else
-  compinit -C;
-fi
+# Skip global compinit to improve startup time
+skip_global_compinit=1
 
 # ============================================================================
 # ADDITIONAL UTILITY FUNCTIONS
@@ -412,3 +458,10 @@ alias ping='ping -c 5'
 alias wget='wget -c'
 
 # ============================================================================
+# FINAL INITIALIZATION
+# ============================================================================
+
+# Show system info (after everything is loaded)
+if command -v neofetch >/dev/null 2>&1; then
+  neofetch
+fi
