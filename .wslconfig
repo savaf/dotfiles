@@ -1,0 +1,30 @@
+[wsl2]
+# Memory allocation (50-80% of total RAM is recommended)
+memory=16GB
+
+# CPU cores (leave 1-2 cores for Windows)
+processors=8
+
+# Swap file size (recommended to have some swap)
+swap=32GB
+
+# Network settings
+localhostForwarding=true
+dnsTunneling=true
+firewall=true
+autoProxy=true
+
+# Performance optimizations
+nestedVirtualization=true
+pageReporting=true
+guiApplications=true
+
+# Kernel settings for better performance
+kernelCommandLine=cgroup_no_v1=all systemd.unified_cgroup_hierarchy=1
+
+# Experimental features (optional)
+sparseVhd=true
+
+# Additional settings
+debugConfig=true
+vmIdleTimeout=60000
