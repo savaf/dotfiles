@@ -20,3 +20,4 @@ visual-studio-code
 vlc
 webpquicklook
 whatsapp
+spotify
