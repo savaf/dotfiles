@@ -21,3 +21,4 @@ vlc
 webpquicklook
 whatsapp
 spotify
+bitwarden
