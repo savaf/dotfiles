@@ -140,13 +140,6 @@ zinit snippet OMZP::node
 zinit snippet OMZP::pm2
 zinit snippet OMZP::bun
 
-# Platform specific
-zinit snippet OMZP::ubuntu
-
-# macOS specific
-if [[ $OSTYPE == darwin* ]]; then
-  zinit snippet OMZP::macos
-fi
 
 # ============================================================================
 # COMPLETION SYSTEM
@@ -456,6 +449,13 @@ alias diskusage='df -h'
 # Network
 alias ping='ping -c 5'
 alias wget='wget -c'
+
+# tree
+alias ptree="tree -L 2 -I 'node_modules|.git|dist'"
+
+# git
+alias gclean="git branch | grep -v "main" | xargs git branch -D"
+
 
 # ============================================================================
 # FINAL INITIALIZATION
