@@ -264,7 +264,16 @@ function ex() {
 
 # ---- FZF -----
 # Set up fzf key bindings and fuzzy completion
-eval "$(fzf --zsh)"
+
+if command -v fzf >/dev/null 2>&1; then
+  if fzf --help 2>&1 | grep -q -- '--zsh'; then
+    eval "$(fzf --zsh)"
+  else
+    [[ -r ~/.fzf.zsh ]] && source ~/.fzf.zsh
+    [[ -r /usr/share/doc/fzf/examples/key-bindings.zsh ]] && source /usr/share/doc/fzf/examples/key-bindings.zsh
+    [[ -r /usr/share/doc/fzf/examples/completion.zsh ]] && source /usr/share/doc/fzf/examples/completion.zsh
+  fi
+fi
 
 # FZF theme configuration
 fg="#CBE0F0"
@@ -277,7 +286,9 @@ cyan="#2CF9ED"
 export FZF_DEFAULT_OPTS="--color=fg:${fg},bg:${bg},hl:${purple},fg+:${fg},bg+:${bg_highlight},hl+:${purple},info:${blue},prompt:${cyan},pointer:${cyan},marker:${cyan},spinner:${cyan},header:${cyan}"
 
 # ---- ZOXIDE -----
-eval "$(zoxide init zsh)"
+if command -v zoxide >/dev/null 2>&1; then
+  eval "$(zoxide init zsh)"
+fi
 
 
 # ============================================================================
