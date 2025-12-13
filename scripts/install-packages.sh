@@ -9,6 +9,22 @@ APT_CLI="${ROOT_DIR}/apt-cli.txt"
 log() { echo "[setup] $*"; }
 exists() { command -v "$1" >/dev/null 2>&1; }
 
+# Cache sudo credentials once and keep alive during script run (Linux only)
+require_sudo() {
+  if [[ "$OSTYPE" != darwin* ]]; then
+    if ! exists sudo; then
+      echo "[setup] sudo is required"; exit 1
+    fi
+    # Prompt once
+    sudo -v
+    # Keep sudo timestamp updated until this script exits
+    # shellcheck disable=SC2064
+    trap 'kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true' EXIT
+    while true; do sudo -n true; sleep 60; done &
+    SUDO_KEEPALIVE_PID=$!
+  fi
+}
+
 os_detect() {
   if [[ "$OSTYPE" == "darwin"* ]]; then
     echo "macos"; return
@@ -85,6 +101,8 @@ post_checks() {
 main() {
   OS="$(os_detect)"
   log "Detected OS: ${OS}"
+  # Ensure single sudo prompt and keep-alive for Linux
+  require_sudo
   case "${OS}" in
     macos) install_macos ;;
     ubuntu|debian) install_ubuntu ;;
