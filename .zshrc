@@ -344,6 +344,13 @@ alias cat='batcat -p'
 if [[ $OSTYPE == darwin* ]]; then
   alias cat='bat -p'
 fi
+# Ubuntu-only: map bat -> batcat
+if [[ -r /etc/os-release ]]; then
+  . /etc/os-release
+  if [[ "${ID}" = "ubuntu" ]] && command -v batcat >/dev/null 2>&1; then
+    alias bat='batcat'
+  fi
+fi
 
 # Zoxide (better cd)
 alias cd="z"
