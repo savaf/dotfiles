@@ -1,3 +1,6 @@
+git
+stow
+zsh
 neofetch
 curl
 eza
