@@ -16,15 +16,10 @@ autoProxy=true
 
 # Performance optimizations
 nestedVirtualization=true
-pageReporting=true
 guiApplications=true
 
 # Kernel settings for better performance
 kernelCommandLine=cgroup_no_v1=all systemd.unified_cgroup_hierarchy=1
 
-# Experimental features (optional)
-sparseVhd=true
-
 # Additional settings
-debugConfig=true
 vmIdleTimeout=60000
