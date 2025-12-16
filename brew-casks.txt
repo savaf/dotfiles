@@ -7,7 +7,6 @@ hiddenbar
 iterm2
 itsycal
 keka
-notion
 quicklook-csv
 quicklook-json
 raycast
@@ -22,3 +21,5 @@ webpquicklook
 whatsapp
 spotify
 bitwarden
+docker-desktop
+obsidian
