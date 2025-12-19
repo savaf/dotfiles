@@ -117,13 +117,12 @@ yzhang.markdown-all-in-one
   "editor.detectIndentation": true,
   "editor.fontFamily": "\"MonaspiceAr Nerd Font\", \"Monaspace Argon SemiWide\", \"Fira Code\", \"Courier New\", monospace",
   "editor.fontWeight": "500",
-  "editor.fontLigatures": true,
-  "editor.fontSize": 16,
+  "editor.fontLigatures": false,
+  "editor.fontSize": 15,
   "editor.formatOnPaste": false,
   "editor.inlineSuggest.enabled": true,
   "editor.lineHeight": 0,
   "editor.linkedEditing": true,
-  "editor.minimap.enabled": false,
   "editor.multiCursorModifier": "ctrlCmd",
   "editor.snippetSuggestions": "top",
   "editor.suggestSelection": "first",
@@ -147,17 +146,21 @@ yzhang.markdown-all-in-one
           "fontStyle": "italic",
           "foreground": "#F5F"
         }
-      },
-      {
-        "name": "envKeys",
-        "scope": "string.quoted.double.env,source.env,constant.numeric.env",
-        "settings": {
-          "foreground": "#19354900"
-        }
       }
+      // {
+      //   "name": "envKeys",
+      //   "scope": "string.quoted.double.env,source.env,constant.numeric.env",
+      //   "settings": {
+      //     "foreground": "#19354900"
+      //   }
+      // }
     ]
   },
   "editor.unicodeHighlight.invisibleCharacters": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "always",
+    "source.sortImports": "always"
+  },
   "emmet.showAbbreviationSuggestions": false,
   "eslint.enable": true,
   "eslint.validate": ["vue", "react", "typescript", "html", "javascript"],
@@ -182,10 +185,8 @@ yzhang.markdown-all-in-one
   "search.useIgnoreFiles": false,
   "terminal.integrated.fontSize": 14,
   "window.zoomLevel": 1,
-  "workbench.colorTheme": "Ayu Dark",
   "workbench.editor.labelFormat": "medium",
   "workbench.editor.showTabs": "multiple",
-  "workbench.iconTheme": "vscode-great-icons",
   "workbench.sideBar.location": "right",
   "workbench.startupEditor": "newUntitledFile",
   "workbench.statusBar.visible": true,
@@ -198,14 +199,12 @@ yzhang.markdown-all-in-one
       "editorBracketHighlight.foreground5": "#45A9F9",
       "editorBracketHighlight.foreground6": "#FFB86C",
       "editorBracketHighlight.unexpectedBracket.foreground": "#FF2C6D",
-
       "editorBracketPairGuide.background1": "#FFB86C",
       "editorBracketPairGuide.background2": "#FF75B5",
       "editorBracketPairGuide.background3": "#45A9F9",
       "editorBracketPairGuide.background4": "#B084EB",
       "editorBracketPairGuide.background5": "#E6E6E6",
       "editorBracketPairGuide.background6": "#19f9d8",
-
       "editorBracketPairGuide.activeBackground1": "#FFB86C",
       "editorBracketPairGuide.activeBackground2": "#FF75B5",
       "editorBracketPairGuide.activeBackground3": "#45A9F9",
@@ -260,8 +259,8 @@ yzhang.markdown-all-in-one
   "html.autoClosingTags": true,
   "javascript.autoClosingTags": true,
   "typescript.autoClosingTags": true,
-  "javascript.preferences.renameMatchingJsxTags" : true,
-  "typescript.preferences.renameMatchingJsxTags" : true,
+  "javascript.preferences.renameMatchingJsxTags": true,
+  "typescript.preferences.renameMatchingJsxTags": true,
   "cSpell.enabled": true,
   "cSpell.userWords": [
     "acumatica",
@@ -306,7 +305,19 @@ yzhang.markdown-all-in-one
     "uniqid",
     "varchar"
   ],
+  "workbench.iconTheme": "vscode-great-icons",
+  "workbench.colorTheme": "Ayu Dark",
+  "accessibility.signalOptions.volume": 0,
+  "typescript.updateImportsOnFileMove.enabled": "never",
+  "docker.extension.enableComposeLanguageServer": false,
+  "workbench.activityBar.location": "top",
+  "editor.minimap.autohide": "mouseover",
+  "editor.cursorSmoothCaretAnimation": "on",
+  "editor.cursorBlinking": "phase",
+  "terminal.integrated.cursorBlinking": true,
+  "breadcrumbs.enabled": false
 }
+
 ```
 
 # Keybindings
