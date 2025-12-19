@@ -781,3 +781,23 @@ $ stow .
 $ xargs brew install < brew-cli.txt # Mac
 $ sudo xargs -a apt-cli.txt apt install -y # Ubuntu
 ```
+
+## Quick Start (Bootstrap)
+
+Run the full setup with one command:
+
+```sh
+sh scripts/bootstrap.sh
+```
+
+Legacy entry point (still works):
+
+```sh
+sh scripts/setup-all.sh
+```
+
+Tip: export your current VS Code extensions list:
+
+```sh
+code --list-extensions > vs-extensions.txt
+```
