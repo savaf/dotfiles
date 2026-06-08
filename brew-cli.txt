@@ -28,3 +28,4 @@ unibilium
 wget
 zoxide
 bat
+gh
