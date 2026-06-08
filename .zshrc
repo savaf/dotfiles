@@ -483,3 +483,9 @@ alias gclean="git branch | grep -v "main" | xargs git branch -D"
 if command -v neofetch >/dev/null 2>&1; then
   neofetch
 fi
+
+# Added by Antigravity
+export PATH="/Users/savaf/.antigravity/antigravity/bin:$PATH"
+
+
+export PATH="$HOME/.local/bin:$PATH"
