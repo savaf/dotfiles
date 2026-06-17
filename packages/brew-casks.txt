@@ -5,11 +5,7 @@ font-monaspace-nerd-font
 google-chrome
 hiddenbar
 iterm2
-itsycal
 keka
-quicklook-csv
-quicklook-json
-raycast
 rectangle
 slack
 stats
@@ -17,10 +13,14 @@ suspicious-package
 telegram-desktop
 visual-studio-code
 vlc
-webpquicklook
 whatsapp
 spotify
 bitwarden
 docker-desktop
 obsidian
 zoom
+microsoft-teams
+microsoft-outlook
+grammarly-desktop
+caffeine
+dbeaver-community
