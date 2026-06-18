@@ -25,7 +25,3 @@ fi
 if [ -d "$HOME/.local/bin" ] ; then
     PATH="$HOME/.local/bin:$PATH"
 fi
-. "$HOME/.cargo/env"
-
-# Adding Golang to PATH
-export PATH=$PATH:/usr/local/go/bin
