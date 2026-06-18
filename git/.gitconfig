@@ -1,0 +1,44 @@
+[user]
+	name = Sinver Aguilo
+	email = sinveraguilo@gmail.com
+
+[init]
+	defaultBranch = main
+
+[core]
+	editor = nvim
+	excludesfile = ~/.config/git/ignore
+	autocrlf = input
+
+[pull]
+	rebase = true
+
+[push]
+	autoSetupRemote = true
+	default = simple
+
+[fetch]
+	prune = true
+
+[merge]
+	conflictstyle = zdiff3
+
+[diff]
+	colorMoved = default
+
+[color]
+	ui = auto
+
+[alias]
+	st = status -sb
+	co = checkout
+	br = branch
+	ci = commit
+	cm = commit -m
+	aa = add --all
+	unstage = reset HEAD --
+	last = log -1 HEAD --stat
+	lg = log --oneline --graph --decorate --all
+	amend = commit --amend --no-edit
+	undo = reset --soft HEAD~1
+	cleanup = "!git branch --merged main | grep -v '\\*\\|main' | xargs -r git branch -d"

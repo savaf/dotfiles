@@ -1,52 +1,3 @@
-# VS Code Settings
-  
-### Extension package names for easy install
-
-```
-aaron-bond.better-comments
-amphtml.amphtml-validator
-antfu.iconify
-aykutsarac.jsoncrack-vscode
-bradlc.vscode-tailwindcss
-dbaeumer.vscode-eslint
-deerawan.vscode-faker
-docker.docker
-eamodio.gitlens
-editorconfig.editorconfig
-emmanuelbeziat.vscode-great-icons
-esbenp.prettier-vscode
-fib.beautyamp
-formulahendry.auto-rename-tag
-fosshaas.fontsize-shortcuts
-github.copilot
-github.copilot-chat
-jock.svg
-kisstkondoros.vscode-codemetrics
-kisstkondoros.vscode-gutter-preview
-mikestead.dotenv
-mintlify.document
-ms-azuretools.vscode-containers
-ms-azuretools.vscode-docker
-ms-vscode-remote.remote-wsl
-ms-vscode.vscode-typescript-next
-redhat.vscode-yaml
-snappify.snappify
-streetsidesoftware.code-spell-checker
-tamasfe.even-better-toml
-teabyii.ayu
-unifiedjs.vscode-mdx
-usernamehw.errorlens
-vue.volar
-waifuproject.icns-preview
-wix.vscode-import-cost
-xnerd.ampscript-language
-yoavbls.pretty-ts-errors
-yzhang.markdown-all-in-one
-```
-
-# Settings
-
-```json
 {
   "files.trimTrailingWhitespace": true,
   "diffEditor.ignoreTrimWhitespace": false,
@@ -83,13 +34,6 @@ yzhang.markdown-all-in-one
           "foreground": "#F5F"
         }
       }
-      // {
-      //   "name": "envKeys",
-      //   "scope": "string.quoted.double.env,source.env,constant.numeric.env",
-      //   "settings": {
-      //     "foreground": "#19354900"
-      //   }
-      // }
     ]
   },
   "editor.unicodeHighlight.invisibleCharacters": false,
@@ -253,5 +197,3 @@ yzhang.markdown-all-in-one
   "terminal.integrated.cursorBlinking": true,
   "breadcrumbs.enabled": false
 }
-
-```
