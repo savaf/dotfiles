@@ -2,9 +2,9 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BREW_CLI="${ROOT_DIR}/brew-cli.txt"
-BREW_CASKS="${ROOT_DIR}/brew-casks.txt"
-APT_CLI="${ROOT_DIR}/apt-cli.txt"
+BREW_CLI="${ROOT_DIR}/packages/brew-cli.txt"
+BREW_CASKS="${ROOT_DIR}/packages/brew-casks.txt"
+APT_CLI="${ROOT_DIR}/packages/apt-cli.txt"
 
 log() { echo "[setup] $*"; }
 exists() { command -v "$1" >/dev/null 2>&1; }
