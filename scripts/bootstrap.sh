@@ -19,7 +19,7 @@ os_detect() {
 is_wsl() { grep -qi microsoft /proc/version 2>/dev/null; }
 
 # Config packages that get symlinked into $HOME via stow.
-STOW_PACKAGES=(zsh git p10k nvim tmux shell)
+STOW_PACKAGES=(zsh git p10k nvim tmux shell lazygit)
 
 ensure_stow() {
   exists stow && return 0
@@ -69,6 +69,18 @@ install_wslconfig() {
   fi
 }
 
+# On macOS lazygit reads its config from ~/Library/Application Support/lazygit,
+# not ~/.config. Symlink the stowed config there (mirrors the VS Code approach).
+link_lazygit_macos() {
+  [[ "${OS}" == "macos" ]] || return 0
+  local src="${ROOT_DIR}/lazygit/.config/lazygit/config.yml"
+  [[ -f "${src}" ]] || return 0
+  local dest="$HOME/Library/Application Support/lazygit/config.yml"
+  mkdir -p "$(dirname "${dest}")"
+  ln -snf "${src}" "${dest}"
+  log "Enlazado lazygit config → ${dest}"
+}
+
 install_node_globals() {
   local list="${ROOT_DIR}/packages/global-node-packages.txt"
   [[ -s "${list}" ]] || return 0
@@ -111,6 +123,8 @@ main() {
   fi
 
   install_node_globals
+
+  link_lazygit_macos
 
   if [[ "${OS}" == "macos" ]]; then
     log "Aplicando defaults de macOS…"
