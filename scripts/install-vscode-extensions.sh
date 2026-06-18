@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIST="${ROOT_DIR}/vs-extensions.txt"
+LIST="${ROOT_DIR}/packages/vs-extensions.txt"
 
 if ! command -v code >/dev/null 2>&1; then
   echo "[setup] VS Code CLI (code) no encontrado"; exit 0
