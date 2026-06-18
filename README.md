@@ -4,8 +4,7 @@ This guide covers the basics of setting up a development environment on a new PC
 
 Some environments we will set up are Node (JavaScript) and Dart. Even if you don't program in all of them, they are useful to have as many command-line tools rely on them. We'll also show you some useful daily use applications. As you read and follow these steps, feel free to post any feedback or comments you may have.
 
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+## Contents
 
 - [My PC Setup Guide](#my-pc-setup-guide)
   - [What setup PC do I have?](#what-setup-pc-do-i-have)
@@ -39,16 +38,13 @@ Some environments we will set up are Node (JavaScript) and Dart. Even if you don
   - [Node.js](#nodejs)
     - [Global Modules](#global-modules)
   - [VS Code](#vs-code)
-- [My dotfies](#my-dotfies)
+- [My dotfiles](#my-dotfiles)
+  - [Repository structure](#repository-structure)
   - [Requirements](#requirements)
-    - [Git](#git)
-    - [Stow](#stow)
-  - [Installation](#installation)
-  - [Install desktop apps](#install-desktop-apps)
-  - [Install cli apps](#install-cli-apps)
-  - [Install ubuntu cli apps](#install-ubuntu-cli-apps)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+  - [Quick start (recommended)](#quick-start-recommended)
+  - [Manual usage with Stow](#manual-usage-with-stow)
+  - [Package lists](#package-lists)
+  - [Notes](#notes)
 
 
 ## What setup PC do I have?
@@ -741,63 +737,92 @@ Before adding a new SSH key to the ssh-agent to manage your keys, you should hav
 
 # My dotfiles
 
-This directory contains the dotfiles for my system
+Cross-platform dotfiles for **Ubuntu/WSL** and **macOS**, organized as
+[GNU Stow](https://www.gnu.org/software/stow/) packages.
+
+## Repository structure
+
+Each top-level folder is a Stow *package*: running `stow <package>` symlinks
+its contents into `$HOME`, preserving the internal directory layout.
+
+```
+dotfiles/
+├── zsh/            # .zshrc (slim loader) + .config/zsh/*.zsh modules
+├── git/            # .gitconfig + .config/git/ignore
+├── p10k/           # .p10k.zsh (Powerlevel10k prompt)
+├── nvim/           # .config/nvim/init.lua (minimal, portable)
+├── tmux/           # .config/tmux/tmux.conf
+├── shell/          # .profile
+├── vscode/         # settings.json (symlinked per-OS by a script)
+├── wsl/            # .wslconfig (copied to the Windows profile on WSL)
+├── packages/       # package lists (brew/apt/node/vscode extensions)
+├── scripts/        # bootstrap + install/sync helpers
+└── README.md
+```
+
+The `zsh` config is modular: `zsh/.zshrc` is a slim loader that sources focused
+files from `~/.config/zsh/` (`exports`, `path`, `plugins`, `completion`,
+`history`, `keybindings`, `aliases`, `functions`, `integrations`).
 
 ## Requirements
 
-Ensure you have the following installed on your system
-
-### Git
+`git` and `stow` (the bootstrap installs `stow` for you if missing):
 
 ```sh
-$ sudo apt install  git # ubuntu
-$ brew install git # Mac
+sudo apt install git stow   # Ubuntu/WSL
+brew install git stow       # macOS
 ```
 
-### Stow
+## Quick start (recommended)
+
+Clone the repo and run the single bootstrap entry point. It detects the OS,
+installs base packages, stows the config packages, syncs VS Code, installs
+global node packages, and applies OS-specific extras (macOS defaults / WSL
+`.wslconfig`).
 
 ```sh
-$ sudo apt install stow # Ubuntu
-$ brew install stow # Mac
+git clone git@github.com:savaf/dotfiles.git ~/dotfiles
+cd ~/dotfiles
+./scripts/bootstrap.sh
 ```
 
-## Installation
+The bootstrap backs up any conflicting real files to
+`~/.dotfiles-backup/<timestamp>/` before linking.
 
-First, check out the dotfiles repo in your $HOME directory using git
+## Manual usage with Stow
+
+To link (or unlink) individual packages yourself:
 
 ```sh
-$ git clone git@github.com:savaf/dotfiles.git
-$ cd dotfiles
+cd ~/dotfiles
+stow zsh git p10k nvim tmux shell   # link everything
+stow nvim                            # link just one package
+stow -D nvim                         # unlink (remove symlinks)
+stow -R zsh                          # restow (refresh) after changes
 ```
 
-then use GNU stow to create symlinks
+## Package lists
+
+Reproducible package manifests live in `packages/`:
 
 ```sh
-$ stow .
+xargs brew install < packages/brew-cli.txt          # macOS CLI
+xargs brew install --cask < packages/brew-casks.txt # macOS apps
+sudo xargs -a packages/apt-cli.txt apt install -y   # Ubuntu/WSL CLI
 ```
 
-## Install cli apps
-```sh
-$ xargs brew install < brew-cli.txt # Mac
-$ sudo xargs -a apt-cli.txt apt install -y # Ubuntu
-```
-
-## Quick Start (Bootstrap)
-
-Run the full setup with one command:
+VS Code settings (`vscode/settings.json`) are symlinked to the OS-specific
+location by `scripts/sync-vscode-settings.sh`, and extensions are installed from
+`packages/vs-extensions.txt`. Refresh the extension list with:
 
 ```sh
-sh scripts/bootstrap.sh
+code --list-extensions > packages/vs-extensions.txt
 ```
 
-Legacy entry point (still works):
+## Notes
 
-```sh
-sh scripts/setup-all.sh
-```
-
-Tip: export your current VS Code extensions list:
-
-```sh
-code --list-extensions > vs-extensions.txt
-```
+- **WSL `.wslconfig`** is read by Windows from your Windows user profile, not the
+  Linux `$HOME`. The bootstrap copies it to `C:\Users\<you>\.wslconfig`; apply
+  changes with `wsl --shutdown`.
+- **Powerlevel10k**: regenerate the prompt anytime with `p10k configure` (writes
+  `~/.p10k.zsh`, which is this repo's `p10k/.p10k.zsh`).
