@@ -81,6 +81,9 @@ alias tag='git tag'
 alias newtag='git tag -a'
 alias gclean='git branch | grep -v "main" | xargs git branch -D'
 
+# lazygit (terminal UI for git)
+alias lzg='lazygit'
+
 # Docker shortcuts (if docker is installed)
 if command -v docker >/dev/null 2>&1; then
   alias dps='docker ps'

@@ -45,6 +45,7 @@ Some environments we will set up are Node (JavaScript) and Dart. Even if you don
   - [Manual usage with Stow](#manual-usage-with-stow)
   - [Package lists](#package-lists)
   - [Notes](#notes)
+  - [Docs](#docs)
 
 
 ## What setup PC do I have?
@@ -752,11 +753,13 @@ dotfiles/
 ├── p10k/           # .p10k.zsh (Powerlevel10k prompt)
 ├── nvim/           # .config/nvim/init.lua (minimal, portable)
 ├── tmux/           # .config/tmux/tmux.conf
+├── lazygit/        # .config/lazygit/config.yml (terminal UI for git)
 ├── shell/          # .profile
 ├── vscode/         # settings.json (symlinked per-OS by a script)
 ├── wsl/            # .wslconfig (copied to the Windows profile on WSL)
 ├── packages/       # package lists (brew/apt/node/vscode extensions)
 ├── scripts/        # bootstrap + install/sync helpers
+├── docs/           # usage guides (e.g. lazygit)
 └── README.md
 ```
 
@@ -826,3 +829,10 @@ code --list-extensions > packages/vs-extensions.txt
   changes with `wsl --shutdown`.
 - **Powerlevel10k**: regenerate the prompt anytime with `p10k configure` (writes
   `~/.p10k.zsh`, which is this repo's `p10k/.p10k.zsh`).
+- **lazygit**: launch with `lzg`. See the usage guide for keybindings and
+  workflows.
+
+## Docs
+
+- [lazygit](docs/lazygit.md) — terminal UI for git: install, keybindings and
+  common workflows.

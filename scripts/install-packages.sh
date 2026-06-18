@@ -65,6 +65,48 @@ install_macos() {
   chsh -s /bin/zsh || true
 }
 
+# lazygit is not reliably packaged in apt; try apt first, then fall back to the
+# latest GitHub release binary. Works on x86_64 and arm64 (incl. WSL).
+install_lazygit() {
+  if exists lazygit; then
+    log "lazygit ya instalado ($(lazygit --version 2>/dev/null | head -1))"
+    return 0
+  fi
+
+  log "Instalando lazygit (apt)…"
+  if sudo apt install -y lazygit 2>/dev/null && exists lazygit; then
+    return 0
+  fi
+
+  log "apt no tiene lazygit; descargando el último release de GitHub…"
+  local arch tarball version tmp
+  case "$(uname -m)" in
+    x86_64|amd64) arch="x86_64" ;;
+    aarch64|arm64) arch="arm64" ;;
+    armv7l|armhf) arch="armv6" ;;
+    *) log "Arquitectura no soportada: $(uname -m); omitiendo lazygit"; return 0 ;;
+  esac
+
+  version="$(curl -fsSL https://api.github.com/repos/jesseduffield/lazygit/releases/latest \
+    | grep -Po '"tag_name":\s*"v\K[^"]*' || true)"
+  if [[ -z "${version}" ]]; then
+    log "No se pudo determinar la versión de lazygit; omitiendo."
+    return 0
+  fi
+
+  tmp="$(mktemp -d)"
+  tarball="lazygit_${version}_Linux_${arch}.tar.gz"
+  if curl -fsSL -o "${tmp}/${tarball}" \
+      "https://github.com/jesseduffield/lazygit/releases/download/v${version}/${tarball}"; then
+    tar -xf "${tmp}/${tarball}" -C "${tmp}" lazygit
+    sudo install "${tmp}/lazygit" /usr/local/bin/lazygit
+    log "lazygit ${version} instalado en /usr/local/bin/lazygit"
+  else
+    log "Fallo al descargar lazygit; omitiendo."
+  fi
+  rm -rf "${tmp}"
+}
+
 install_ubuntu() {
   log "Updating and upgrading Ubuntu packages..."
   sudo apt update && sudo apt upgrade -y
@@ -83,6 +125,8 @@ install_ubuntu() {
     log "Creating bat convenience symlink → batcat"
     sudo ln -sf "$(command -v batcat)" /usr/local/bin/bat
   fi
+
+  install_lazygit
 
   chsh -s "$(command -v zsh)" || true
 }
