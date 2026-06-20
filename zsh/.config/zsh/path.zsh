@@ -24,3 +24,10 @@ fi
 # User-local binaries
 [[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"
 [[ -d "$HOME/bin" ]] && export PATH="$HOME/bin:$PATH"
+
+# ============================================================================
+# PNPM
+# ============================================================================
+
+export PNPM_HOME="$HOME/.local/share/pnpm"
+[[ -d "$PNPM_HOME" ]] && export PATH="$PNPM_HOME/bin:$PATH"
