@@ -11,3 +11,5 @@ zoxide
 neovim
 net-tools
 bat
+unzip
+cmatrix
