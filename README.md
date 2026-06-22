@@ -23,7 +23,7 @@ dotfiles/
 ├── zsh/            # .zshrc (slim loader) + .config/zsh/*.zsh modules
 ├── git/            # .gitconfig + .config/git/ignore
 ├── p10k/           # .p10k.zsh (Powerlevel10k prompt)
-├── nvim/           # .config/nvim/init.lua (minimal, portable)
+├── nvim/           # .config/nvim/ (LazyVim distribution)
 ├── tmux/           # .config/tmux/tmux.conf
 ├── lazygit/        # .config/lazygit/config.yml (terminal UI for git)
 ├── shell/          # .profile
@@ -112,7 +112,7 @@ Step-by-step guides for a fresh machine live in [`docs/`](docs):
 | [git-and-ssh.md](docs/git-and-ssh.md) | Git defaults and GitHub SSH key setup |
 | [nodejs.md](docs/nodejs.md) | Node.js via nvm and global modules |
 | [vscode.md](docs/vscode.md) | VS Code settings and extensions |
-| [nvim.md](docs/nvim.md) | Neovim config, keymaps and basics |
+| [nvim.md](docs/nvim.md) | Neovim (LazyVim) setup, requirements and basics |
 | [tmux.md](docs/tmux.md) | tmux prefix, panes/windows and copy mode |
 | [lazygit.md](docs/lazygit.md) | lazygit keybindings and workflows |
 | [hardware.md](docs/hardware.md) | My machines, for reference |

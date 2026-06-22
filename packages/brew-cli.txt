@@ -1,6 +1,7 @@
 ca-certificates
 curl
 eza
+fd
 ffmpeg
 fzf
 gettext
@@ -18,6 +19,7 @@ neovim
 openssl@3
 pcre2
 powerlevel10k
+ripgrep
 screenresolution
 stow
 telnet

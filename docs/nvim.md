@@ -1,67 +1,81 @@
-# Neovim
+# Neovim (LazyVim)
 
-The Neovim config lives in [`nvim/.config/nvim/init.lua`](../nvim/.config/nvim/init.lua):
-a single, minimal, **plugin-manager-free** Lua file that works out of the box on
-Ubuntu/WSL and macOS. It's stowed to `~/.config/nvim/init.lua`.
+The Neovim config is a [**LazyVim**](https://www.lazyvim.org/) setup living in
+[`nvim/.config/nvim/`](../nvim/.config/nvim/). It's stowed to `~/.config/nvim/`
+and works on macOS and Ubuntu/WSL.
 
-Launch with `nvim` (or the aliases `vim` / `vi` / `v` defined in the zsh config).
+Launch with `nvim` (or the aliases `vim` / `vi` / `v` from the zsh config). On the
+first launch `lazy.nvim` bootstraps itself, installs all plugins and compiles the
+treesitter parsers. The `bootstrap.sh` script also does this headlessly with
+`nvim --headless "+Lazy! sync" +qa`.
 
-## What it sets up
-
-- **Leader key** is `Space` (`<leader>`).
-- Line numbers (absolute + relative), mouse, and the **system clipboard**
-  (`unnamedplus`) so yank/paste works with the OS.
-- Persistent **undo** (survives restarts), no swap files, confirm-on-quit.
-- True color, always-on sign column, current-line highlight, 8 lines of scroll
-  context, no line wrap, splits open right/below.
-- 2-space indentation with `expandtab` (spaces, not tabs) and `smartindent`.
-- Smart-case search (case-insensitive unless you type an uppercase letter).
-- Brief highlight on yanked text.
-
-## Keymaps
-
-> `<leader>` is `Space`.
-
-| Mode | Keys | Action |
-|------|------|--------|
-| Normal | `<leader>w` | Save file |
-| Normal | `<leader>q` | Quit |
-| Normal | `<leader>h` | Clear search highlight |
-| Normal | `Ctrl-h/j/k/l` | Move between split windows |
-| Visual | `J` / `K` | Move the selected lines down / up |
-
-Everything else is stock Neovim. A few essentials if you're new to vim:
-
-| Keys | Action |
-|------|--------|
-| `i` / `a` | Insert before / after cursor · `Esc` to leave insert mode |
-| `:w` / `:q` / `:wq` | Write · quit · write & quit |
-| `dd` / `yy` / `p` | Delete line · yank line · paste |
-| `v` / `V` / `Ctrl-v` | Visual · visual-line · visual-block select |
-| `/text` then `n`/`N` | Search forward, next / previous match |
-| `:%s/old/new/g` | Replace in the whole file |
-| `gg` / `G` | Top / bottom of file |
-| `u` / `Ctrl-r` | Undo / redo |
-
-## Working with splits
+## Layout
 
 ```
-:vsplit   " or Ctrl-w v  -> vertical split
-:split    " or Ctrl-w s  -> horizontal split
+nvim/.config/nvim/
+├── init.lua                 # entry point → require("config.lazy")
+├── lua/config/lazy.lua      # bootstraps lazy.nvim + LazyVim
+├── lua/config/options.lua   # your option overrides (empty = LazyVim defaults)
+├── lua/config/keymaps.lua   # your keymap overrides (empty = LazyVim defaults)
+├── lua/config/autocmds.lua  # your autocmd overrides
+├── lua/plugins/             # your plugin specs / overrides
+├── lazyvim.json             # enabled LazyVim extras
+├── lazy-lock.json           # pinned plugin versions (committed, reproducible)
+├── stylua.toml / .neoconf.json
 ```
 
-Then jump around with `Ctrl-h/j/k/l` (mapped here).
+This is a **stock LazyVim** install (no custom keymaps). Learn the defaults at
+<https://www.lazyvim.org/keymaps>. To customize, edit the files under
+`lua/config/` and `lua/plugins/` — they're version-controlled and stowed.
 
-## Extending it
+## Requirements
 
-The config is deliberately dependency-free so it works on a fresh machine. When
-you want LSP, treesitter, fuzzy finding, etc., add a plugin manager such as
-[lazy.nvim](https://github.com/folke/lazy.nvim) and split your config into
-`lua/` modules. Keep `init.lua` as the entry point so stow keeps managing it.
+All of these are installed by `scripts/install-packages.sh` from the package
+lists, except the C compiler (Xcode CLT on macOS / `build-essential` on Linux).
+
+| Tool | Why | Provided by |
+|------|-----|-------------|
+| Neovim ≥ 0.11.2 (LuaJIT) | core | `neovim` |
+| Git ≥ 2.19 | lazy.nvim partial clones | `git` |
+| C compiler | nvim-treesitter parsers | Xcode CLT / build-essential |
+| `tree-sitter` CLI | treesitter parser builds | auto-installed by Mason on first sync |
+| `curl` | blink.cmp completion | `curl` |
+| `fzf`, `ripgrep` (`rg`), `fd` | fzf-lua picker / live grep / file find | `fzf`, `ripgrep`, `fd`/`fd-find` |
+| `lazygit` | in-editor git UI (`<leader>gg`) | `lazygit` |
+| Nerd Font v3+ | icons | `font-*-nerd-font` cask |
+| Terminal with truecolor + undercurl | rendering | iTerm2 / WezTerm / kitty |
+
+> On Ubuntu the apt package is `fd-find`; `install-packages.sh` symlinks it to
+> `fd`. nvim-treesitter pulls the `tree-sitter` CLI through Mason, so no system
+> package is required for it — only the C compiler to compile parsers.
+
+## Enabled extras
+
+Tracked in `lazyvim.json`, managed with `:LazyExtras`:
+
+- `lang.typescript` — TS/JS LSP, formatting (needs node, already installed)
+- `lang.json`, `lang.yaml`, `lang.markdown`
+
+LSP servers/formatters install on demand via **Mason** (`:Mason`).
+
+## Day-to-day
+
+| Command | Action |
+|---------|--------|
+| `<leader><space>` | Find files (uses `fd`) |
+| `<leader>/` | Live grep (uses `rg`) |
+| `<leader>e` | File explorer |
+| `<leader>gg` | lazygit |
+| `:Lazy` | Plugin manager UI (install/update/clean) |
+| `:LazyExtras` | Enable/disable language & feature extras |
+| `:Mason` | Manage LSP servers, linters, formatters |
+| `:checkhealth lazy` / `:checkhealth lazyvim` | Verify requirements are met |
+
+After updating plugins (`:Lazy update`), commit the regenerated `lazy-lock.json`
+to keep versions reproducible across machines.
 
 ## Tips
 
-- Check health: `:checkhealth`.
-- See a mapping: `:verbose nmap <leader>w`.
-- The clipboard integration needs a provider: `xclip`/`wl-clipboard` on Linux,
-  `win32yank` on WSL, built-in on macOS.
+- New to vim? `:Tutor`. Discover keymaps live with `<leader>` (which-key popup).
+- Clipboard provider on Linux/WSL: `xclip`/`wl-clipboard` / `win32yank`
+  (built-in on macOS).
