@@ -10,8 +10,11 @@ ripgrep
 tldr
 wget
 zoxide
-neovim
 net-tools
 bat
 unzip
 cmatrix
+build-essential
+xclip
+wl-clipboard
+fontconfig

@@ -30,24 +30,30 @@ This is a **stock LazyVim** install (no custom keymaps). Learn the defaults at
 
 ## Requirements
 
-All of these are installed by `scripts/install-packages.sh` from the package
-lists, except the C compiler (Xcode CLT on macOS / `build-essential` on Linux).
+All of these are installed automatically by the bootstrap. On Linux the C
+compiler ships as `build-essential` in the apt list. On macOS it comes from the
+Xcode Command Line Tools, which Homebrew's installer pulls in on a clean Mac;
+`ensure_xcode_clt` also triggers `xcode-select --install` (a one-time GUI
+prompt) as a guard.
 
 | Tool | Why | Provided by |
 |------|-----|-------------|
 | Neovim ≥ 0.11.2 (LuaJIT) | core | `neovim` |
 | Git ≥ 2.19 | lazy.nvim partial clones | `git` |
-| C compiler | nvim-treesitter parsers | Xcode CLT / build-essential |
+| C compiler | nvim-treesitter parsers | `build-essential` (Linux) / Xcode CLT (macOS) |
 | `tree-sitter` CLI | treesitter parser builds | auto-installed by Mason on first sync |
 | `curl` | blink.cmp completion | `curl` |
+| Node.js | `lang.typescript` LSP, Mason servers, node globals | `nvm` (installed by `bootstrap.sh`) |
 | `fzf`, `ripgrep` (`rg`), `fd` | fzf-lua picker / live grep / file find | `fzf`, `ripgrep`, `fd`/`fd-find` |
 | `lazygit` | in-editor git UI (`<leader>gg`) | `lazygit` |
-| Nerd Font v3+ | icons | `font-*-nerd-font` cask |
+| clipboard | yank to system clipboard | `xclip`/`wl-clipboard` (Linux) / built-in (macOS) |
+| Nerd Font v3+ | icons | `ensure_nerd_font` → Monaspace (Linux) / `font-*-nerd-font` cask (macOS) |
 | Terminal with truecolor + undercurl | rendering | iTerm2 / WezTerm / kitty |
 
 > On Ubuntu the apt package is `fd-find`; `install-packages.sh` symlinks it to
 > `fd`. nvim-treesitter pulls the `tree-sitter` CLI through Mason, so no system
 > package is required for it — only the C compiler to compile parsers.
+> Node is provisioned via `nvm` (so it's modern enough for the TS server).
 
 ## Enabled extras
 
@@ -77,5 +83,8 @@ to keep versions reproducible across machines.
 ## Tips
 
 - New to vim? `:Tutor`. Discover keymaps live with `<leader>` (which-key popup).
-- Clipboard provider on Linux/WSL: `xclip`/`wl-clipboard` / `win32yank`
-  (built-in on macOS).
+- IDE cockpit: run `nic [session]` (zsh function) to open a tmux session with
+  LazyVim, Claude Code, and a terminal pane; re-attaches if it already exists.
+- Clipboard provider: `xclip`/`wl-clipboard` are installed automatically on
+  Linux (built-in on macOS). On WSL the system clipboard goes through
+  `win32yank`, which you install manually on the Windows side.
