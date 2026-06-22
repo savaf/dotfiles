@@ -4,9 +4,13 @@
 
 # Pick the best available UTF-8 locale (works on both Ubuntu/WSL and macOS).
 setup_locale() {
-  local locales=("C.UTF-8" "en_US.UTF-8" "POSIX")
-  for loc in "${locales[@]}"; do
-    if locale -a 2>/dev/null | grep -q "^${loc}$"; then
+  # locale -a spells UTF-8 locales as "c.utf8"/"en_us.utf8"; normalize both
+  # sides (lowercase, drop dashes) so our candidates actually match.
+  local loc want available
+  available=$(locale -a 2>/dev/null | tr 'A-Z' 'a-z' | tr -d '-')
+  for loc in "C.UTF-8" "en_US.UTF-8"; do
+    want=$(echo "$loc" | tr 'A-Z' 'a-z' | tr -d '-')
+    if echo "$available" | grep -qx "$want"; then
       export LANG="$loc"
       export LC_ALL="$loc"
       return 0

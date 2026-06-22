@@ -72,7 +72,13 @@ stow_packages() {
     done < <(find "${ROOT_DIR}/${pkg}" -type f -print0)
   done
   log "Enlazando paquetes con stow: ${STOW_PACKAGES[*]}"
-  ( cd "${ROOT_DIR}" && stow --restow --no-folding --target="${HOME}" "${STOW_PACKAGES[@]}" )
+  # La fase unstow de --restow escanea todo $HOME y stow tiene un bug cosmético
+  # ("BUG in find_stowed_path? Absolute/relative mismatch") con symlinks a rutas
+  # absolutas ajenas (p.ej. ~/.aws → /mnt/c/...). Los enlaces se crean bien igual;
+  # filtramos solo esa línea de stderr y dejamos pasar cualquier error real.
+  # ponytail: filtra ruido conocido de stow; si molesta el unstow, quitar --restow.
+  stow -d "${ROOT_DIR}" --restow --no-folding --target="${HOME}" "${STOW_PACKAGES[@]}" \
+    2> >(grep -v 'BUG in find_stowed_path' >&2 || true)
 }
 
 install_wslconfig() {
@@ -102,6 +108,24 @@ link_lazygit_macos() {
   backup_if_real "${dest}" "lazygit-config.yml.macos"
   ln -snf "${src}" "${dest}"
   log "Enlazado lazygit config → ${dest}"
+}
+
+# El extra lang.typescript de LazyVim (y los node globals de abajo) necesitan
+# Node. Se provisiona con nvm para tener una versión moderna en cualquier OS.
+# Sourcear nvm.sh en este proceso deja node/npm en el PATH para los pasos
+# siguientes (sync de LazyVim → Mason, install_node_globals).
+ensure_node() {
+  export NVM_DIR="${HOME}/.nvm"
+  if [[ ! -s "${NVM_DIR}/nvm.sh" ]]; then
+    log "Instalando nvm…"
+    curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash || true
+  fi
+  # shellcheck disable=SC1091
+  [[ -s "${NVM_DIR}/nvm.sh" ]] && . "${NVM_DIR}/nvm.sh"
+  if exists nvm && ! exists node; then
+    log "Instalando Node LTS vía nvm…"
+    nvm install --lts || true
+  fi
 }
 
 install_node_globals() {
@@ -141,6 +165,9 @@ main() {
   ensure_locale
   ensure_stow
   stow_packages
+
+  # Node antes del sync para que Mason pueda instalar el LSP de TypeScript.
+  ensure_node
 
   # First-run LazyVim sync: clones lazy.nvim, installs plugins and compiles
   # treesitter parsers without opening the UI. Safe to re-run (idempotent).

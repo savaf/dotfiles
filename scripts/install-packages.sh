@@ -36,7 +36,23 @@ os_detect() {
   echo "unknown"
 }
 
+# El compilador C de treesitter viene de las Xcode Command Line Tools. El
+# instalador de Homebrew ya las instala en un Mac limpio; esto es el guard por si
+# brew preexistía sin ellas.
+ensure_xcode_clt() {
+  if xcode-select -p >/dev/null 2>&1; then
+    log "Xcode Command Line Tools ya presentes; se omite."
+    return 0
+  fi
+  log "Instalando Xcode Command Line Tools (confirma el diálogo que aparece)…"
+  # ponytail: xcode-select --install abre un popup GUI; no hay forma 100%
+  # headless sin trucos frágiles de softwareupdate. El usuario confirma una vez.
+  xcode-select --install || true
+}
+
 install_macos() {
+  ensure_xcode_clt
+
   if ! exists brew; then
     log "Installing Homebrew..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -112,6 +128,70 @@ install_lazygit() {
   rm -rf "${tmp}"
 }
 
+# apt solo trae Neovim 0.9.x; LazyVim necesita >= 0.11.2. Instala el tarball
+# oficial en /opt y lo enlaza a /usr/local/bin (que precede a /usr/bin en PATH).
+ensure_neovim() {
+  local NVIM_VERSION="v0.11.3"
+  if exists nvim; then
+    local major minor
+    read -r major minor < <(nvim --version | sed -n '1s/^NVIM v\([0-9]*\)\.\([0-9]*\).*/\1 \2/p')
+    if [[ -n "${major}" && ( "${major}" -gt 0 || "${minor}" -ge 11 ) ]]; then
+      log "Neovim ya >= 0.11 ($(nvim --version | head -1)); se omite."
+      return 0
+    fi
+  fi
+
+  local arch
+  case "$(uname -m)" in
+    x86_64|amd64) arch="x86_64" ;;
+    aarch64|arm64) arch="arm64" ;;
+    *) log "Arquitectura no soportada para Neovim tarball: $(uname -m); omitiendo."; return 0 ;;
+  esac
+
+  local tarball="nvim-linux-${arch}.tar.gz" tmp
+  tmp="$(mktemp -d)"
+  log "Descargando Neovim ${NVIM_VERSION} (${arch})…"
+  if curl -fsSL -o "${tmp}/${tarball}" \
+      "https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/${tarball}"; then
+    sudo rm -rf "/opt/nvim-linux-${arch}"
+    sudo tar -xzf "${tmp}/${tarball}" -C /opt
+    sudo ln -sf "/opt/nvim-linux-${arch}/bin/nvim" /usr/local/bin/nvim
+    log "Neovim ${NVIM_VERSION} instalado en /usr/local/bin/nvim"
+  else
+    log "Fallo al descargar Neovim; omitiendo."
+  fi
+  rm -rf "${tmp}"
+}
+
+# LazyVim necesita una Nerd Font para los iconos. La instala en el perfil del
+# usuario (no requiere sudo). Misma fuente que el cask de macOS (Monaspace).
+# ponytail: en WSL la fuente real es la del terminal de Windows; esto solo
+# aplica a Linux de escritorio. Inofensivo si se ejecuta en WSL.
+ensure_nerd_font() {
+  if fc-list 2>/dev/null | grep -qi 'Monaspace.*Nerd'; then
+    log "Nerd Font (Monaspace) ya instalada; se omite."
+    return 0
+  fi
+  if ! exists fc-cache; then
+    log "fontconfig no disponible; se omite la Nerd Font."
+    return 0
+  fi
+
+  local NF_VERSION="v3.4.0" font_dir="${HOME}/.local/share/fonts" tmp
+  tmp="$(mktemp -d)"
+  log "Descargando Nerd Font Monaspace ${NF_VERSION}…"
+  if curl -fsSL -o "${tmp}/Monaspace.tar.xz" \
+      "https://github.com/ryanoasis/nerd-fonts/releases/download/${NF_VERSION}/Monaspace.tar.xz"; then
+    mkdir -p "${font_dir}"
+    tar -xJf "${tmp}/Monaspace.tar.xz" -C "${font_dir}"
+    fc-cache -f "${font_dir}" >/dev/null 2>&1 || fc-cache -f >/dev/null 2>&1 || true
+    log "Nerd Font Monaspace instalada en ${font_dir}"
+  else
+    log "Fallo al descargar la Nerd Font; se omite."
+  fi
+  rm -rf "${tmp}"
+}
+
 install_ubuntu() {
   log "Updating and upgrading Ubuntu packages..."
   sudo apt update && sudo apt upgrade -y
@@ -132,6 +212,8 @@ install_ubuntu() {
   fi
 
   install_lazygit
+  ensure_neovim
+  ensure_nerd_font
 
   chsh -s "$(command -v zsh)" || true
 }
