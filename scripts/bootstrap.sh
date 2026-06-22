@@ -28,6 +28,8 @@ BACKUP_DIR="${HOME}/.dotfiles-backup/$(date +%Y%m%d_%H%M%S)"
 backup_if_real() {
   local target="$1" rel="$2"
   [[ -e "${target}" && ! -L "${target}" ]] || return 0
+  # No mover archivos que resuelven dentro del repo (symlinks folded de stow).
+  case "$(readlink -f "${target}")" in "${ROOT_DIR}"/*) return 0 ;; esac
   mkdir -p "$(dirname "${BACKUP_DIR}/${rel}")"
   log "Backup ${target} → ${BACKUP_DIR}/${rel}"
   mv "${target}" "${BACKUP_DIR}/${rel}"
@@ -70,7 +72,7 @@ stow_packages() {
     done < <(find "${ROOT_DIR}/${pkg}" -type f -print0)
   done
   log "Enlazando paquetes con stow: ${STOW_PACKAGES[*]}"
-  ( cd "${ROOT_DIR}" && stow --restow --target="${HOME}" "${STOW_PACKAGES[@]}" )
+  ( cd "${ROOT_DIR}" && stow --restow --no-folding --target="${HOME}" "${STOW_PACKAGES[@]}" )
 }
 
 install_wslconfig() {
