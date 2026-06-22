@@ -19,5 +19,11 @@ else
 fi
 
 mkdir -p "$(dirname "${DEST}")"
+# Back up a real (non-symlink) settings.json before replacing it with our symlink.
+if [[ -e "${DEST}" && ! -L "${DEST}" ]]; then
+  bak="${DEST}.bak.$(date +%Y%m%d_%H%M%S)"
+  mv "${DEST}" "${bak}"
+  echo "[setup] Backup settings.json existente → ${bak}" >&2
+fi
 ln -snf "${SRC}" "${DEST}"
 echo "[setup] Enlazado VS Code settings → ${DEST}"
