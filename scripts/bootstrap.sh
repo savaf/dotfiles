@@ -118,6 +118,13 @@ main() {
   ensure_stow
   stow_packages
 
+  # First-run LazyVim sync: clones lazy.nvim, installs plugins and compiles
+  # treesitter parsers without opening the UI. Safe to re-run (idempotent).
+  if exists nvim; then
+    log "Sincronizando plugins de LazyVim (headless)…"
+    nvim --headless "+Lazy! sync" +qa || true
+  fi
+
   if [[ -f "${ROOT_DIR}/vscode/settings.json" ]]; then
     log "Sincronizando VS Code settings…"
     "${SCRIPT_DIR}/sync-vscode-settings.sh" || true

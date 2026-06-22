@@ -2,27 +2,24 @@
 # Reference: https://github.com/jesseduffield/lazygit/blob/master/docs/Config.md
 
 gui:
-  nerdFontsVersion: "3"      # render Nerd Font icons (you already use them)
-  showFileTree: true         # tree view of changed files (toggle with `)
+  nerdFontsVersion: "3" # render Nerd Font icons (you already use them)
+  showFileTree: true # tree view of changed files (toggle with `)
   showRandomTip: false
-  scrollHeight: 2            # lines scrolled with up/down in diff view
+  scrollHeight: 2 # lines scrolled with up/down in diff view
   sidePanelWidth: 0.3333
   showBottomLine: true
   theme:
     activeBorderColor:
-      - "#06BCE4"            # cyan accent, matches the terminal/FZF palette
+      - "#06BCE4" # cyan accent, matches the terminal/FZF palette
       - bold
     inactiveBorderColor:
       - "#143652"
-
 os:
-  editPreset: "nvim"          # open files / edit commits in Neovim
-
+  editPreset: "nvim" # open files / edit commits in Neovim
 git:
-  paging:
-    colorArg: always
+  pagers:
+    - colorArg: always
   autoFetch: true
   parseEmoji: true
-
 confirmOnQuit: false
 disableStartupPopups: true

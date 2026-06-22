@@ -4,7 +4,9 @@ zsh
 neofetch
 curl
 eza
+fd-find
 fzf
+ripgrep
 tldr
 wget
 zoxide
