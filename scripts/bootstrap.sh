@@ -21,6 +21,31 @@ is_wsl() { grep -qi microsoft /proc/version 2>/dev/null; }
 # Config packages that get symlinked into $HOME via stow.
 STOW_PACKAGES=(zsh git p10k nvim tmux shell lazygit)
 
+# Shared backup dir for this run; created lazily on first real file moved.
+BACKUP_DIR="${HOME}/.dotfiles-backup/$(date +%Y%m%d_%H%M%S)"
+
+# Move a real (non-symlink) file out of the way before we overwrite it.
+backup_if_real() {
+  local target="$1" rel="$2"
+  [[ -e "${target}" && ! -L "${target}" ]] || return 0
+  mkdir -p "$(dirname "${BACKUP_DIR}/${rel}")"
+  log "Backup ${target} → ${BACKUP_DIR}/${rel}"
+  mv "${target}" "${BACKUP_DIR}/${rel}"
+}
+
+ensure_locale() {
+  case "${OS}" in ubuntu|debian) ;; *) return 0 ;; esac
+  exists locale-gen || return 0
+  # Idempotente: si ya está generado, no hace nada.
+  if locale -a 2>/dev/null | grep -qiE '^en_US\.utf-?8$'; then
+    log "Locale en_US.UTF-8 ya presente; se omite."
+    return 0
+  fi
+  log "Generando locale en_US.UTF-8…"
+  sudo locale-gen en_US.UTF-8
+  sudo update-locale LANG=en_US.UTF-8
+}
+
 ensure_stow() {
   exists stow && return 0
   log "GNU stow no encontrado; instalando…"
@@ -33,8 +58,7 @@ ensure_stow() {
 
 # Back up any real (non-symlink) files that would collide, then stow.
 stow_packages() {
-  local backup_dir="${HOME}/.dotfiles-backup/$(date +%Y%m%d_%H%M%S)"
-  local pkg rel target f
+  local pkg rel f
   for pkg in "${STOW_PACKAGES[@]}"; do
     if [[ ! -d "${ROOT_DIR}/${pkg}" ]]; then
       log "Paquete '${pkg}' no existe; se omite."
@@ -42,12 +66,7 @@ stow_packages() {
     fi
     while IFS= read -r -d '' f; do
       rel="${f#"${ROOT_DIR}/${pkg}/"}"
-      target="${HOME}/${rel}"
-      if [[ -e "${target}" && ! -L "${target}" ]]; then
-        mkdir -p "$(dirname "${backup_dir}/${rel}")"
-        log "Backup ${target} → ${backup_dir}/${rel}"
-        mv "${target}" "${backup_dir}/${rel}"
-      fi
+      backup_if_real "${HOME}/${rel}" "${rel}"
     done < <(find "${ROOT_DIR}/${pkg}" -type f -print0)
   done
   log "Enlazando paquetes con stow: ${STOW_PACKAGES[*]}"
@@ -62,6 +81,7 @@ install_wslconfig() {
     win_profile="$(wslpath "$(cmd.exe /c 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')" 2>/dev/null || true)"
   fi
   if [[ -n "${win_profile}" && -d "${win_profile}" ]]; then
+    backup_if_real "${win_profile}/.wslconfig" "wslconfig.windows"
     cp "${ROOT_DIR}/wsl/.wslconfig" "${win_profile}/.wslconfig"
     log ".wslconfig → ${win_profile}/.wslconfig (aplica con: wsl --shutdown)"
   else
@@ -77,6 +97,7 @@ link_lazygit_macos() {
   [[ -f "${src}" ]] || return 0
   local dest="$HOME/Library/Application Support/lazygit/config.yml"
   mkdir -p "$(dirname "${dest}")"
+  backup_if_real "${dest}" "lazygit-config.yml.macos"
   ln -snf "${src}" "${dest}"
   log "Enlazado lazygit config → ${dest}"
 }
@@ -115,6 +136,7 @@ main() {
     done
   fi
 
+  ensure_locale
   ensure_stow
   stow_packages
 

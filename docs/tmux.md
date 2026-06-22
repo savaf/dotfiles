@@ -14,7 +14,7 @@ disconnects. The config lives in
 
 ## The prefix
 
-This config uses **`Ctrl-a`** as the prefix (instead of the default `Ctrl-b`).
+This config uses **`Ctrl-b`** as the prefix (the tmux default).
 You press the prefix, release, then press the command key.
 
 ```sh
@@ -26,7 +26,7 @@ tmux attach -t work
 
 ## Keybindings (this config)
 
-> Notation: `prefix` = `Ctrl-a`. `prefix |` means press `Ctrl-a`, release, then `|`.
+> Notation: `prefix` = `Ctrl-b`. `prefix |` means press `Ctrl-b`, release, then `|`.
 
 | Keys | Action |
 |------|--------|
