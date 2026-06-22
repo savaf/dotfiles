@@ -107,6 +107,14 @@ main() {
     log "scripts/install-packages.sh no encontrado o no ejecutable; se omite."
   fi
 
+  # En un Mac recién instalado, brew/stow/code no están en el PATH de este
+  # proceso padre; cargar el entorno de Homebrew para los pasos siguientes.
+  if [[ "${OS}" == "macos" ]]; then
+    for b in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+      [[ -x "$b" ]] && eval "$("$b" shellenv)" && break
+    done
+  fi
+
   ensure_stow
   stow_packages
 
