@@ -40,18 +40,23 @@ install_macos() {
   if ! exists brew; then
     log "Installing Homebrew..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile || true
-    eval "$(/opt/homebrew/bin/brew shellenv)"
+    # Detect real prefix: /opt/homebrew on Apple Silicon, /usr/local on Intel.
+    local brew_bin
+    brew_bin="$( [[ -x /opt/homebrew/bin/brew ]] && echo /opt/homebrew/bin/brew || echo /usr/local/bin/brew )"
+    echo "eval \"\$(${brew_bin} shellenv)\"" >> ~/.zprofile || true
+    eval "$(${brew_bin} shellenv)"
   fi
 
   brew update
+  # ponytail: stdin redirection (not GNU `xargs -a`/`-r`) so this works on BSD
+  # xargs too (macOS). The `-s` guards above stand in for `-r`.
   if [[ -s "${BREW_CLI}" ]]; then
     log "Installing Homebrew formulae..."
-    xargs -a "${BREW_CLI}" -r brew install
+    xargs brew install < "${BREW_CLI}"
   fi
   if [[ -s "${BREW_CASKS}" ]]; then
     log "Installing Homebrew casks..."
-    xargs -a "${BREW_CASKS}" -r brew install --cask
+    xargs brew install --cask < "${BREW_CASKS}"
   fi
 
   if exists fzf; then
