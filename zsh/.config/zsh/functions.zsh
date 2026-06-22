@@ -68,3 +68,33 @@ function weather() {
 function backup() {
   cp "$1" "$1.backup.$(date +%Y%m%d_%H%M%S)"
 }
+
+# Coding cockpit: neovim + claude + terminal en tmux
+# usage: nic [session_name]   (default: basename del directorio actual)
+function nic() {
+  local session_name="${1:-$(basename "$PWD")}"
+
+  if [[ -n "$TMUX" ]]; then
+    echo "Already in a tmux session. Detach first or run from outside tmux."
+    return 1
+  fi
+
+  if tmux has-session -t "$session_name" 2>/dev/null; then
+    tmux attach-session -t "$session_name"
+    return
+  fi
+
+  # Layout: nvim alto completo a la izquierda; claude + terminal en columna derecha
+  #   +-------------------+----------+
+  #   |                   |  claude  |
+  #   |       nvim        +----------+
+  #   |                   |   term   |
+  #   +-------------------+----------+
+  tmux new-session -d -s "$session_name" -c "$PWD" -x "$(tput cols)" -y "$(tput lines)"
+  tmux split-window -h -t "$session_name":1.1 -c "$PWD" -l 35%
+  tmux split-window -v -t "$session_name":1.2 -c "$PWD" -l 30%
+  tmux send-keys -t "$session_name":1.1 'nvim' C-m
+  tmux send-keys -t "$session_name":1.2 'claude' C-m
+  tmux select-pane -t "$session_name":1.1
+  tmux attach-session -t "$session_name"
+}
