@@ -81,6 +81,14 @@ stow_packages() {
     2> >(grep -v 'BUG in find_stowed_path' >&2 || true)
 }
 
+apply_linux_keyboard() {
+  is_wsl && { log "WSL: Caps→Esc lo gestiona Windows; se omite."; return 0; }
+  exists gsettings || return 0   # solo GNOME (default de Ubuntu)
+  log "Remapeando Caps Lock → Escape (GNOME)…"
+  # ponytail: sobrescribe xkb-options con solo caps:escape; si hay más opciones, hacer merge.
+  gsettings set org.gnome.desktop.input-sources xkb-options "['caps:escape']" || true
+}
+
 install_wslconfig() {
   is_wsl || return 0
   [[ -f "${ROOT_DIR}/wsl/.wslconfig" ]] || return 0
@@ -195,6 +203,10 @@ main() {
   if [[ "${OS}" == "macos" ]]; then
     log "Aplicando defaults de macOS…"
     "${SCRIPT_DIR}/apply-macos-defaults.sh" || true
+  fi
+
+  if [[ "${OS}" != "macos" ]]; then
+    apply_linux_keyboard
   fi
 
   install_wslconfig

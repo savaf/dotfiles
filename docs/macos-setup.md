@@ -74,6 +74,13 @@ mkdir -p /path/to/screenshots/
 defaults write com.apple.screencapture location /path/to/screenshots/ && killall SystemUIServer
 ```
 
+Remap Caps Lock → Escape (applied by `scripts/apply-macos-defaults.sh` via `hidutil`,
+persisted with a `~/Library/LaunchAgents/com.dotfiles.capslock-escape.plist` LaunchAgent):
+
+```sh
+hidutil property --set '{"UserKeyMapping":[{"HIDKeyboardModifierMappingSrc":0x700000039,"HIDKeyboardModifierMappingDst":0x700000029}]}'
+```
+
 ## Xcode command line tools
 
 Many developer tools need these:
