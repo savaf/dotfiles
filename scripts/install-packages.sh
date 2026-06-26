@@ -45,7 +45,7 @@ ensure_xcode_clt() {
     return 0
   fi
   log "Instalando Xcode Command Line Tools (confirma el diálogo que aparece)…"
-  # ponytail: xcode-select --install abre un popup GUI; no hay forma 100%
+  # xcode-select --install abre un popup GUI; no hay forma 100%
   # headless sin trucos frágiles de softwareupdate. El usuario confirma una vez.
   xcode-select --install || true
 }
@@ -64,7 +64,7 @@ install_macos() {
   fi
 
   brew update
-  # ponytail: stdin redirection (not GNU `xargs -a`/`-r`) so this works on BSD
+  # stdin redirection (not GNU `xargs -a`/`-r`) so this works on BSD
   # xargs too (macOS). The `-s` guards above stand in for `-r`.
   if [[ -s "${BREW_CLI}" ]]; then
     log "Installing Homebrew formulae..."
@@ -165,7 +165,7 @@ ensure_neovim() {
 
 # LazyVim necesita una Nerd Font para los iconos. La instala en el perfil del
 # usuario (no requiere sudo). Misma fuente que el cask de macOS (Monaspace).
-# ponytail: en WSL la fuente real es la del terminal de Windows; esto solo
+# En WSL la fuente real es la del terminal de Windows; esto solo
 # aplica a Linux de escritorio. Inofensivo si se ejecuta en WSL.
 ensure_nerd_font() {
   if fc-list 2>/dev/null | grep -qi 'Monaspace.*Nerd'; then

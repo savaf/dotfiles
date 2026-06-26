@@ -72,21 +72,35 @@ stow_packages() {
     done < <(find "${ROOT_DIR}/${pkg}" -type f -print0)
   done
   log "Enlazando paquetes con stow: ${STOW_PACKAGES[*]}"
-  # La fase unstow de --restow escanea todo $HOME y stow tiene un bug cosmético
-  # ("BUG in find_stowed_path? Absolute/relative mismatch") con symlinks a rutas
-  # absolutas ajenas (p.ej. ~/.aws → /mnt/c/...). Los enlaces se crean bien igual;
-  # filtramos solo esa línea de stderr y dejamos pasar cualquier error real.
-  # ponytail: filtra ruido conocido de stow; si molesta el unstow, quitar --restow.
-  stow -d "${ROOT_DIR}" --restow --no-folding --target="${HOME}" "${STOW_PACKAGES[@]}" \
-    2> >(grep -v 'BUG in find_stowed_path' >&2 || true)
+  # Modo link (sin --restow): idempotente con symlinks ya correctos, así que
+  # re-ejecutar es seguro y evita la fase unstow que disparaba el bug cosmético
+  # de stow ("BUG in find_stowed_path?"). No limpia links de paquetes eliminados.
+  stow -d "${ROOT_DIR}" --no-folding --target="${HOME}" "${STOW_PACKAGES[@]}"
+}
+
+# Fusiona caps:escape en el array xkb-options actual, preservando lo existente.
+# $1 = valor crudo de `gsettings get`; echo del array fusionado.
+xkb_merge() {
+  local cur="$1"
+  case "${cur}" in *caps:escape*) echo "${cur}"; return 0 ;; esac
+  case "${cur}" in
+    "@as []"|"[]"|"") echo "['caps:escape']" ;;
+    *)                echo "${cur%]}, 'caps:escape']" ;;
+  esac
 }
 
 apply_linux_keyboard() {
   is_wsl && { log "WSL: Caps→Esc lo gestiona Windows; se omite."; return 0; }
   exists gsettings || return 0   # solo GNOME (default de Ubuntu)
+  local cur merged
+  cur="$(gsettings get org.gnome.desktop.input-sources xkb-options 2>/dev/null || echo '@as []')"
+  merged="$(xkb_merge "${cur}")"
+  if [[ "${merged}" == "${cur}" ]]; then
+    log "caps:escape ya presente en xkb-options; se omite."
+    return 0
+  fi
   log "Remapeando Caps Lock → Escape (GNOME)…"
-  # ponytail: sobrescribe xkb-options con solo caps:escape; si hay más opciones, hacer merge.
-  gsettings set org.gnome.desktop.input-sources xkb-options "['caps:escape']" || true
+  gsettings set org.gnome.desktop.input-sources xkb-options "${merged}" || true
 }
 
 install_wslconfig() {
