@@ -7,6 +7,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
+source "${ROOT_DIR}/scripts/lib-sudo.sh"
+
 log() { echo "[setup] $*"; }
 exists() { command -v "$1" >/dev/null 2>&1; }
 
@@ -168,6 +170,10 @@ install_node_globals() {
 main() {
   OS="$(os_detect)"
   log "OS detectado: ${OS}"
+
+  # Un solo prompt de sudo para todo el bootstrap; el keep-alive del padre cubre
+  # install-packages.sh, ensure_locale y ensure_stow.
+  require_sudo
 
   if [[ -x "${SCRIPT_DIR}/install-packages.sh" ]]; then
     log "Instalando paquetes base…"

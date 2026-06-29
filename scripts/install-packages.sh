@@ -9,21 +9,9 @@ APT_CLI="${ROOT_DIR}/packages/apt-cli.txt"
 log() { echo "[setup] $*"; }
 exists() { command -v "$1" >/dev/null 2>&1; }
 
-# Cache sudo credentials once and keep alive during script run (Linux only)
-require_sudo() {
-  if [[ "$OSTYPE" != darwin* ]]; then
-    if ! exists sudo; then
-      echo "[setup] sudo is required"; exit 1
-    fi
-    # Prompt once
-    sudo -v
-    # Keep sudo timestamp updated until this script exits
-    # shellcheck disable=SC2064
-    trap 'kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true' EXIT
-    while true; do sudo -n true; sleep 60; done &
-    SUDO_KEEPALIVE_PID=$!
-  fi
-}
+# require_sudo: prompt único + keep-alive. Si se corre vía bootstrap.sh, hereda
+# el keep-alive del padre y no repregunta.
+source "${ROOT_DIR}/scripts/lib-sudo.sh"
 
 os_detect() {
   if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -83,7 +71,7 @@ install_macos() {
   if ! grep -q "/bin/zsh" /etc/shells; then
     echo "/bin/zsh" | sudo tee -a /etc/shells >/dev/null || true
   fi
-  chsh -s /bin/zsh || true
+  sudo chsh -s /bin/zsh "$(id -un)" || true
 }
 
 # lazygit is not reliably packaged in apt; try apt first, then fall back to the
@@ -215,7 +203,7 @@ install_ubuntu() {
   ensure_neovim
   ensure_nerd_font
 
-  chsh -s "$(command -v zsh)" || true
+  sudo chsh -s "$(command -v zsh)" "$(id -un)" || true
 }
 
 post_checks() {
