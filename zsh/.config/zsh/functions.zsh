@@ -70,31 +70,54 @@ function backup() {
 }
 
 # Coding cockpit: neovim + claude + terminal en tmux
-# usage: nic [session_name]   (default: basename del directorio actual)
+#
+# Layout: nvim alto completo a la izquierda; claude + terminal en columna derecha
+#   +-------------------+----------+
+#   |                   |  claude  |
+#   |       nvim        +----------+
+#   |                   |   term   |
+#   +-------------------+----------+
+#
+# Arma el cockpit en la ventana destino. Captura pane-id en vez de .1/.2
+# para ser robusto en macOS y WSL.
+#   $1 = target tmux (session:window)   $2 = working dir
+function _nic_cockpit() {
+  local win="$1" dir="$2" p_nvim p_claude
+  p_nvim=$(tmux display-message -p -t "$win" '#{pane_id}')
+  p_claude=$(tmux split-window -h -t "$win" -c "$dir" -l 35% -P -F '#{pane_id}')
+  tmux split-window -v -t "$p_claude" -c "$dir" -l 30%
+  tmux send-keys -t "$p_nvim" 'nvim' C-m
+  tmux send-keys -t "$p_claude" 'claude' C-m
+  tmux select-pane -t "$p_nvim"
+}
+
+# usage: nic [name]   (default: basename del directorio actual)
+#   - fuera de tmux: crea/attachea una sesión con el cockpit
+#   - dentro de tmux: arma el cockpit en la ventana actual (un proyecto por ventana)
 function nic() {
-  local session_name="${1:-$(basename "$PWD")}"
+  local name="${1:-$(basename "$PWD")}"
 
+  # Dentro de tmux: cockpit en la ventana ACTUAL
   if [[ -n "$TMUX" ]]; then
-    echo "Already in a tmux session. Detach first or run from outside tmux."
-    return 1
-  fi
-
-  if tmux has-session -t "$session_name" 2>/dev/null; then
-    tmux attach-session -t "$session_name"
+    local panes; panes=$(tmux display-message -p '#{window_panes}')
+    if (( panes > 1 )); then
+      echo "Esta ventana ya tiene paneles. Abre una vacía (prefix+c) y corre nic ahí."
+      return 1
+    fi
+    local win; win=$(tmux display-message -p '#{session_name}:#{window_index}')
+    tmux rename-window "$name"
+    _nic_cockpit "$win" "$PWD"
     return
   fi
 
-  # Layout: nvim alto completo a la izquierda; claude + terminal en columna derecha
-  #   +-------------------+----------+
-  #   |                   |  claude  |
-  #   |       nvim        +----------+
-  #   |                   |   term   |
-  #   +-------------------+----------+
-  tmux new-session -d -s "$session_name" -c "$PWD" -x "$(tput cols)" -y "$(tput lines)"
-  tmux split-window -h -t "$session_name":1.1 -c "$PWD" -l 35%
-  tmux split-window -v -t "$session_name":1.2 -c "$PWD" -l 30%
-  tmux send-keys -t "$session_name":1.1 'nvim' C-m
-  tmux send-keys -t "$session_name":1.2 'claude' C-m
-  tmux select-pane -t "$session_name":1.1
-  tmux attach-session -t "$session_name"
+  # Fuera de tmux: reusar sesión si existe
+  if tmux has-session -t "$name" 2>/dev/null; then
+    tmux attach-session -t "$name"
+    return
+  fi
+
+  # Fuera de tmux: sesión nueva con cockpit
+  tmux new-session -d -s "$name" -c "$PWD" -x "$(tput cols)" -y "$(tput lines)"
+  _nic_cockpit "$name:1" "$PWD"
+  tmux attach-session -t "$name"
 }
