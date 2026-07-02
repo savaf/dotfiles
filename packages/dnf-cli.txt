@@ -1,0 +1,26 @@
+# Nombres de paquete de Fedora; sirve para dnf (Fedora) y rpm-ostree (Bazzite).
+git
+stow
+zsh
+# fastfetch reemplaza a neofetch (retirado de los repos de Fedora)
+fastfetch
+curl
+eza
+# en Fedora fd-find instala el binario como `fd` (sin symlink fdfind)
+fd-find
+fzf
+ripgrep
+tldr
+wget
+zoxide
+net-tools
+bat
+unzip
+cmatrix
+# equivalente a build-essential (compilador para treesitter)
+gcc
+gcc-c++
+make
+xclip
+wl-clipboard
+fontconfig

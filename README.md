@@ -1,6 +1,6 @@
 # Dotfiles
 
-Cross-platform dotfiles for **Ubuntu/WSL** and **macOS**, organized as
+Cross-platform dotfiles for **Ubuntu/WSL**, **Fedora/Bazzite** and **macOS**, organized as
 [GNU Stow](https://www.gnu.org/software/stow/) packages.
 
 ## Contents
@@ -29,7 +29,7 @@ dotfiles/
 ├── shell/          # .profile
 ├── vscode/         # settings.json (symlinked per-OS by a script)
 ├── wsl/            # .wslconfig (copied to the Windows profile on WSL)
-├── packages/       # package lists (brew/apt/node/vscode extensions)
+├── packages/       # package lists (brew/apt/dnf/node/vscode extensions)
 ├── scripts/        # bootstrap + install/sync helpers
 ├── docs/           # setup guides (macOS, shell, git/ssh, lazygit, …)
 └── README.md
@@ -46,6 +46,7 @@ files from `~/.config/zsh/` (`exports`, `path`, `plugins`, `completion`,
 
 ```sh
 sudo apt install git stow   # Ubuntu/WSL
+sudo dnf install git stow   # Fedora (Bazzite ships both in the base image)
 brew install git stow       # macOS
 ```
 
@@ -85,6 +86,7 @@ Reproducible package manifests live in `packages/`:
 xargs brew install < packages/brew-cli.txt          # macOS CLI
 xargs brew install --cask < packages/brew-casks.txt # macOS apps
 sudo xargs -a packages/apt-cli.txt apt install -y   # Ubuntu/WSL CLI
+grep -v '^#' packages/dnf-cli.txt | xargs sudo dnf install -y  # Fedora CLI (Bazzite: rpm-ostree install)
 ```
 
 VS Code settings (`vscode/settings.json`) are symlinked to the OS-specific

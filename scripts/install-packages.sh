@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BREW_CLI="${ROOT_DIR}/packages/brew-cli.txt"
 BREW_CASKS="${ROOT_DIR}/packages/brew-casks.txt"
 APT_CLI="${ROOT_DIR}/packages/apt-cli.txt"
+DNF_CLI="${ROOT_DIR}/packages/dnf-cli.txt"
 
 log() { echo "[setup] $*"; }
 exists() { command -v "$1" >/dev/null 2>&1; }
@@ -82,12 +83,14 @@ install_lazygit() {
     return 0
   fi
 
-  log "Instalando lazygit (apt)…"
-  if sudo apt install -y lazygit 2>/dev/null && exists lazygit; then
-    return 0
+  if exists apt; then
+    log "Instalando lazygit (apt)…"
+    if sudo apt install -y lazygit 2>/dev/null && exists lazygit; then
+      return 0
+    fi
   fi
 
-  log "apt no tiene lazygit; descargando el último release de GitHub…"
+  log "Descargando el último release de lazygit desde GitHub…"
   local arch tarball version tmp
   case "$(uname -m)" in
     x86_64|amd64) arch="x86_64" ;;
@@ -206,6 +209,39 @@ install_ubuntu() {
   sudo chsh -s "$(command -v zsh)" "$(id -un)" || true
 }
 
+# Fedora clásica usa dnf. Bazzite (Fedora Atomic) es inmutable: no hay dnf en
+# el host; los paquetes se capean con rpm-ostree. Misma lista para ambos.
+install_fedora() {
+  local pkgs
+  pkgs="$(grep -Ev '^\s*#|^\s*$' "${DNF_CLI}" | tr '\n' ' ')"
+
+  if exists rpm-ostree; then
+    log "Sistema inmutable (rpm-ostree) detectado; capeando paquetes faltantes…"
+    # rpm-ostree falla con paquetes ya presentes en la imagen base: filtrar.
+    local p missing=()
+    for p in ${pkgs}; do rpm -q "$p" >/dev/null 2>&1 || missing+=("$p"); done
+    if ((${#missing[@]})); then
+      # --apply-live aplica sin reboot; si no está soportado, capa normal.
+      if ! sudo rpm-ostree install --idempotent --apply-live "${missing[@]}"; then
+        sudo rpm-ostree install --idempotent "${missing[@]}"
+        log "Paquetes capeados; reinicia para aplicarlos y re-ejecuta el bootstrap."
+      fi
+    else
+      log "Todos los paquetes ya presentes; se omite."
+    fi
+  elif [[ -n "${pkgs// /}" ]]; then
+    log "Installing dnf packages from list..."
+    # shellcheck disable=SC2086
+    sudo dnf install -y ${pkgs}
+  fi
+
+  install_lazygit
+  ensure_neovim
+  ensure_nerd_font
+
+  sudo chsh -s "$(command -v zsh)" "$(id -un)" || true
+}
+
 post_checks() {
   echo "[versions]"
   exists zsh && zsh --version || echo "zsh: not found"
@@ -225,6 +261,7 @@ main() {
   case "${OS}" in
     macos) install_macos ;;
     ubuntu|debian) install_ubuntu ;;
+    fedora|bazzite) install_fedora ;;
     *) echo "[setup] Unsupported or unknown OS: ${OS}"; exit 1 ;;
   esac
   post_checks
