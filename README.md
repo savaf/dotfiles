@@ -1,6 +1,6 @@
 # Dotfiles
 
-Cross-platform dotfiles for **Ubuntu/WSL**, **Fedora/Bazzite** and **macOS**, organized as
+Cross-platform dotfiles for **Ubuntu/WSL**, **Fedora/Bazzite**, **Arch/Omarchy** and **macOS**, organized as
 [GNU Stow](https://www.gnu.org/software/stow/) packages.
 
 ## Contents
@@ -47,6 +47,7 @@ files from `~/.config/zsh/` (`exports`, `path`, `plugins`, `completion`,
 ```sh
 sudo apt install git stow   # Ubuntu/WSL
 sudo dnf install git stow   # Fedora (Bazzite ships both in the base image)
+sudo pacman -S git stow     # Arch/Omarchy
 brew install git stow       # macOS
 ```
 
@@ -87,6 +88,7 @@ xargs brew install < packages/brew-cli.txt          # macOS CLI
 xargs brew install --cask < packages/brew-casks.txt # macOS apps
 sudo xargs -a packages/apt-cli.txt apt install -y   # Ubuntu/WSL CLI
 grep -v '^#' packages/dnf-cli.txt | xargs sudo dnf install -y  # Fedora CLI (Bazzite: rpm-ostree install)
+grep -v '^#' packages/pacman-cli.txt | xargs sudo pacman -S --needed  # Arch/Omarchy CLI
 ```
 
 VS Code settings (`vscode/settings.json`) are symlinked to the OS-specific
@@ -111,6 +113,7 @@ Step-by-step guides for a fresh machine live in [`docs/`](docs):
 | [shell-and-dotfiles.md](docs/shell-and-dotfiles.md) | zsh modules, prompt, and applying the dotfiles with Stow |
 | [ubuntu-wsl.md](docs/ubuntu-wsl.md) | Ubuntu & WSL2 setup from scratch (incl. `.wslconfig`, fonts) |
 | [bazzite.md](docs/bazzite.md) | Fedora & Bazzite (immutable) setup — dnf / rpm-ostree |
+| [omarchy.md](docs/omarchy.md) | Arch & Omarchy (Hyprland) setup — pacman |
 | [macos-setup.md](docs/macos-setup.md) | macOS system preferences, apps, Homebrew, iTerm2 |
 | [git-and-ssh.md](docs/git-and-ssh.md) | Git defaults and GitHub SSH key setup |
 | [nodejs.md](docs/nodejs.md) | Node.js via nvm and global modules |

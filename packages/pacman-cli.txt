@@ -1,0 +1,26 @@
+# Nombres de paquete de Arch Linux (pacman); aplica a Arch y Omarchy.
+git
+stow
+zsh
+fastfetch
+curl
+eza
+# en Arch el paquete y el binario se llaman fd
+fd
+fzf
+ripgrep
+tldr
+wget
+zoxide
+net-tools
+bat
+unzip
+cmatrix
+# equivalente a build-essential (compilador para treesitter)
+base-devel
+xclip
+wl-clipboard
+fontconfig
+# en repos oficiales con versión actual; en Omarchy ya presentes (--needed los salta)
+lazygit
+neovim

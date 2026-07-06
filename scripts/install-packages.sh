@@ -6,6 +6,7 @@ BREW_CLI="${ROOT_DIR}/packages/brew-cli.txt"
 BREW_CASKS="${ROOT_DIR}/packages/brew-casks.txt"
 APT_CLI="${ROOT_DIR}/packages/apt-cli.txt"
 DNF_CLI="${ROOT_DIR}/packages/dnf-cli.txt"
+PACMAN_CLI="${ROOT_DIR}/packages/pacman-cli.txt"
 
 log() { echo "[setup] $*"; }
 exists() { command -v "$1" >/dev/null 2>&1; }
@@ -242,6 +243,23 @@ install_fedora() {
   sudo chsh -s "$(command -v zsh)" "$(id -un)" || true
 }
 
+# Arch/Omarchy: repos oficiales traen lazygit y neovim actuales, así que no
+# hacen falta los fallbacks de GitHub. Omarchy ya trae casi todo (--needed salta).
+install_arch() {
+  local pkgs
+  pkgs="$(grep -Ev '^\s*#|^\s*$' "${PACMAN_CLI}" | tr '\n' ' ')"
+
+  if [[ -n "${pkgs// /}" ]]; then
+    log "Installing pacman packages from list..."
+    # shellcheck disable=SC2086
+    sudo pacman -S --needed --noconfirm ${pkgs}
+  fi
+
+  ensure_nerd_font
+
+  sudo chsh -s "$(command -v zsh)" "$(id -un)" || true
+}
+
 post_checks() {
   echo "[versions]"
   exists zsh && zsh --version || echo "zsh: not found"
@@ -262,6 +280,7 @@ main() {
     macos) install_macos ;;
     ubuntu|debian) install_ubuntu ;;
     fedora|bazzite) install_fedora ;;
+    arch|omarchy) install_arch ;;
     *) echo "[setup] Unsupported or unknown OS: ${OS}"; exit 1 ;;
   esac
   post_checks

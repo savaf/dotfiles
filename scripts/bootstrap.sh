@@ -57,6 +57,7 @@ ensure_stow() {
     macos)        exists brew && brew install stow ;;
     ubuntu|debian) sudo apt install -y stow ;;
     fedora)       sudo dnf install -y stow ;;
+    arch|omarchy) sudo pacman -S --needed --noconfirm stow ;;
     bazzite)      log "stow se capeó con rpm-ostree; reinicia y re-ejecuta el bootstrap."; exit 1 ;;
     *) log "Instala 'stow' manualmente y reintenta."; exit 1 ;;
   esac

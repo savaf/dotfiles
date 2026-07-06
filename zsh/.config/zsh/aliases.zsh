@@ -46,17 +46,12 @@ alias l.='eza -al --color=always --group-directories-first ../' # ls on the PARE
 alias l..='eza -al --color=always --group-directories-first ../../' # ls on directory 2 levels up
 alias l...='eza -al --color=always --group-directories-first ../../../' # ls on directory 3 levels up
 
-# BAT (better cat)
-alias cat='batcat -p'
-if [[ $OSTYPE == darwin* ]]; then
+# BAT (better cat) — usa el binario que exista (bat en macOS/Fedora/Arch, batcat en Ubuntu)
+if command -v bat >/dev/null 2>&1; then
   alias cat='bat -p'
-fi
-# Ubuntu-only: map bat -> batcat
-if [[ -r /etc/os-release ]]; then
-  . /etc/os-release
-  if [[ "${ID}" = "ubuntu" ]] && command -v batcat >/dev/null 2>&1; then
-    alias bat='batcat'
-  fi
+elif command -v batcat >/dev/null 2>&1; then
+  alias cat='batcat -p'
+  alias bat='batcat'
 fi
 
 # Zoxide (better cd)
