@@ -110,4 +110,9 @@ replaces that.)
   (Teams, Outlook) from `packages/omarchy-webapps.txt` via
   `omarchy-webapp-install`. Add lines there instead of installing by hand.
 - One-off extra packages: `omarchy pkg add <name>` (or plain `pacman`/`yay`).
+- NVIDIA + LUKS: a black screen at the boot password prompt means the
+  initramfs is missing the nvidia modules (an Omarchy update can create
+  `/etc/mkinitcpio.conf.d/nvidia.conf` after the last image rebuild). The
+  bootstrap detects this and regenerates via `limine-mkinitcpio`; manual fix:
+  `sudo limine-mkinitcpio`.
 - To re-apply config after pulling changes: `cd ~/dotfiles && stow -R zsh git p10k nvim tmux shell lazygit`.

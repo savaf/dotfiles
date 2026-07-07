@@ -272,6 +272,27 @@ ensure_omarchy_zsh() {
   log "ventanas NUEVAS de Alacritty ya abren zsh gracias al pin de arriba."
 }
 
+# Con NVIDIA + LUKS, el prompt de contraseña queda en negro si los módulos
+# nvidia no están dentro del initramfs. Omarchy los configura en
+# /etc/mkinitcpio.conf.d/nvidia.conf, pero si ese drop-in aparece (update,
+# migración) DESPUÉS de la última regeneración, la imagen queda desactualizada.
+# Aquí se detecta el caso inspeccionando el UKI real y se regenera si falta.
+ensure_omarchy_initramfs() {
+  local uki="/boot/EFI/Linux/omarchy_linux.efi"
+  [[ -f /etc/mkinitcpio.conf.d/nvidia.conf && -f "${uki}" ]] || return 0
+  exists limine-mkinitcpio || return 0
+  local tmp
+  tmp="$(mktemp)"
+  if objcopy -O binary --only-section=.initrd "${uki}" "${tmp}" \
+      && lsinitcpio "${tmp}" | grep -q '/nvidia\.ko'; then
+    log "Initramfs ya incluye los módulos NVIDIA; se omite."
+  else
+    log "Initramfs sin módulos NVIDIA (sin video en el prompt de LUKS); regenerando..."
+    sudo limine-mkinitcpio
+  fi
+  rm -f "${tmp}"
+}
+
 # Webapps de Omarchy (equivalente a casks sin buen paquete Linux). Lista en
 # omarchy-webapps.txt con formato Nombre|URL|IconoURL, los 3 args no
 # interactivos de omarchy-webapp-install.
@@ -322,6 +343,7 @@ install_arch() {
     # Fijar el shell en Alacritty por el SHELL "congelado" de uwsm.
     ensure_omarchy_zsh
     ensure_omarchy_webapps
+    ensure_omarchy_initramfs
   fi
 }
 
