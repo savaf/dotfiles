@@ -163,6 +163,33 @@ ensure_node() {
   fi
 }
 
+# Mensaje final sobre cómo entrar a zsh. Clave: NO sugerir `source ~/.zshrc`,
+# porque ~/.zshrc es sintaxis zsh y falla línea por línea si tu sesión actual es
+# bash (bad substitution, `command not found: zinit`, etc.). Lo correcto es
+# arrancar zsh en una sesión nueva o con `exec zsh`.
+final_shell_hint() {
+  local login_shell
+  login_shell="$(getent passwd "$(id -un)" 2>/dev/null | cut -d: -f7 || true)"
+  [[ -n "${login_shell}" ]] || login_shell="${SHELL:-}"
+
+  log "Bootstrap completo."
+  case "${login_shell##*/}" in
+    zsh) log "zsh ya es tu login shell." ;;
+    *)   log "Aviso: zsh aún no es tu login shell; revisa el paso chsh de install-packages.sh." ;;
+  esac
+  case "${OS}" in
+    omarchy)
+      log "Cierra sesión de Hyprland y vuelve a entrar (o reinicia) para que \$SHELL se"
+      log "actualice en toda la sesión; las ventanas NUEVAS de Alacritty ya abren zsh"
+      log "gracias al pin en alacritty.toml. Para probar aquí mismo: exec zsh"
+      ;;
+    *)
+      log "Abre una terminal nueva para entrar a zsh, o cámbiate ya con: exec zsh"
+      ;;
+  esac
+  log "No ejecutes 'source ~/.zshrc' desde bash: es config de zsh y dará errores."
+}
+
 install_node_globals() {
   local list="${ROOT_DIR}/packages/global-node-packages.txt"
   [[ -s "${list}" ]] || return 0
@@ -242,7 +269,7 @@ main() {
 
   install_wslconfig
 
-  log "Listo. Abre una nueva terminal o ejecuta: source ~/.zshrc"
+  final_shell_hint
 }
 
 main "$@"
