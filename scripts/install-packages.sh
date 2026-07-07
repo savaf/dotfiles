@@ -7,6 +7,8 @@ BREW_CASKS="${ROOT_DIR}/packages/brew-casks.txt"
 APT_CLI="${ROOT_DIR}/packages/apt-cli.txt"
 DNF_CLI="${ROOT_DIR}/packages/dnf-cli.txt"
 PACMAN_CLI="${ROOT_DIR}/packages/pacman-cli.txt"
+ARCH_APPS="${ROOT_DIR}/packages/arch-apps.txt"
+OMARCHY_WEBAPPS="${ROOT_DIR}/packages/omarchy-webapps.txt"
 
 log() { echo "[setup] $*"; }
 exists() { command -v "$1" >/dev/null 2>&1; }
@@ -270,6 +272,22 @@ ensure_omarchy_zsh() {
   log "ventanas NUEVAS de Alacritty ya abren zsh gracias al pin de arriba."
 }
 
+# Webapps de Omarchy (equivalente a casks sin buen paquete Linux). Lista en
+# omarchy-webapps.txt con formato Nombre|URL|IconoURL, los 3 args no
+# interactivos de omarchy-webapp-install.
+ensure_omarchy_webapps() {
+  exists omarchy-webapp-install || return 0
+  while IFS='|' read -r name url icon; do
+    [[ -z "${name}" || "${name}" =~ ^[[:space:]]*# ]] && continue
+    if [[ -f "${HOME}/.local/share/applications/${name}.desktop" ]]; then
+      log "Webapp '${name}' ya existe; se omite."
+    else
+      log "Creando webapp '${name}'..."
+      omarchy-webapp-install "${name}" "${url}" "${icon}" || log "Fallo creando webapp '${name}' (¿sin red?); continúa."
+    fi
+  done < "${OMARCHY_WEBAPPS}"
+}
+
 # Arch/Omarchy: repos oficiales traen lazygit y neovim actuales, así que no
 # hacen falta los fallbacks de GitHub. Omarchy ya trae casi todo (--needed salta).
 install_arch() {
@@ -282,12 +300,29 @@ install_arch() {
     sudo pacman -S --needed --noconfirm ${pkgs}
   fi
 
+  # Apps GUI vía yay (repos + AUR); mismo mecanismo que usa Omarchy por defecto
+  # (omarchy-pkg-aur-add es un wrapper de esto y solo existe en Omarchy).
+  local apps
+  apps="$(grep -Ev '^\s*#|^\s*$' "${ARCH_APPS}" | tr '\n' ' ')"
+  if [[ -n "${apps// /}" ]]; then
+    if exists yay; then
+      log "Installing GUI apps with yay..."
+      # shellcheck disable=SC2086
+      yay -S --needed --noconfirm ${apps}
+    else
+      log "yay no encontrado; omito apps GUI (packages/arch-apps.txt). Instala yay y re-ejecuta."
+    fi
+  fi
+
   ensure_nerd_font
 
   sudo chsh -s "$(command -v zsh)" "$(id -un)" || true
 
-  # Solo en Omarchy: fijar el shell en Alacritty por el SHELL "congelado" de uwsm.
-  [[ "${OS}" == "omarchy" ]] && ensure_omarchy_zsh
+  if [[ "${OS}" == "omarchy" ]]; then
+    # Fijar el shell en Alacritty por el SHELL "congelado" de uwsm.
+    ensure_omarchy_zsh
+    ensure_omarchy_webapps
+  fi
 }
 
 post_checks() {

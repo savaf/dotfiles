@@ -1,0 +1,3 @@
+# Webapps de Omarchy: Nombre|URL|URL del icono PNG
+Microsoft Teams|https://teams.microsoft.com|https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/microsoft-teams.png
+Microsoft Outlook|https://outlook.office.com/mail/|https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/microsoft-outlook.png

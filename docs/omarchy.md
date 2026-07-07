@@ -105,5 +105,9 @@ replaces that.)
   GitHub-release fallbacks used on Ubuntu/Fedora aren't needed.
 - `wl-clipboard` is in the package list — Neovim's system clipboard needs it
   under Wayland/Hyprland.
-- Extra packages on Omarchy: `omarchy pkg add <name>` (or plain `pacman`/AUR).
+- GUI apps (the `brew-casks.txt` equivalent) install automatically from
+  `packages/arch-apps.txt` via `yay` (official repos + AUR), and web-only apps
+  (Teams, Outlook) from `packages/omarchy-webapps.txt` via
+  `omarchy-webapp-install`. Add lines there instead of installing by hand.
+- One-off extra packages: `omarchy pkg add <name>` (or plain `pacman`/`yay`).
 - To re-apply config after pulling changes: `cd ~/dotfiles && stow -R zsh git p10k nvim tmux shell lazygit`.
