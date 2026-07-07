@@ -21,6 +21,11 @@ os_detect() {
   fi
   if [[ -r /etc/os-release ]]; then
     . /etc/os-release
+    # Omarchy no altera /etc/os-release (queda ID=arch); detectarlo por su marca.
+    if [[ "${ID:-}" == "arch" ]] \
+        && { [[ -d "${HOME}/.local/share/omarchy" ]] || command -v omarchy >/dev/null 2>&1; }; then
+      echo "omarchy"; return
+    fi
     echo "${ID:-linux}"; return
   fi
   echo "unknown"
