@@ -243,6 +243,28 @@ install_fedora() {
   sudo chsh -s "$(command -v zsh)" "$(id -un)" || true
 }
 
+# En Omarchy la sesión Hyprland/uwsm arranca con SHELL "congelado" y Alacritty
+# (vía xdg-terminal-exec) toma el shell de $SHELL, no de /etc/passwd. Fijar el
+# shell en el alacritty.toml del usuario hace que las ventanas nuevas abran zsh
+# sin depender de un reboot. Idempotente: no duplica la clave si ya existe.
+ensure_omarchy_zsh() {
+  local cfg="${HOME}/.config/alacritty/alacritty.toml"
+  [[ -f "${cfg}" ]] || { log "alacritty.toml no encontrado; se omite el pin de shell."; return 0; }
+  if grep -qE '^\s*shell\s*=' "${cfg}"; then
+    log "Pin de shell ya presente en alacritty.toml; se omite."
+  elif grep -qE '^\s*\[terminal\]' "${cfg}"; then
+    # Insertar la clave justo debajo del encabezado [terminal] existente.
+    sed -i '/^\s*\[terminal\]/a shell = { program = "/usr/bin/zsh" }' "${cfg}"
+    log "Pin de shell (zsh) añadido bajo [terminal] en alacritty.toml."
+  else
+    printf '\n[terminal]\nshell = { program = "/usr/bin/zsh" }\n' >> "${cfg}"
+    log "Sección [terminal] con pin de shell (zsh) añadida a alacritty.toml."
+  fi
+  log "zsh ya es tu login shell. Reinicia o cierra sesión de Hyprland y vuelve a"
+  log "entrar para que \$SHELL se actualice en toda la sesión; mientras tanto, las"
+  log "ventanas NUEVAS de Alacritty ya abren zsh gracias al pin de arriba."
+}
+
 # Arch/Omarchy: repos oficiales traen lazygit y neovim actuales, así que no
 # hacen falta los fallbacks de GitHub. Omarchy ya trae casi todo (--needed salta).
 install_arch() {
@@ -258,6 +280,9 @@ install_arch() {
   ensure_nerd_font
 
   sudo chsh -s "$(command -v zsh)" "$(id -un)" || true
+
+  # Solo en Omarchy: fijar el shell en Alacritty por el SHELL "congelado" de uwsm.
+  [[ "${OS}" == "omarchy" ]] && ensure_omarchy_zsh
 }
 
 post_checks() {

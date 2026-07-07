@@ -45,13 +45,45 @@ before linking, so nothing is lost.
 
 Open a new terminal (or `source ~/.zshrc`) to load everything.
 
-## 4. Fonts
+## 4. Switching the shell to zsh
+
+The bootstrap runs `chsh` to make zsh your login shell (Omarchy defaults to
+bash). This updates `/etc/passwd`, but **reopening a terminal is not enough**:
+the running Hyprland/uwsm session captured `SHELL=/usr/bin/bash` at login, and
+Omarchy launches the terminal via `xdg-terminal-exec` → Alacritty, which reads
+the shell from that inherited `$SHELL` rather than from `/etc/passwd`. So new
+terminals keep opening bash until the session's `$SHELL` is refreshed.
+
+Two ways to get zsh:
+
+- **Reboot / re-login Hyprland** — the clean, terminal-agnostic fix. PAM
+  re-exports `SHELL=/usr/bin/zsh` into the fresh session and every terminal
+  opens zsh. Verify with `echo $SHELL`.
+- **Pin the shell in Alacritty** — works immediately, no reboot, but is
+  Alacritty-specific. The bootstrap does this automatically on Omarchy; it adds
+  to `~/.config/alacritty/alacritty.toml`:
+
+  ```toml
+  [terminal]
+  shell = { program = "/usr/bin/zsh" }
+  ```
+
+  New Alacritty windows (`SUPER`+`RETURN`) then open zsh right away.
+
+Coexistence with Omarchy: the `omarchy-*` commands and `mise` shims live on
+`PATH` via `~/.config/uwsm/env`, so they keep working under zsh. Omarchy's bash
+aliases/functions are **not** loaded in zsh (by design) — your own
+`~/.config/zsh/*` config replaces them. `~/.bashrc` is left untouched (these
+dotfiles don't stow it), so bash still works in TTYs and scripts, and
+`omarchy update` won't conflict.
+
+## 5. Fonts
 
 The bootstrap installs the *Monaspace Nerd Font* into `~/.local/share/fonts`.
 Select it in your terminal (Alacritty on Omarchy: `~/.config/alacritty/alacritty.toml`
 → `[font]` section).
 
-## 5. Caps Lock → Escape (Hyprland)
+## 6. Caps Lock → Escape (Hyprland)
 
 There is no `gsettings` on Hyprland, so the bootstrap can't apply this
 automatically. Set it in `~/.config/hypr/input.conf`:

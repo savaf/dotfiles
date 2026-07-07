@@ -113,7 +113,7 @@ Step-by-step guides for a fresh machine live in [`docs/`](docs):
 | [shell-and-dotfiles.md](docs/shell-and-dotfiles.md) | zsh modules, prompt, and applying the dotfiles with Stow |
 | [ubuntu-wsl.md](docs/ubuntu-wsl.md) | Ubuntu & WSL2 setup from scratch (incl. `.wslconfig`, fonts) |
 | [bazzite.md](docs/bazzite.md) | Fedora & Bazzite (immutable) setup — dnf / rpm-ostree |
-| [omarchy.md](docs/omarchy.md) | Arch & Omarchy (Hyprland) setup — pacman |
+| [omarchy.md](docs/omarchy.md) | Arch & Omarchy (Hyprland) setup — pacman, switching to zsh |
 | [macos-setup.md](docs/macos-setup.md) | macOS system preferences, apps, Homebrew, iTerm2 |
 | [git-and-ssh.md](docs/git-and-ssh.md) | Git defaults and GitHub SSH key setup |
 | [nodejs.md](docs/nodejs.md) | Node.js via nvm and global modules |
