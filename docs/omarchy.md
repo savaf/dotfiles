@@ -110,6 +110,10 @@ replaces that.)
   (Teams, Outlook) from `packages/omarchy-webapps.txt` via
   `omarchy-webapp-install`. Add lines there instead of installing by hand.
 - One-off extra packages: `omarchy pkg add <name>` (or plain `pacman`/`yay`).
+- Slow boot/login? Run `scripts/boot-health.sh` — it reports per-phase boot
+  times, flaky-USB enumeration errors (a bad device can stall the LUKS prompt
+  ~1 min), and whether the initramfs has the NVIDIA modules. The bootstrap
+  also runs it at the end.
 - NVIDIA + LUKS: a black screen at the boot password prompt means the
   initramfs is missing the nvidia modules (an Omarchy update can create
   `/etc/mkinitcpio.conf.d/nvidia.conf` after the last image rebuild). The

@@ -269,6 +269,9 @@ main() {
 
   install_wslconfig
 
+  # Diagnóstico de arranque (solo Linux; avisos, nunca bloquea).
+  [[ "${OS}" != "macos" ]] && bash "${SCRIPT_DIR}/boot-health.sh" || true
+
   final_shell_hint
 }
 
