@@ -110,6 +110,11 @@ replaces that.)
   (Teams, Outlook) from `packages/omarchy-webapps.txt` via
   `omarchy-webapp-install`. Add lines there instead of installing by hand.
 - One-off extra packages: `omarchy pkg add <name>` (or plain `pacman`/`yay`).
+- Xbox controller: pair over Bluetooth (Super+Ctrl+B) — works with the
+  in-kernel driver; run `omarchy-install-gaming-xbox-controllers` (xpadneo)
+  if you want rumble/battery reporting. Avoid the USB Wireless Adapter
+  dongle: it needs the AUR `xone-dkms` driver and, on a monitor/desk hub, it
+  can brown out and stall boot ~1 min (this happened; see boot-health.sh).
 - Slow boot/login? Run `scripts/boot-health.sh` — it reports per-phase boot
   times, flaky-USB enumeration errors (a bad device can stall the LUKS prompt
   ~1 min), and whether the initramfs has the NVIDIA modules. The bootstrap

@@ -18,6 +18,8 @@ unzip
 cmatrix
 # equivalente a build-essential (compilador para treesitter)
 base-devel
+# requisito de cualquier módulo dkms (xone, etc.)
+linux-headers
 xclip
 wl-clipboard
 fontconfig
