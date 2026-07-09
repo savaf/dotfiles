@@ -124,4 +124,11 @@ replaces that.)
   `/etc/mkinitcpio.conf.d/nvidia.conf` after the last image rebuild). The
   bootstrap detects this and regenerates via `limine-mkinitcpio`; manual fix:
   `sudo limine-mkinitcpio`.
+- RGB (OpenRGB): el paquete stow `omarchy` instala un hook
+  (`~/.config/omarchy/hooks/theme-set.d/openrgb`) que pone todo el RGB del PC
+  (NZXT, Lian Li Strimer, teclado Keychron) al color accent del tema activo,
+  en cada cambio de tema y al arrancar (vía `~/.config/hypr/autostart.conf`).
+  Overrides de color por tema se ajustan en el `case` del hook. Para RGB de
+  motherboard/RAM hace falta además: `sudo modprobe i2c-dev` y
+  `echo i2c-dev | sudo tee /etc/modules-load.d/i2c-dev.conf`.
 - To re-apply config after pulling changes: `cd ~/dotfiles && stow -R zsh git p10k nvim tmux shell lazygit`.

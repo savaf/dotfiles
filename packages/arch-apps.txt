@@ -16,3 +16,5 @@ zoom
 spotify
 obsidian
 dbeaver
+# control RGB (NZXT, Lian Li Strimer, Keychron); sync con tema vía hook del paquete stow omarchy
+openrgb

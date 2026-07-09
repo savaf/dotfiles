@@ -209,6 +209,9 @@ main() {
   OS="$(os_detect)"
   log "OS detectado: ${OS}"
 
+  # Paquete solo-Omarchy: hook de OpenRGB (RGB sync con el tema) + autostart de hypr.
+  [[ "${OS}" == "omarchy" ]] && STOW_PACKAGES+=(omarchy)
+
   # Un solo prompt de sudo para todo el bootstrap; el keep-alive del padre cubre
   # install-packages.sh, ensure_locale y ensure_stow.
   require_sudo

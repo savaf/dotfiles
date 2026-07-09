@@ -1,0 +1,14 @@
+#!/bin/bash
+# Aplica el color accent del tema actual de omarchy a todo el RGB
+theme=$(cat ~/.config/omarchy/current/theme.name)
+accent=$(grep -m1 '^accent' ~/.config/omarchy/current/theme/colors.toml | grep -oE '[0-9a-fA-F]{6}')
+
+# Overrides donde el accent del tema no luce bien en LEDs
+case $theme in
+  gruvbox)    accent=d79921 ;; # naranja cálido, la firma de gruvbox
+  rose-pine)  accent=ebbcba ;; # rosa, la firma de rose pine
+  vantablack) accent=000000 ;; # negro absoluto = LEDs apagados
+  white)      accent=ffffff ;; # blanco real, no gris
+esac
+
+[[ -n $accent ]] && openrgb --mode static --color "$accent" >/dev/null 2>&1 &
