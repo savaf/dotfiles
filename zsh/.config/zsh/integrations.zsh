@@ -34,15 +34,13 @@ if command -v zoxide >/dev/null 2>&1; then
 fi
 
 # ---- NVM (Node Version Manager) ----
-NVM_DIR="$HOME/.nvm"
-if [[ ! -d "$NVM_DIR" ]]; then
+export NVM_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/nvm"
+if [[ ! -s "$NVM_DIR/nvm.sh" ]]; then
   echo "nvm is not installed. Installing nvm..."
-  mkdir -p "$(dirname "$NVM_DIR")"
   git clone --depth=1 https://github.com/nvm-sh/nvm.git "$NVM_DIR"
-  echo "nvm installed successfully."
 fi
-export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                 # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
 # ---- PHP Brew ----
 [[ -e ~/.phpbrew/bashrc ]] && source ~/.phpbrew/bashrc

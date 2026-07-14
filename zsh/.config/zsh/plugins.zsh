@@ -46,7 +46,7 @@ zinit snippet OMZP::colored-man-pages
 zinit snippet OMZP::colorize
 
 # Development tools
-zinit snippet OMZP::nvm
+# nvm se carga manualmente en integrations.zsh (NVM_DIR canónico); evitar doble-load.
 zinit snippet OMZP::node
 zinit snippet OMZP::pm2
 zinit snippet OMZP::bun
