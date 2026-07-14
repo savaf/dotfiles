@@ -32,3 +32,4 @@ bat
 gh
 lazygit
 cmatrix
+fastfetch

@@ -25,7 +25,7 @@ focused files from `~/.config/zsh/`:
 | `keybindings.zsh` | key bindings |
 | `aliases.zsh` | aliases (git, eza, bat, docker, `lzg`, …) |
 | `functions.zsh` | utility functions (`ex`, `mkcd`, `glog`, …) |
-| `integrations.zsh` | fzf, zoxide, nvm, neofetch, … |
+| `integrations.zsh` | fzf, zoxide, nvm, fastfetch, … |
 
 Plugins are managed by [zinit](https://github.com/zdharma-continuum/zinit) and
 auto-install on first launch. The prompt is

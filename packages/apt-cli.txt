@@ -1,7 +1,7 @@
 git
 stow
 zsh
-neofetch
+fastfetch
 curl
 eza
 fd-find

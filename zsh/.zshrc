@@ -28,7 +28,7 @@ zsh_modules=(
   keybindings   # key bindings
   aliases       # aliases
   functions     # utility functions
-  integrations  # fzf, zoxide, nvm, neofetch, ...
+  integrations  # fzf, zoxide, nvm, fastfetch, ...
 )
 
 for _mod in "${zsh_modules[@]}"; do
