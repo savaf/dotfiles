@@ -96,6 +96,7 @@ function _nic_cockpit() {
 #   - dentro de tmux: arma el cockpit en la ventana actual (un proyecto por ventana)
 function nic() {
   local name="${1:-$(basename "$PWD")}"
+  name="${name//[.:]/_}"        # tmux no permite '.' ni ':' en nombres de sesión
 
   # Dentro de tmux: cockpit en la ventana ACTUAL
   if [[ -n "$TMUX" ]]; then
