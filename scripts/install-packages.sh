@@ -33,6 +33,62 @@ os_detect() {
   echo "unknown"
 }
 
+# Login shell actual del usuario, de forma portable: macOS no tiene getent, así
+# que se lee de Directory Services; en Linux, de /etc/passwd vía getent.
+current_login_shell() {
+  if [[ "${OS}" == "macos" ]]; then
+    dscl . -read "/Users/$(id -un)" UserShell 2>/dev/null | awk '{print $2}'
+  else
+    getent passwd "$(id -un)" 2>/dev/null | cut -d: -f7
+  fi
+}
+
+# Garantiza que zsh esté instalado, registrado en /etc/shells y fijado como login
+# shell del usuario. Consolida lo que antes vivía duplicado (y con `|| true` mudo)
+# en install_macos/ubuntu/fedora/arch. Idempotente: no reinstala ni re-chsh si ya
+# está todo en su sitio, y nunca hace `chsh -s ""` cuando zsh falta.
+ensure_zsh() {
+  # 1) Instalar el binario si no vino en la lista de paquetes (o distro rara).
+  if ! exists zsh; then
+    log "zsh no encontrado; instalándolo…"
+    case "${OS}" in
+      macos)         exists brew && brew install zsh ;;   # macOS ya trae /bin/zsh; guard
+      ubuntu|debian) sudo apt install -y zsh ;;
+      fedora)        sudo dnf install -y zsh ;;
+      bazzite)       sudo rpm-ostree install --idempotent --apply-live zsh \
+                       || { sudo rpm-ostree install --idempotent zsh; \
+                            log "zsh capeado; reinicia y re-ejecuta el bootstrap."; } ;;
+      arch|omarchy)  sudo pacman -S --needed --noconfirm zsh ;;
+      *)             log "No sé instalar zsh en '${OS}'; hazlo manual y re-ejecuta."; return 0 ;;
+    esac
+  fi
+
+  # 2) Resolver la ruta real; si sigue sin existir, no forzar el cambio de shell.
+  local zsh_bin
+  zsh_bin="$(command -v zsh || true)"
+  if [[ -z "${zsh_bin}" ]]; then
+    log "zsh sigue sin estar disponible; se omite el cambio de shell."
+    return 0
+  fi
+
+  # 3) Registrar en /etc/shells (chsh lo exige; el paquete no siempre lo añade).
+  if [[ -r /etc/shells ]] && ! grep -qxF "${zsh_bin}" /etc/shells; then
+    log "Añadiendo ${zsh_bin} a /etc/shells…"
+    echo "${zsh_bin}" | sudo tee -a /etc/shells >/dev/null || true
+  fi
+
+  # 4) Fijar como login shell solo si aún no lo es.
+  local cur
+  cur="$(current_login_shell)"
+  if [[ "${cur}" == "${zsh_bin}" ]]; then
+    log "zsh ya es tu login shell (${zsh_bin}); se omite chsh."
+  elif sudo chsh -s "${zsh_bin}" "$(id -un)"; then
+    log "Login shell cambiado a ${zsh_bin}."
+  else
+    log "No se pudo cambiar el login shell a zsh (chsh falló); cámbialo manual: chsh -s ${zsh_bin}"
+  fi
+}
+
 # El compilador C de treesitter viene de las Xcode Command Line Tools. El
 # instalador de Homebrew ya las instala en un Mac limpio; esto es el guard por si
 # brew preexistía sin ellas.
@@ -77,10 +133,7 @@ install_macos() {
     "$(brew --prefix)/opt/fzf/install" --key-bindings --completion --no-update-rc || true
   fi
 
-  if ! grep -q "/bin/zsh" /etc/shells; then
-    echo "/bin/zsh" | sudo tee -a /etc/shells >/dev/null || true
-  fi
-  sudo chsh -s /bin/zsh "$(id -un)" || true
+  ensure_zsh
 }
 
 # lazygit is not reliably packaged in apt; try apt first, then fall back to the
@@ -214,7 +267,7 @@ install_ubuntu() {
   ensure_neovim
   ensure_nerd_font
 
-  sudo chsh -s "$(command -v zsh)" "$(id -un)" || true
+  ensure_zsh
 }
 
 # Fedora clásica usa dnf. Bazzite (Fedora Atomic) es inmutable: no hay dnf en
@@ -247,7 +300,7 @@ install_fedora() {
   ensure_neovim
   ensure_nerd_font
 
-  sudo chsh -s "$(command -v zsh)" "$(id -un)" || true
+  ensure_zsh
 }
 
 # En Omarchy la sesión Hyprland/uwsm arranca con SHELL "congelado" y Alacritty
@@ -267,9 +320,9 @@ ensure_omarchy_zsh() {
     printf '\n[terminal]\nshell = { program = "/usr/bin/zsh" }\n' >> "${cfg}"
     log "Sección [terminal] con pin de shell (zsh) añadida a alacritty.toml."
   fi
-  log "zsh ya es tu login shell. Reinicia o cierra sesión de Hyprland y vuelve a"
-  log "entrar para que \$SHELL se actualice en toda la sesión; mientras tanto, las"
-  log "ventanas NUEVAS de Alacritty ya abren zsh gracias al pin de arriba."
+  log "Reinicia o cierra sesión de Hyprland y vuelve a entrar para que \$SHELL se"
+  log "actualice en toda la sesión; mientras tanto, las ventanas NUEVAS de Alacritty"
+  log "ya abren zsh gracias al pin de arriba."
 }
 
 # Con NVIDIA + LUKS, el prompt de contraseña queda en negro si los módulos
@@ -337,7 +390,7 @@ install_arch() {
 
   ensure_nerd_font
 
-  sudo chsh -s "$(command -v zsh)" "$(id -un)" || true
+  ensure_zsh
 
   if [[ "${OS}" == "omarchy" ]]; then
     # Fijar el shell en Alacritty por el SHELL "congelado" de uwsm.
