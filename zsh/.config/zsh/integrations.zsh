@@ -45,13 +45,3 @@ fi
 # ---- PHP Brew ----
 [[ -e ~/.phpbrew/bashrc ]] && source ~/.phpbrew/bashrc
 
-# ============================================================================
-# FINAL INITIALIZATION
-# ============================================================================
-
-# Show system info (after everything is loaded)
-if command -v fastfetch >/dev/null 2>&1; then
-  fastfetch
-elif command -v neofetch >/dev/null 2>&1; then
-  neofetch
-fi
