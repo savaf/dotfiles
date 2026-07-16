@@ -7,7 +7,11 @@ and works on macOS and Ubuntu/WSL.
 Launch with `nvim` (or the aliases `vim` / `vi` / `v` from the zsh config). On the
 first launch `lazy.nvim` bootstraps itself, installs all plugins and compiles the
 treesitter parsers. The `bootstrap.sh` script also does this headlessly with
-`nvim --headless "+Lazy! sync" +qa`.
+`nvim --headless "+Lazy! install" "+Lazy! restore" +qa`: `install` clones the
+plugins and `restore` pins them to the exact commits in `lazy-lock.json`, so every
+machine ends up on the **same** plugin versions (reproducible). It deliberately
+avoids `Lazy sync`, which would update plugins to latest and rewrite the lock,
+causing drift between machines.
 
 ## Layout
 
@@ -77,8 +81,10 @@ LSP servers/formatters install on demand via **Mason** (`:Mason`).
 | `:Mason` | Manage LSP servers, linters, formatters |
 | `:checkhealth lazy` / `:checkhealth lazyvim` | Verify requirements are met |
 
-After updating plugins (`:Lazy update`), commit the regenerated `lazy-lock.json`
-to keep versions reproducible across machines.
+To keep plugin versions reproducible across machines: update deliberately on one
+machine with `:Lazy update`, commit the regenerated `lazy-lock.json`, then on the
+other machines `git pull` and run `:Lazy restore` (or re-run `bootstrap.sh`) to
+pin them to that lock.
 
 ## Tips
 

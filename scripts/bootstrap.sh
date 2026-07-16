@@ -238,11 +238,13 @@ main() {
   # Node antes del sync para que Mason pueda instalar el LSP de TypeScript.
   ensure_node
 
-  # First-run LazyVim sync: clones lazy.nvim, installs plugins and compiles
-  # treesitter parsers without opening the UI. Safe to re-run (idempotent).
+  # First-run LazyVim setup, headless (sin abrir la UI). install clona los plugins
+  # faltantes; restore los fija a los commits EXACTOS de lazy-lock.json (reproducible
+  # entre PCs). Se usa install+restore en vez de sync porque sync ACTUALIZA a la última
+  # versión y reescribe el lock, provocando deriva entre máquinas. Idempotente.
   if exists nvim; then
-    log "Sincronizando plugins de LazyVim (headless)…"
-    nvim --headless "+Lazy! sync" +qa || true
+    log "Instalando y fijando plugins de LazyVim al lockfile (headless)…"
+    nvim --headless "+Lazy! install" "+Lazy! restore" +qa || true
   fi
 
   if [[ -f "${ROOT_DIR}/vscode/settings.json" ]]; then
