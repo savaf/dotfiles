@@ -18,3 +18,6 @@ obsidian
 dbeaver
 # control RGB (NZXT, Lian Li Strimer, Keychron); sync con tema vía hook del paquete stow omarchy
 openrgb
+# refrigeración + NZXT Kraken (bomba/ventiladores) y su pantalla LCD; daemon coolercontrold
+# lo habilita el bootstrap. Deps opcionales liquidctl/lm_sensors en pacman-cli.txt
+coolercontrol

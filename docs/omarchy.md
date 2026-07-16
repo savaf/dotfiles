@@ -126,9 +126,21 @@ replaces that.)
   `sudo limine-mkinitcpio`.
 - RGB (OpenRGB): el paquete stow `omarchy` instala un hook
   (`~/.config/omarchy/hooks/theme-set.d/openrgb`) que pone todo el RGB del PC
-  (NZXT, Lian Li Strimer, teclado Keychron) al color accent del tema activo,
-  en cada cambio de tema y al arrancar (vía `~/.config/hypr/autostart.conf`).
-  Overrides de color por tema se ajustan en el `case` del hook. Para RGB de
-  motherboard/RAM hace falta además: `sudo modprobe i2c-dev` y
-  `echo i2c-dev | sudo tee /etc/modules-load.d/i2c-dev.conf`.
+  (NZXT, Lian Li Strimer, RAM, GPU, placa, teclado Keychron) al color accent del
+  tema activo, en cada cambio de tema y al arrancar (vía
+  `~/.config/hypr/autostart.conf`). El hook aplica dos pasadas (`--mode direct` y
+  `--mode static`) porque los dispositivos no comparten un único modo de color
+  fijo: el Lian Li Strimer y la RAM Corsair solo soportan `direct`, mientras que
+  GPU y teclado solo soportan `static`. Overrides de color por tema se ajustan en
+  el `case` del hook. El módulo `i2c-dev` (necesario para el RGB de RAM/placa por
+  SMBus) lo persiste el bootstrap en `/etc/modules-load.d/i2c-dev.conf`.
+- Refrigeración y Kraken (CoolerControl): `coolercontrol` (en `arch-apps.txt`)
+  controla el AIO NZXT Kraken —bomba, ventiladores y **pantalla LCD**— vía su
+  daemon `coolercontrold`, que el bootstrap habilita (`systemctl enable --now`).
+  Deps opcionales `liquidctl` y `lm_sensors` (en `pacman-cli.txt`) le dan acceso
+  a más sensores. El **contenido de la LCD** (temperatura de líquido/CPU, imagen,
+  reloj) se configura desde la **GUI de CoolerControl**; esa config vive en el
+  daemon (root, fuera de `$HOME`) y no se gestiona por stow. Para exponer todos
+  los sensores del sistema, opcionalmente: `sudo sensors-detect --auto`.
+  OpenRGB no ve el Kraken, así que no hay conflicto entre ambas herramientas.
 - To re-apply config after pulling changes: `cd ~/dotfiles && stow -R zsh git p10k nvim tmux shell lazygit`.

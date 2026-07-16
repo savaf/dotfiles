@@ -362,6 +362,33 @@ ensure_omarchy_webapps() {
   done < "${OMARCHY_WEBAPPS}"
 }
 
+# CoolerControl controla el AIO NZXT Kraken (bomba/ventiladores + pantalla LCD) vía
+# su daemon. Se instala como paquete (arch-apps.txt) con sus deps opcionales
+# liquidctl y lm_sensors; aquí solo garantizamos el servicio activo. Idempotente.
+ensure_coolercontrol() {
+  exists systemctl || return 0
+  if systemctl is-enabled --quiet coolercontrold.service 2>/dev/null; then
+    log "coolercontrold ya está habilitado; se omite."
+  else
+    log "Habilitando coolercontrold (Kraken + LCD)…"
+    sudo systemctl enable --now coolercontrold.service \
+      || log "No se pudo habilitar coolercontrold (¿instalado?); revisa manual."
+  fi
+}
+
+# El módulo i2c-dev expone los buses SMBus que OpenRGB necesita para el RGB de
+# RAM y placa base. Se persiste en modules-load.d para que cargue en cada arranque.
+ensure_i2c_dev() {
+  local conf=/etc/modules-load.d/i2c-dev.conf
+  if [[ -f "${conf}" ]]; then
+    log "i2c-dev ya persistido (${conf}); se omite."
+  else
+    log "Persistiendo el módulo i2c-dev (RGB de RAM/placa vía OpenRGB)…"
+    echo i2c-dev | sudo tee "${conf}" >/dev/null || true
+  fi
+  lsmod | grep -q '^i2c_dev' || sudo modprobe i2c-dev || true
+}
+
 # Arch/Omarchy: repos oficiales traen lazygit y neovim actuales, así que no
 # hacen falta los fallbacks de GitHub. Omarchy ya trae casi todo (--needed salta).
 install_arch() {
@@ -397,6 +424,8 @@ install_arch() {
     ensure_omarchy_zsh
     ensure_omarchy_webapps
     ensure_omarchy_initramfs
+    ensure_i2c_dev
+    ensure_coolercontrol
   fi
 }
 
