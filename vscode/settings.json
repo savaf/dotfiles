@@ -186,7 +186,7 @@
     "varchar"
   ],
   "workbench.iconTheme": "vscode-great-icons",
-  "workbench.colorTheme": "Everforest Dark",
+  "workbench.colorTheme": "Ocean Green: Dark",
   "accessibility.signalOptions.volume": 0,
   "typescript.updateImportsOnFileMove.enabled": "never",
   "docker.extension.enableComposeLanguageServer": false,
