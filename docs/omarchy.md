@@ -97,6 +97,30 @@ input {
 Then `hyprctl reload`. (Omarchy binds Caps as compose key by default; this
 replaces that.)
 
+## 7. Keyboard layouts (LATAM / US, per-device)
+
+La laptop (songbird) tiene el teclado físico en **LATAM** pero se usa con un
+teclado USB EN-US (Keychron K3). El paquete stow `omarchy` versiona
+`~/.config/hypr/input.conf` para resolverlo **por dispositivo**, sin udev:
+
+- Default global `kb_layout = us,latam` → el USB EN-US y las máquinas sin
+  teclado LATAM (p.ej. ANDREA, el desktop) arrancan en **US**.
+- Un bloque `device{}` para el teclado físico (`at-translated-set-2-keyboard`)
+  lo fuerza a `latam,us` → **LATAM**. En máquinas que no tengan ese teclado el
+  bloque se ignora, así el mismo archivo sirve para ambas PCs.
+
+Hyprland aplica el bloque `device{}` solo al conectar el teclado, así que el
+switch es automático. Extras:
+
+- **Toggle manual**: `SUPER` + `ALT` + `K` → `hyprctl switchxkblayout current
+  next` (en `~/.config/hypr/bindings.conf`, también versionado).
+- **Indicador**: el módulo `hyprland/language` en `~/.config/waybar/config.jsonc`
+  muestra `US`/`LATAM` y es clicable para alternar.
+
+El nombre del `device` es el que reporta `hyprctl devices` (minúsculas, espacios
+→ guiones). Con fcitx5 activo (método de entrada), el toggle `current` y el
+indicador operan sobre el teclado virtual de fcitx5; solo intercepta apps Qt.
+
 ## Notes
 
 - On Arch `fd` and `bat` install under their real names — no `fdfind`/`batcat`
