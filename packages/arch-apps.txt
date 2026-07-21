@@ -3,11 +3,11 @@
 # Casks de mac sin equivalente aquí: rectangle/alt-tab/stats/hiddenbar/caffeine
 # (Hyprland/waybar), iterm2 (Alacritty), keka/suspicious-package/grammarly
 # (solo-macOS), docker-desktop (Omarchy trae docker+lazydocker).
-# Como webapp (ver omarchy-webapps.txt): discord, whatsapp, slack, teams, outlook.
+# Como webapp (ver omarchy-webapps.txt): discord, whatsapp, slack, telegram,
+# teams, outlook.
 brave-bin
 google-chrome
 visual-studio-code-bin
-telegram-desktop
 vlc
 bitwarden
 zoom
