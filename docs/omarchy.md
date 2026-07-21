@@ -131,7 +131,8 @@ indicador operan sobre el teclado virtual de fcitx5; solo intercepta apps Qt.
   under Wayland/Hyprland.
 - GUI apps (the `brew-casks.txt` equivalent) install automatically from
   `packages/arch-apps.txt` via `yay` (official repos + AUR), and web-only apps
-  (Teams, Outlook) from `packages/omarchy-webapps.txt` via
+  (Teams, Outlook, Discord, WhatsApp, Slack) from
+  `packages/omarchy-webapps.txt` via
   `omarchy-webapp-install`. Add lines there instead of installing by hand.
 - One-off extra packages: `omarchy pkg add <name>` (or plain `pacman`/`yay`).
 - Xbox controller: pair over Bluetooth (Super+Ctrl+B) — works with the

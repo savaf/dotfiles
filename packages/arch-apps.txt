@@ -2,14 +2,12 @@
 # Omarchy ya trae varias (spotify, obsidian, vlc...); --needed las salta.
 # Casks de mac sin equivalente aquí: rectangle/alt-tab/stats/hiddenbar/caffeine
 # (Hyprland/waybar), iterm2 (Alacritty), keka/suspicious-package/grammarly
-# (solo-macOS), docker-desktop (Omarchy trae docker+lazydocker), whatsapp
-# (webapp por defecto), teams/outlook (ver omarchy-webapps.txt).
+# (solo-macOS), docker-desktop (Omarchy trae docker+lazydocker).
+# Como webapp (ver omarchy-webapps.txt): discord, whatsapp, slack, teams, outlook.
 brave-bin
 google-chrome
 visual-studio-code-bin
-discord
 telegram-desktop
-slack-desktop
 vlc
 bitwarden
 zoom
