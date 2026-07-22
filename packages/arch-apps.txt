@@ -14,6 +14,7 @@ zoom
 spotify
 obsidian
 dbeaver
+slack-desktop
 # control RGB (NZXT, Lian Li Strimer, Keychron); sync con tema vía hook del paquete stow omarchy
 openrgb
 # refrigeración + NZXT Kraken (bomba/ventiladores) y su pantalla LCD; daemon coolercontrold

@@ -3,5 +3,4 @@ Microsoft Teams|https://teams.microsoft.com|https://cdn.jsdelivr.net/gh/homarr-l
 Microsoft Outlook|https://outlook.office.com/mail/|https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/microsoft-outlook.png
 Discord|https://discord.com/app|https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/discord.png
 WhatsApp|https://web.whatsapp.com|https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/whatsapp.png
-Slack|https://app.slack.com/client|https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/slack.png
 Telegram|https://web.telegram.org/k/|https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/telegram.png
