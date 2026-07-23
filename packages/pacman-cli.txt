@@ -30,3 +30,4 @@ neovim
 liquidctl
 lm_sensors
 i2c-tools
+nginx

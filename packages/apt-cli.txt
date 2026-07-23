@@ -18,3 +18,4 @@ build-essential
 xclip
 wl-clipboard
 fontconfig
+nginx

@@ -16,6 +16,7 @@ luajit
 luv
 msgpack
 neovim
+nginx
 openssl@3
 pcre2
 powerlevel10k
