@@ -27,6 +27,7 @@ dotfiles/
 ├── tmux/           # .config/tmux/tmux.conf
 ├── lazygit/        # .config/lazygit/config.yml (terminal UI for git)
 ├── shell/          # .profile
+├── claude/         # .claude/ (Claude Code settings, agents, global CLAUDE.md)
 ├── vscode/         # settings.json (symlinked per-OS by a script)
 ├── wsl/            # .wslconfig (copied to the Windows profile on WSL)
 ├── packages/       # package lists (brew/apt/dnf/node/vscode extensions)
@@ -73,7 +74,7 @@ To link (or unlink) individual packages yourself:
 
 ```sh
 cd ~/dotfiles
-stow zsh git p10k nvim tmux shell lazygit   # link everything
+stow zsh git p10k nvim tmux shell lazygit claude   # link everything
 stow nvim                                    # link just one package
 stow -D nvim                                 # unlink (remove symlinks)
 stow -R zsh                                   # restow (refresh) after changes

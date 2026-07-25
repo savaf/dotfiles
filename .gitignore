@@ -12,5 +12,5 @@
 .env.*
 *.local
 
-# Claude Code (config local de sesión)
-.claude/
+# Claude Code (config local de sesión; anclado para no ignorar claude/.claude/)
+/.claude/

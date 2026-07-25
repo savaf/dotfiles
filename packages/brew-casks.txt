@@ -24,3 +24,5 @@ microsoft-outlook
 grammarly-desktop
 caffeine
 dbeaver-community
+claude
+claude-code

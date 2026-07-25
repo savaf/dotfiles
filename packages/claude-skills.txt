@@ -1,0 +1,11 @@
+# Claude Code skills, installed with `npx skills add <repo>` by
+# scripts/install-claude-skills.sh. Third-party skills are a prompt-injection
+# surface: review the repo before adding a new line here.
+# ponytail: pushes the agent toward minimal code (YAGNI) — fewer generated tokens
+DietrichGebert/ponytail
+# anti-slop UI fundamentals (layout, typography, motion, spacing)
+Leonxlnx/taste-skill
+# reusable CSS transitions catalog + agent skill
+Jakubantalik/transitions.dev
+# 60+ marketing skills (CRO, SEO, copywriting, growth...)
+coreyhaines31/marketingskills

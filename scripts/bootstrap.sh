@@ -29,7 +29,7 @@ os_detect() {
 is_wsl() { grep -qi microsoft /proc/version 2>/dev/null; }
 
 # Config packages that get symlinked into $HOME via stow.
-STOW_PACKAGES=(zsh git p10k nvim tmux shell lazygit)
+STOW_PACKAGES=(zsh git p10k nvim tmux shell lazygit claude)
 
 # Shared backup dir for this run; created lazily on first real file moved.
 BACKUP_DIR="${HOME}/.dotfiles-backup/$(date +%Y%m%d_%H%M%S)"
@@ -260,6 +260,9 @@ main() {
   fi
 
   install_node_globals
+
+  # Skills y MCP de Claude Code (necesita npx en PATH, ya cargado arriba).
+  "${SCRIPT_DIR}/install-claude-skills.sh" || true
 
   link_lazygit_macos
 

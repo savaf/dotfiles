@@ -23,6 +23,7 @@ repo entero.
 | git / ssh | `docs/git-and-ssh.md` |
 | lazygit | `docs/lazygit.md` |
 | VS Code | `docs/vscode.md` |
+| Claude Code (settings, agentes, skills) | `docs/claude-code.md` |
 | Node.js | `docs/nodejs.md` |
 | Setup de una plataforma concreta | `docs/{ubuntu-wsl,bazzite,omarchy,macos-setup}.md` |
 

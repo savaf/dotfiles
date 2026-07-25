@@ -20,3 +20,7 @@ openrgb
 # refrigeración + NZXT Kraken (bomba/ventiladores) y su pantalla LCD; daemon coolercontrold
 # lo habilita el bootstrap. Deps opcionales liquidctl/lm_sensors en pacman-cli.txt
 coolercontrol
+# claude-code viene en el repo omarchy (o AUR en Arch puro); claude-desktop es el AUR
+# que reempaqueta la app oficial de Anthropic
+claude-code
+claude-desktop
