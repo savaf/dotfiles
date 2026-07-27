@@ -25,6 +25,16 @@
 
 [diff]
 	colorMoved = default
+	algorithm = histogram
+
+[rerere]
+	enabled = true
+
+[branch]
+	sort = -committerdate
+
+[column]
+	ui = auto
 
 [color]
 	ui = auto

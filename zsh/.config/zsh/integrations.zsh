@@ -34,11 +34,8 @@ if command -v zoxide >/dev/null 2>&1; then
 fi
 
 # ---- NVM (Node Version Manager) ----
+# La instalación la hace scripts/bootstrap.sh (ensure_node); aquí solo se carga.
 export NVM_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/nvm"
-if [[ ! -s "$NVM_DIR/nvm.sh" ]]; then
-  echo "nvm is not installed. Installing nvm..."
-  git clone --depth=1 https://github.com/nvm-sh/nvm.git "$NVM_DIR"
-fi
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                 # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 

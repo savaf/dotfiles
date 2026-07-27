@@ -12,7 +12,7 @@ The single source of truth is [`vscode/settings.json`](../vscode/settings.json).
 
 The [bootstrap](../README.md#quick-start-recommended) runs this automatically.
 
-Highlights: Monaspace Nerd Font, Ayu Dark theme, `vscode-great-icons`, format on
+Highlights: Monaspace Nerd Font, Ocean Green Dark theme, `vscode-great-icons`, format on
 save with Prettier + ESLint, bracket-pair colorization, and a spell checker.
 
 ## Extensions

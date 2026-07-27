@@ -150,9 +150,12 @@ link_lazygit_macos() {
 # Sourcear nvm.sh en este proceso deja node/npm en el PATH para los pasos
 # siguientes (sync de LazyVim → Mason, install_node_globals).
 ensure_node() {
-  export NVM_DIR="${HOME}/.nvm"
+  # Misma ruta que usa la shell (zsh/.config/zsh/integrations.zsh); el installer
+  # oficial respeta NVM_DIR si está exportado.
+  export NVM_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/nvm"
   if [[ ! -s "${NVM_DIR}/nvm.sh" ]]; then
     log "Instalando nvm…"
+    mkdir -p "${NVM_DIR}"
     curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash || true
   fi
   # shellcheck disable=SC1091

@@ -3,14 +3,16 @@
 I use [nvm](https://github.com/nvm-sh/nvm) to manage Node.js versions, so I can
 switch versions per project.
 
-> The zsh config (`integrations.zsh`) auto-installs nvm on first launch if it is
-> missing, so on these dotfiles you usually don't need to install it by hand.
+> The [bootstrap](../README.md#quick-start-recommended) installs nvm into
+> `~/.config/nvm` (the zsh config loads it from there), so on these dotfiles you
+> usually don't need to install it by hand.
 
 Manual install (check the latest version on the
 [nvm releases](https://github.com/nvm-sh/nvm/releases)):
 
 ```sh
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+export NVM_DIR="$HOME/.config/nvm" && mkdir -p "$NVM_DIR"
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
 ```
 
 Install and use a Node version:

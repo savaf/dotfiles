@@ -71,7 +71,7 @@ alias commit='git commit -m'
 alias fetch='git fetch'
 alias pull='git pull origin'
 alias push='git push origin'
-alias stat='git status'  # 'status' is protected name so using 'stat' instead
+alias gst='git status'  # 'status' es palabra reservada de zsh y 'stat' taparía /usr/bin/stat
 alias tag='git tag'
 alias newtag='git tag -a'
 alias gclean='git branch | grep -v "main" | xargs git branch -D'
@@ -103,4 +103,4 @@ alias ping='ping -c 5'
 alias wget='wget -c'
 
 # tree
-alias ptree="tree -L 2 -I 'node_modules|.git|dist'"
+alias ptree="eza --tree -L 2 -I 'node_modules|.git|dist'"

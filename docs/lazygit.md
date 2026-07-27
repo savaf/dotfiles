@@ -11,7 +11,7 @@ tener que memorizar flags.
 - **Branches, stash, cherry-pick y resolución de conflictos** de forma visual.
 - **Push / pull / fetch** y navegación del log/gráfico de commits.
 - **Undo / redo** de acciones de git (`z` / `Z`): experimenta sin miedo.
-- Complementa (no reemplaza) tus aliases: `git lg`, `glog`, `stat`, etc.
+- Complementa (no reemplaza) tus aliases: `git lg`, `glog`, `gst`, etc.
 
 ## Instalación
 

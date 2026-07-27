@@ -21,7 +21,10 @@ install_skills() {
     [[ "${repo}" =~ ^[[:space:]]*(#|$) ]] && continue
     log "Installing skill(s) from ${repo}…"
     # -g: user-level; -a: only Claude Code; -s '*': all skills in the repo; -y: no prompts
-    npx -y skills add "${repo}" -g -a claude-code -s '*' -y || log "Failed: ${repo} (continuing)."
+    # stdin a /dev/null: si no, la CLI consume el stdin del bucle y solo se
+    # procesa la primera línea del manifiesto.
+    npx -y skills add "${repo}" -g -a claude-code -s '*' -y </dev/null \
+      || log "Failed: ${repo} (continuing)."
   done < "${SKILLS_LIST}"
 }
 
