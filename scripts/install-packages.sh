@@ -219,27 +219,54 @@ ensure_neovim() {
 # usuario (no requiere sudo). Misma fuente que el cask de macOS (Monaspace).
 # En WSL la fuente real es la del terminal de Windows; esto solo
 # aplica a Linux de escritorio. Inofensivo si se ejecuta en WSL.
+#
+# Solo descarga si la fuente falta o si NF_VERSION (el pin de abajo) cambió
+# respecto a lo instalado: la versión instalada se guarda en un marcador junto
+# a las fuentes. Acepta el nombre de la fuente como argumento (default
+# Monaspace) para poder añadir más Nerd Fonts con una línea.
 ensure_nerd_font() {
-  if fc-list 2>/dev/null | grep -qi 'Monaspace.*Nerd'; then
-    log "Nerd Font (Monaspace) ya instalada; se omite."
-    return 0
-  fi
+  local font="${1:-Monaspace}" NF_VERSION="v3.4.0"
+  local font_dir="${HOME}/.local/share/fonts"
+  local version_file="${font_dir}/.nerd-font-${font}.version" installed=""
+
   if ! exists fc-cache; then
     log "fontconfig no disponible; se omite la Nerd Font."
     return 0
   fi
 
-  local NF_VERSION="v3.4.0" font_dir="${HOME}/.local/share/fonts" tmp
+  [[ -f "${version_file}" ]] && installed="$(<"${version_file}")"
+  if fc-list 2>/dev/null | grep -qi "${font}.*Nerd\|Monaspice.*Nerd"; then
+    if [[ "${installed}" == "${NF_VERSION}" ]]; then
+      log "Nerd Font ${font} ${NF_VERSION} ya instalada; se omite."
+      return 0
+    fi
+    if [[ -z "${installed}" ]]; then
+      # Instalada por una versión anterior del script (sin marcador): adoptar
+      # el pin actual como línea base en vez de re-descargar.
+      mkdir -p "${font_dir}"
+      echo "${NF_VERSION}" > "${version_file}"
+      log "Nerd Font ${font} ya instalada; registrada como ${NF_VERSION}."
+      return 0
+    fi
+    log "Nerd Font ${font} ${installed} → ${NF_VERSION}: actualizando…"
+  fi
+
+  local install_dir="${font_dir}/nerd-fonts/${font}" tmp
   tmp="$(mktemp -d)"
-  log "Descargando Nerd Font Monaspace ${NF_VERSION}…"
-  if curl -fsSL -o "${tmp}/Monaspace.tar.xz" \
-      "https://github.com/ryanoasis/nerd-fonts/releases/download/${NF_VERSION}/Monaspace.tar.xz"; then
-    mkdir -p "${font_dir}"
-    tar -xJf "${tmp}/Monaspace.tar.xz" -C "${font_dir}"
+  log "Descargando Nerd Font ${font} ${NF_VERSION}…"
+  if curl -fsSL -o "${tmp}/${font}.tar.xz" \
+      "https://github.com/ryanoasis/nerd-fonts/releases/download/${NF_VERSION}/${font}.tar.xz"; then
+    rm -rf "${install_dir}"
+    mkdir -p "${install_dir}"
+    tar -xJf "${tmp}/${font}.tar.xz" -C "${install_dir}"
+    # Migración: el script viejo extraía Monaspace plano en font_dir
+    # (archivos MonaspiceXxNerdFont-*); borrarlos para no duplicar familias.
+    [[ "${font}" == "Monaspace" ]] && rm -f "${font_dir}"/Monaspice*NerdFont*
+    echo "${NF_VERSION}" > "${version_file}"
     fc-cache -f "${font_dir}" >/dev/null 2>&1 || fc-cache -f >/dev/null 2>&1 || true
-    log "Nerd Font Monaspace instalada en ${font_dir}"
+    log "Nerd Font ${font} ${NF_VERSION} instalada en ${install_dir}"
   else
-    log "Fallo al descargar la Nerd Font; se omite."
+    log "Fallo al descargar la Nerd Font ${font}; se omite."
   fi
   rm -rf "${tmp}"
 }
