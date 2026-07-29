@@ -134,6 +134,25 @@ indicador operan sobre el teclado virtual de fcitx5; solo intercepta apps Qt.
   (Teams, Outlook, Discord, WhatsApp, Slack, Telegram) from
   `packages/omarchy-webapps.txt` via
   `omarchy-webapp-install`. Add lines there instead of installing by hand.
+- Webapp manifest format is `Name|URL|IconURL[|CustomExec]`. The 4th field is
+  optional and replaces the generated `Exec=`; `omarchy-launch-webapp` forwards
+  everything after the URL straight to the browser, so it's how you pass
+  Chromium flags. `$HOME` in that field is expanded by
+  `scripts/install-packages.sh` — the desktop-entry spec does **not** expand
+  `$HOME` or `~`, so a literal one would break the launcher.
+- **Isolating several accounts of the same service.** Every webapp runs on the
+  browser's `Default` profile, so one entry can't hold two sessions of the same
+  provider — signing into a second tenant evicts the first. Give each account its
+  own entry with a separate `--user-data-dir`. Teams does this for three
+  Microsoft tenants (`teams-unapec`, `teams-cnc`, `teams-urbn`); profiles live in
+  `~/.local/share/omarchy-webapps/<name>/`, outside the browser's own config, so
+  normal browsing is untouched and a profile is disposable with `rm -rf`. Pair it
+  with `--no-first-run --no-default-browser-check` (skips Brave's welcome screen
+  on a fresh profile) and `--class=<name>` (distinct `app_id` for Hyprland
+  rules). Caveat: `omarchy-webapp-install` only takes `MimeType` as a 5th
+  argument, so `StartupWMClass` can't be set in the generated `.desktop` —
+  `--class` still applies to the window, but the compositor's
+  launcher-to-window association isn't wired up.
 - One-off extra packages: `omarchy pkg add <name>` (or plain `pacman`/`yay`).
 - Xbox controller: pair over Bluetooth (Super+Ctrl+B) — works with the
   in-kernel driver; run `omarchy-install-gaming-xbox-controllers` (xpadneo)

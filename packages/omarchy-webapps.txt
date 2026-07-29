@@ -1,5 +1,17 @@
-# Webapps de Omarchy: Nombre|URL|URL del icono PNG
-Microsoft Teams|https://teams.microsoft.com|https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/microsoft-teams.png
+# Webapps de Omarchy: Nombre|URL|URL del icono PNG[|Exec personalizado]
+#
+# El 4º campo es opcional y reemplaza el Exec= del .desktop generado. Se usa para
+# pasar flags al navegador: omarchy-launch-webapp reenvía todo lo que va después
+# de la URL. $HOME se expande en scripts/install-packages.sh (los .desktop no lo
+# hacen). Sin 4º campo, el Exec por defecto es `omarchy-launch-webapp <url>`.
+#
+# Teams: una entrada por tenant. Todas las webapps comparten el perfil Default
+# del navegador, así que una sola entrada no puede sostener 3 sesiones de
+# Microsoft a la vez (iniciar en un tenant desaloja al anterior). --user-data-dir
+# le da a cada cuenta su propio perfil aislado.
+Teams UNAPEC|https://teams.microsoft.com|https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/microsoft-teams.png|omarchy-launch-webapp https://teams.microsoft.com --user-data-dir=$HOME/.local/share/omarchy-webapps/teams-unapec --no-first-run --no-default-browser-check --class=teams-unapec
+Teams CNC|https://teams.microsoft.com|https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/microsoft-teams.png|omarchy-launch-webapp https://teams.microsoft.com --user-data-dir=$HOME/.local/share/omarchy-webapps/teams-cnc --no-first-run --no-default-browser-check --class=teams-cnc
+Teams URBN|https://teams.microsoft.com|https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/microsoft-teams.png|omarchy-launch-webapp https://teams.microsoft.com --user-data-dir=$HOME/.local/share/omarchy-webapps/teams-urbn --no-first-run --no-default-browser-check --class=teams-urbn
 Microsoft Outlook|https://outlook.office.com/mail/|https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/microsoft-outlook.png
 Discord|https://discord.com/app|https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/discord.png
 WhatsApp|https://web.whatsapp.com|https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/whatsapp.png

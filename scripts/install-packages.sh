@@ -374,17 +374,23 @@ ensure_omarchy_initramfs() {
 }
 
 # Webapps de Omarchy (equivalente a casks sin buen paquete Linux). Lista en
-# omarchy-webapps.txt con formato Nombre|URL|IconoURL, los 3 args no
-# interactivos de omarchy-webapp-install.
+# omarchy-webapps.txt con formato Nombre|URL|IconoURL[|ExecPersonalizado], los
+# 4 args no interactivos de omarchy-webapp-install. El 4º es opcional: si va
+# vacío, omarchy-webapp-install usa su Exec por defecto
+# (omarchy-launch-webapp <url>). Sirve para pasar flags al navegador, p.ej.
+# --user-data-dir para aislar sesiones (ver las 3 entradas de Teams).
 ensure_omarchy_webapps() {
   exists omarchy-webapp-install || return 0
-  while IFS='|' read -r name url icon; do
+  while IFS='|' read -r name url icon custom; do
     [[ -z "${name}" || "${name}" =~ ^[[:space:]]*# ]] && continue
+    # Los .desktop no expanden $HOME ni ~ (spec freedesktop), así que hay que
+    # resolverlo aquí. Sustitución de cadena, no eval: el manifiesto no es código.
+    custom="${custom//\$HOME/${HOME}}"
     if [[ -f "${HOME}/.local/share/applications/${name}.desktop" ]]; then
       log "Webapp '${name}' ya existe; se omite."
     else
       log "Creando webapp '${name}'..."
-      omarchy-webapp-install "${name}" "${url}" "${icon}" || log "Fallo creando webapp '${name}' (¿sin red?); continúa."
+      omarchy-webapp-install "${name}" "${url}" "${icon}" "${custom}" || log "Fallo creando webapp '${name}' (¿sin red?); continúa."
     fi
   done < "${OMARCHY_WEBAPPS}"
 }

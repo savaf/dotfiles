@@ -7,5 +7,8 @@ DietrichGebert/ponytail
 Leonxlnx/taste-skill
 # reusable CSS transitions catalog + agent skill
 Jakubantalik/transitions.dev
-# 60+ marketing skills (CRO, SEO, copywriting, growth...)
-coreyhaines31/marketingskills
+# coreyhaines31/marketingskills — DESACTIVADO. Aportaba 47 skills (~8.000 tokens de
+# descripciones) al prompt de CADA request, medido como ~4% del consumo total, y no se
+# usaban en trabajo de APIs/frontend. Los directorios están en ~/.claude/skills-disabled/;
+# para recuperarlos: descomenta la línea y corre scripts/install-claude-skills.sh, o
+# `mv ~/.claude/skills-disabled/<skill> ~/.claude/skills/` para uno solo.
