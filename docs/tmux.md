@@ -14,8 +14,14 @@ disconnects. The config lives in
 
 ## The prefix
 
-This config uses **`Ctrl-b`** as the prefix (the tmux default).
+This config uses **`Ctrl-a`** as the prefix (screen-style, remapped from the
+tmux default `Ctrl-b` for comfort — it sits next to the home row).
 You press the prefix, release, then press the command key.
+
+Inside tmux, `Ctrl-a` no longer reaches the shell (readline's "go to start of
+line"), since tmux intercepts it as the prefix. Press `prefix` then `Ctrl-a`
+again (i.e. `Ctrl-a Ctrl-a`) to send the literal `Ctrl-a` through when you
+need it.
 
 ```sh
 tmux              # start a session
@@ -26,7 +32,7 @@ tmux attach -t work
 
 ## Keybindings (this config)
 
-> Notation: `prefix` = `Ctrl-b`. `prefix |` means press `Ctrl-b`, release, then `|`.
+> Notation: `prefix` = `Ctrl-a`. `prefix |` means press `Ctrl-a`, release, then `|`.
 
 | Keys | Action |
 |------|--------|
