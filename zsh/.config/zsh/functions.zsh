@@ -69,14 +69,14 @@ function backup() {
   cp "$1" "$1.backup.$(date +%Y%m%d_%H%M%S)"
 }
 
-# Coding cockpit: neovim + claude + terminal en tmux
+# Coding cockpit: neovim + claude en tmux
 #
-# Layout: nvim alto completo a la izquierda; claude + terminal en columna derecha
-#   +-------------------+----------+
-#   |                   |  claude  |
-#   |       nvim        +----------+
-#   |                   |   term   |
-#   +-------------------+----------+
+# Layout: dos paneles a alto completo
+#   +-----------------+------------+
+#   |                 |            |
+#   |      nvim       |   claude   |
+#   |      (60%)      |   (40%)    |
+#   +-----------------+------------+
 #
 # Arma el cockpit en la ventana destino. Captura pane-id en vez de .1/.2
 # para ser robusto en macOS y WSL.
@@ -84,8 +84,7 @@ function backup() {
 function _nic_cockpit() {
   local win="$1" dir="$2" p_nvim p_claude
   p_nvim=$(tmux display-message -p -t "$win" '#{pane_id}')
-  p_claude=$(tmux split-window -h -t "$win" -c "$dir" -l 35% -P -F '#{pane_id}')
-  tmux split-window -v -t "$p_claude" -c "$dir" -l 30%
+  p_claude=$(tmux split-window -h -t "$win" -c "$dir" -l 40% -P -F '#{pane_id}')
   tmux send-keys -t "$p_nvim" 'nvim' C-m
   tmux send-keys -t "$p_claude" 'claude' C-m
   tmux select-pane -t "$p_nvim"
