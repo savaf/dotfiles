@@ -104,3 +104,8 @@ alias wget='wget -c'
 
 # tree
 alias ptree="eza --tree -L 2 -I 'node_modules|.git|dist'"
+
+# Claude Code: `claude` a secas = perfil personal (~/.claude); estos usan la
+# cuenta de trabajo en ~/.claude-work (ver claude-profile en functions.zsh).
+alias ccw='claude-profile work'
+alias claude-work='claude-profile work'

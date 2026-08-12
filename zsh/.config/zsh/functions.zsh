@@ -69,6 +69,18 @@ function backup() {
   cp "$1" "$1.backup.$(date +%Y%m%d_%H%M%S)"
 }
 
+# Claude Code con un config dir aislado: credenciales, sesiones, historial y MCP
+# propios por perfil. Sin perfil (`claude` a secas) se usa ~/.claude.
+#   uso: claude-profile <perfil> [args de claude...]
+function claude-profile() {
+  if (( $# == 0 )); then
+    echo "uso: claude-profile <perfil> [args de claude...]"
+    return 1
+  fi
+  local profile="$1"; shift
+  CLAUDE_CONFIG_DIR="$HOME/.claude-$profile" command claude "$@"
+}
+
 # Coding cockpit: neovim + claude en tmux
 #
 # Layout: dos paneles a alto completo
@@ -80,20 +92,35 @@ function backup() {
 #
 # Arma el cockpit en la ventana destino. Captura pane-id en vez de .1/.2
 # para ser robusto en macOS y WSL.
-#   $1 = target tmux (session:window)   $2 = working dir
+#   $1 = target tmux (session:window)   $2 = working dir   $3 = perfil (opcional)
 function _nic_cockpit() {
-  local win="$1" dir="$2" p_nvim p_claude
+  local win="$1" dir="$2" profile="${3:-}" cmd p_nvim p_claude
+  cmd='claude'
+  [[ -n "$profile" ]] && cmd="claude-profile $profile"
   p_nvim=$(tmux display-message -p -t "$win" '#{pane_id}')
   p_claude=$(tmux split-window -h -t "$win" -c "$dir" -l 40% -P -F '#{pane_id}')
   tmux send-keys -t "$p_nvim" 'nvim' C-m
-  tmux send-keys -t "$p_claude" 'claude' C-m
+  tmux send-keys -t "$p_claude" "$cmd" C-m
   tmux select-pane -t "$p_nvim"
 }
 
-# usage: nic [name]   (default: basename del directorio actual)
+# usage: nic [-p perfil] [name]   (default: basename del directorio actual)
 #   - fuera de tmux: crea/attachea una sesión con el cockpit
 #   - dentro de tmux: arma el cockpit en la ventana actual (un proyecto por ventana)
+#   - -p <perfil>: el pane de claude usa ese config dir (ver claude-profile)
 function nic() {
+  local profile=""
+  while [[ "${1:-}" == -* ]]; do
+    case "$1" in
+      -p) profile="${2:-}"; shift 2 ;;
+      *)  echo "nic: opción desconocida '$1' (uso: nic [-p perfil] [nombre])"; return 1 ;;
+    esac
+  done
+  if [[ -n "$profile" && ! -d "$HOME/.claude-$profile" ]]; then
+    echo "nic: perfil '$profile' sin config dir (~/.claude-$profile); corre el bootstrap."
+    return 1
+  fi
+
   local name="${1:-$(basename "$PWD")}"
   name="${name//[.:]/_}"        # tmux no permite '.' ni ':' en nombres de sesión
 
@@ -106,7 +133,7 @@ function nic() {
     fi
     local win; win=$(tmux display-message -p '#{session_name}:#{window_index}')
     tmux rename-window "$name"
-    _nic_cockpit "$win" "$PWD"
+    _nic_cockpit "$win" "$PWD" "$profile"
     return
   fi
 
@@ -118,6 +145,6 @@ function nic() {
 
   # Fuera de tmux: sesión nueva con cockpit
   tmux new-session -d -s "$name" -c "$PWD" -x "$(tput cols)" -y "$(tput lines)"
-  _nic_cockpit "$name:1" "$PWD"
+  _nic_cockpit "$name:1" "$PWD" "$profile"
   tmux attach-session -t "$name"
 }

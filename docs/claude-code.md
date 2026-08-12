@@ -1,9 +1,45 @@
 # Claude Code
 
-Versioned pieces (stow package `claude/`, linked into `~/.claude/`):
+## Profiles (multiple accounts)
+
+Claude Code has no native profile switch: `CLAUDE_CONFIG_DIR` (default `~/.claude`) relocates
+*all* of its state, and the credential store is namespaced per config dir, so two accounts can
+run side by side without touching each other.
+
+| Profile | Config dir | How to launch |
+|---|---|---|
+| personal (default) | `~/.claude` | `claude` |
+| work (URBN) | `~/.claude-work` | `ccw`, `claude-profile work`, `nic -p work` |
+
+`claude-profile <name>` (in `zsh/.config/zsh/functions.zsh`) just runs `claude` with
+`CLAUDE_CONFIG_DIR=~/.claude-<name>`. `ccw` / `claude-work` are aliases for the work profile;
+plain `claude` stays on the default dir.
+
+**Per profile** (never shared): `.credentials.json`, `.claude.json` (MCP servers, per-project
+trust, history), `sessions/`, `projects/` (transcripts + auto-memory), `plans/`, `plugins/`.
+
+**Shared** across profiles: `settings.json`, `CLAUDE.md`, `agents/` — symlinked from this repo —
+plus `skills/`. Stow only links into `~/.claude`; `link_claude_profiles()` in
+`scripts/bootstrap.sh` replicates the same symlinks into every extra profile listed in
+`CLAUDE_PROFILES`. The real skills live in `~/.claude/skills` (that's where `npx skills add -g`
+writes them); extra profiles get a symlink to it.
+
+MCP servers can't be symlinked — they live inside each profile's `.claude.json` — so
+`scripts/install-claude-skills.sh` registers `context7` once per profile.
+
+To add a profile: append it to `CLAUDE_PROFILES` in both `scripts/bootstrap.sh` and
+`scripts/install-claude-skills.sh`, re-run the bootstrap, add an alias in
+`zsh/.config/zsh/aliases.zsh`, then `claude-profile <name>` → `/login`.
+
+`/status` shows which account the current session is on — worth checking when several panes are
+open.
+
+## Versioned config
+
+Versioned pieces (stow package `claude/`, linked into `~/.claude/` and into each extra profile):
 
 - `claude/.claude/settings.json` — user settings (model, theme). Local/runtime state
-  (sessions, cache, plugins, `~/.claude.json`) is NOT versioned; stow links per file
+  (sessions, cache, plugins, the profile's `.claude.json`) is NOT versioned; stow links per file
   (`--no-folding`), so it stays untouched.
 - `claude/.claude/CLAUDE.md` — global memory loaded in every session. Keep it tiny:
   every line costs tokens in every conversation.
@@ -25,8 +61,8 @@ Versioned pieces (stow package `claude/`, linked into `~/.claude/`):
 `packages/claude-skills.txt` lists GitHub repos installed user-level
 (`~/.claude/skills/`) by `scripts/install-claude-skills.sh` (run by the bootstrap) via
 `npx skills add <repo> -g -a claude-code -s '*' -y`. The same script registers the
-`context7` MCP server (library docs) at user scope with `claude mcp add`; that lands in
-`~/.claude.json`, which is runtime state and can't be stowed.
+`context7` MCP server (library docs) at user scope with `claude mcp add`, once per profile; that
+lands in each profile's `.claude.json`, which is runtime state and can't be stowed.
 
 Security note: third-party skills are instructions injected into the agent — review a
 repo before adding it to the manifest.

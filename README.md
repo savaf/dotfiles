@@ -27,7 +27,7 @@ dotfiles/
 ├── tmux/           # .config/tmux/tmux.conf
 ├── lazygit/        # .config/lazygit/config.yml (terminal UI for git)
 ├── shell/          # .profile
-├── claude/         # .claude/ (Claude Code settings, agents, global CLAUDE.md)
+├── claude/         # .claude/ (Claude Code settings, agents, global CLAUDE.md; shared across profiles)
 ├── vscode/         # settings.json (symlinked per-OS by a script)
 ├── wsl/            # .wslconfig (copied to the Windows profile on WSL)
 ├── packages/       # package lists (brew/apt/dnf/node/vscode extensions)
