@@ -1,0 +1,13 @@
+#!/bin/bash
+# Replica el tema de omarchy en los perfiles extra de Claude Code (~/.claude-work, etc.).
+# El perfil por defecto (~/.claude) ya lo refresca omarchy-theme-set por su cuenta.
+#
+# Sin --activate a propósito: ese flag hace `mv` sobre settings.json y reemplazaría el
+# symlink de stow por un archivo real. La activación vive versionada en el repo, en
+# claude/.claude/settings.json ("theme": "custom:omarchy").
+command -v omarchy-theme-set-claude >/dev/null || exit 0
+
+for dir in "$HOME"/.claude-*; do
+  [[ -d $dir ]] || continue
+  CLAUDE_CONFIG_DIR="$dir" omarchy-theme-set-claude
+done

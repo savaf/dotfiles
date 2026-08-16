@@ -32,6 +32,13 @@ auto-install on first launch. The prompt is
 [Powerlevel10k](https://github.com/romkatv/powerlevel10k); regenerate it anytime
 with `p10k configure` (writes `~/.p10k.zsh`, tracked here as `p10k/.p10k.zsh`).
 
+**Prompt colors:** `p10k/.p10k.zsh` uses ANSI indices **0-15** on purpose, not the
+256-color indices that `p10k configure` emits. That way the prompt inherits whatever
+palette the terminal defines, so it follows the active theme by itself — on Omarchy a
+theme change retints it live (even in already-open shells, via OSC), and elsewhere it
+just follows your terminal's theme. If you re-run `p10k configure`, convert the
+`*_FOREGROUND` values back to 0-15.
+
 ## Applying the dotfiles
 
 These dotfiles are managed with [GNU Stow](https://www.gnu.org/software/stow/):

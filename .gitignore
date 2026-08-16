@@ -14,3 +14,6 @@
 
 # Claude Code (config local de sesión; anclado para no ignorar claude/.claude/)
 /.claude/
+
+# nvim: lock de plugins (estado por máquina; omarchy añade sus plugins de temas)
+nvim/.config/nvim/lazy-lock.json

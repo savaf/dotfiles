@@ -1,7 +1,9 @@
 #!/bin/bash
 # Aplica el color accent del tema actual de omarchy a todo el RGB
-theme=$(cat ~/.config/omarchy/current/theme.name)
-accent=$(grep -m1 '^accent' ~/.config/omarchy/current/theme/colors.toml | grep -oE '[0-9a-fA-F]{6}')
+# El estado del tema vive en ~/.local/state/omarchy/ (antes estaba en ~/.config/omarchy/).
+current=~/.local/state/omarchy/current
+theme=$(cat "$current/theme.name" 2>/dev/null)
+accent=$(grep -m1 '^accent' "$current/theme/colors.toml" 2>/dev/null | grep -oE '[0-9a-fA-F]{6}')
 
 # Overrides donde el accent del tema no luce bien en LEDs
 case $theme in

@@ -41,6 +41,16 @@ Versioned pieces (stow package `claude/`, linked into `~/.claude/` and into each
 - `claude/.claude/settings.json` — user settings (model, theme). Local/runtime state
   (sessions, cache, plugins, the profile's `.claude.json`) is NOT versioned; stow links per file
   (`--no-folding`), so it stays untouched.
+
+  `"theme": "custom:omarchy"` hace que Claude Code siga al tema de Omarchy: el archivo de
+  colores (`~/.claude/themes/omarchy.json`) lo regenera `omarchy-theme-set-claude` en cada
+  cambio de tema, y Claude Code lo recarga en caliente. En Ubuntu/WSL y macOS ese archivo no
+  existe y Claude Code cae a su tema por defecto — es el precio de compartir un único
+  `settings.json`.
+
+  > **No ejecutes `omarchy-theme-set-claude --activate`.** Ese flag escribe el `theme` con un
+  > `mv` sobre `settings.json`, lo que reemplazaría el symlink de stow por un archivo real y
+  > desconectaría el perfil del repo. La activación ya está versionada aquí.
 - `claude/.claude/CLAUDE.md` — global memory loaded in every session. Keep it tiny:
   every line costs tokens in every conversation.
 - `claude/.claude/agents/*.md` — model routing per subagent type. User-level agents

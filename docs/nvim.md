@@ -7,11 +7,13 @@ and works on macOS and Ubuntu/WSL.
 Launch with `nvim` (or the aliases `vim` / `vi` / `v` from the zsh config). On the
 first launch `lazy.nvim` bootstraps itself, installs all plugins and compiles the
 treesitter parsers. The `bootstrap.sh` script also does this headlessly with
-`nvim --headless "+Lazy! install" "+Lazy! restore" +qa`: `install` clones the
-plugins and `restore` pins them to the exact commits in `lazy-lock.json`, so every
-machine ends up on the **same** plugin versions (reproducible). It deliberately
-avoids `Lazy sync`, which would update plugins to latest and rewrite the lock,
-causing drift between machines.
+`nvim --headless "+Lazy! install" "+Lazy! restore" +qa`.
+
+`lazy-lock.json` is **not** version-controlled (it's in `.gitignore`): on Omarchy the
+desktop theme injects its own plugin specs into `~/.config/nvim/lua/plugins/`, so the
+lock differs per machine by design and committing it produced churn on every Omarchy
+update. Each machine keeps its own lock; plugin versions come from the specs, not from
+a shared lock.
 
 ## Layout
 
@@ -24,7 +26,7 @@ nvim/.config/nvim/
 ├── lua/config/autocmds.lua  # your autocmd overrides
 ├── lua/plugins/             # your plugin specs / overrides
 ├── lazyvim.json             # enabled LazyVim extras
-├── lazy-lock.json           # pinned plugin versions (committed, reproducible)
+├── lazy-lock.json           # pinned plugin versions (per-machine, gitignored)
 ├── stylua.toml / .neoconf.json
 ```
 
@@ -81,10 +83,17 @@ LSP servers/formatters install on demand via **Mason** (`:Mason`).
 | `:Mason` | Manage LSP servers, linters, formatters |
 | `:checkhealth lazy` / `:checkhealth lazyvim` | Verify requirements are met |
 
-To keep plugin versions reproducible across machines: update deliberately on one
-machine with `:Lazy update`, commit the regenerated `lazy-lock.json`, then on the
-other machines `git pull` and run `:Lazy restore` (or re-run `bootstrap.sh`) to
-pin them to that lock.
+Update plugins with `:Lazy update` on each machine. The regenerated `lazy-lock.json`
+stays local (gitignored), so there's nothing to commit and nothing to restore from a
+shared lock — `:Lazy restore` only re-pins to *this* machine's lock.
+
+## Colorscheme
+
+On Omarchy the colorscheme comes from the desktop theme: `~/.config/nvim/lua/plugins/`
+holds a few unversioned files installed by Omarchy, among them `theme.lua` (a symlink to
+the generated `…/current/theme/neovim.lua`, i.e. `aether.nvim`) and a hot-reload plugin
+that re-applies it without restarting Neovim. They coexist with the stowed specs, which
+link file by file. Elsewhere, LazyVim's default colorscheme applies.
 
 ## Tips
 

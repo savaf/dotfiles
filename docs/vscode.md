@@ -12,8 +12,21 @@ The single source of truth is [`vscode/settings.json`](../vscode/settings.json).
 
 The [bootstrap](../README.md#quick-start-recommended) runs this automatically.
 
-Highlights: Monaspace Nerd Font, Ocean Green Dark theme, `vscode-great-icons`, format on
-save with Prettier + ESLint, bracket-pair colorization, and a spell checker.
+Highlights: Monaspace Nerd Font, `vscode-great-icons`, format on save with Prettier +
+ESLint, bracket-pair colorization, and a spell checker.
+
+### `workbench.colorTheme` lo gestiona Omarchy
+
+En Arch/Omarchy, `omarchy-theme-set-vscode` reescribe esa clave en cada cambio de tema
+usando `sed -i --follow-symlinks`, así que **escribe a través del symlink, dentro de este
+repo**. Es el comportamiento deseado (VS Code sigue al tema del escritorio), con dos
+consecuencias que conviene tener presentes:
+
+- Los commits "omarchy update" que solo tocan esa línea son **esperados**, no un accidente.
+- El nombre del tema viaja al resto de plataformas, donde esa extensión puede no estar
+  instalada; VS Code caerá entonces a su tema por defecto.
+
+Para desactivarlo en esta máquina: `omarchy-toggle skip-vscode-theme-changes on`.
 
 ## Extensions
 

@@ -168,6 +168,23 @@ indicador operan sobre el teclado virtual de fcitx5; solo intercepta apps Qt.
   `/etc/mkinitcpio.conf.d/nvidia.conf` after the last image rebuild). The
   bootstrap detects this and regenerates via `limine-mkinitcpio`; manual fix:
   `sudo limine-mkinitcpio`.
+- Temas: `omarchy-theme-set <slug>` interpola el `colors.toml` del tema sobre las
+  plantillas de `~/.local/share/omarchy/default/themed/*.tpl`, deja el resultado en
+  `~/.local/state/omarchy/current/theme/` (ojo: **antes vivía en `~/.config/omarchy/`**)
+  y luego retinta cada app. Cómo le llega a lo que está bajo stow:
+
+  | App | Mecanismo | Choca con stow? |
+  |---|---|---|
+  | Terminal | `alacritty.toml`/`ghostty.conf`/`kitty.conf` generados + `omarchy-theme-osc`, que reenvía secuencias OSC a los terminales ya abiertos | no |
+  | Prompt zsh | ninguno: omarchy no trae plantilla para shells. `p10k/.p10k.zsh` usa índices ANSI 0-15 para heredar la paleta del terminal (ver `docs/shell-and-dotfiles.md`) | no |
+  | Neovim | `~/.config/nvim/lua/plugins/theme.lua` → symlink al `neovim.lua` generado (aether.nvim), con hot-reload. Archivo local, no versionado | no |
+  | VS Code | `omarchy-theme-set-vscode` reescribe `workbench.colorTheme` con `sed --follow-symlinks` | **sí**: escribe dentro del repo (aceptado, ver `docs/vscode.md`) |
+  | Claude Code | `omarchy-theme-set-claude` genera `~/.claude/themes/omarchy.json`; la activación está versionada en el repo (ver `docs/claude-code.md`) | evitado |
+  | RGB | hook propio `theme-set.d/openrgb` | no |
+
+  Los hooks propios van en `~/.config/omarchy/hooks/theme-set.d/`; `omarchy-theme-set`
+  los ejecuta todos al final de cada cambio de tema (`omarchy-hook theme-set <slug>`).
+  El paquete stow `omarchy` aporta dos: `openrgb` y `claude`.
 - RGB (OpenRGB): el paquete stow `omarchy` instala un hook
   (`~/.config/omarchy/hooks/theme-set.d/openrgb`) que pone todo el RGB del PC
   (NZXT, Lian Li Strimer, RAM, GPU, placa, teclado Keychron) al color accent del
