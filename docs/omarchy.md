@@ -83,43 +83,68 @@ The bootstrap installs the *Monaspace Nerd Font* into `~/.local/share/fonts`.
 Select it in your terminal (Alacritty on Omarchy: `~/.config/alacritty/alacritty.toml`
 → `[font]` section).
 
-## 6. Caps Lock → Escape (Hyprland)
+## 6. Hyprland se configura en Lua, no en `.conf`
 
-There is no `gsettings` on Hyprland, so the bootstrap can't apply this
-automatically. Set it in `~/.config/hypr/input.conf`:
+Desde Omarchy *quattro*, Hyprland usa el config provider de Lua. Compruébalo con:
 
-```conf
-input {
-  kb_options = caps:escape
-}
+```bash
+hyprctl systeminfo | grep configProvider   # → configProvider: lua
 ```
 
-Then `hyprctl reload`. (Omarchy binds Caps as compose key by default; this
-replaces that.)
+`~/.config/hypr/hyprland.lua` carga los defaults de Omarchy y **después**
+`hypr/monitors.lua`, `hypr/input.lua`, `hypr/bindings.lua`, `hypr/looknfeel.lua`
+y `hypr/autostart.lua`, que es lo que versiona el paquete stow `omarchy`. Los
+`.conf` equivalentes ya **no se leen** (quedan en el disco pero son inertes).
+
+Referencia de la API: `/usr/share/hypr/stubs/hl.meta.lua` (tipos de `hl.config`,
+`hl.device`, `hl.monitor`, `hl.bind`…) y los defaults en
+`/usr/share/omarchy/default/hypr/` — leerlos es seguro, editarlos no.
+
+Ejemplo, Caps Lock → Escape en `~/.config/hypr/input.lua`:
+
+```lua
+hl.config({ input = { kb_options = "caps:escape" } })
+```
+
+Luego `hyprctl reload && hyprctl configerrors`. (Omarchy usa Caps como tecla
+compose por defecto; esto lo reemplaza.)
 
 ## 7. Keyboard layouts (LATAM / US, per-device)
 
 La laptop (songbird) tiene el teclado físico en **LATAM** pero se usa con un
 teclado USB EN-US (Keychron K3). El paquete stow `omarchy` versiona
-`~/.config/hypr/input.conf` para resolverlo **por dispositivo**, sin udev:
+`~/.config/hypr/input.lua` para resolverlo **por dispositivo**, sin udev:
 
-- Default global `kb_layout = us,latam` → el USB EN-US y las máquinas sin
-  teclado LATAM (p.ej. ANDREA, el desktop) arrancan en **US**.
-- Un bloque `device{}` para el teclado físico (`at-translated-set-2-keyboard`)
-  lo fuerza a `latam,us` → **LATAM**. En máquinas que no tengan ese teclado el
-  bloque se ignora, así el mismo archivo sirve para ambas PCs.
+- Default global `kb_layout = "us,latam"` → el USB EN-US, el teclado virtual de
+  fcitx5 y las máquinas sin teclado LATAM (p.ej. ANDREA, el desktop) arrancan en
+  **US**. Va hardcodeado a propósito: el default de Omarchy lo saca de
+  `XKBLAYOUT` en `/etc/vconsole.conf`, que el instalador deja en `latam` y varía
+  por instalación.
+- Un `hl.device{}` para el teclado físico (`at-translated-set-2-keyboard`) lo
+  fuerza a `latam,us` → **LATAM**. En máquinas que no tengan ese teclado la regla
+  no matchea, así el mismo archivo sirve para ambas PCs.
 
-Hyprland aplica el bloque `device{}` solo al conectar el teclado, así que el
-switch es automático. Extras:
+Hyprland aplica la regla de `device` al conectar el teclado, así que el switch es
+automático. Extras:
 
 - **Toggle manual**: `SUPER` + `ALT` + `K` → `hyprctl switchxkblayout current
-  next` (en `~/.config/hypr/bindings.conf`, también versionado).
-- **Indicador**: el módulo `hyprland/language` en `~/.config/waybar/config.jsonc`
-  muestra `US`/`LATAM` y es clicable para alternar.
+  next` (en `~/.config/hypr/bindings.lua`, también versionado). Ojo: esa combo es
+  "Tmux keybindings" por defecto en Omarchy, hay que `hl.unbind` primero.
+- **Indicador**: el widget `omarchy.keyboard-layout` en la barra
+  (`~/.config/omarchy/shell.json`, versionado) muestra `US`/`LATAM`.
 
 El nombre del `device` es el que reporta `hyprctl devices` (minúsculas, espacios
 → guiones). Con fcitx5 activo (método de entrada), el toggle `current` y el
 indicador operan sobre el teclado virtual de fcitx5; solo intercepta apps Qt.
+Ese teclado virtual se crea al arrancar fcitx5, así que tras un `hyprctl reload`
+hay que reiniciarlo (`systemctl --user restart omarchy-fcitx5.service`) para que
+tome el layout nuevo; en un arranque normal ya sale bien.
+
+Verificación:
+
+```bash
+hyprctl devices -j | jq -r '.keyboards[] | "\(.name)\t\(.layout)\t\(.active_keymap)"'
+```
 
 ## Notes
 
@@ -189,7 +214,7 @@ indicador operan sobre el teclado virtual de fcitx5; solo intercepta apps Qt.
   (`~/.config/omarchy/hooks/theme-set.d/openrgb`) que pone todo el RGB del PC
   (NZXT, Lian Li Strimer, RAM, GPU, placa, teclado Keychron) al color accent del
   tema activo, en cada cambio de tema y al arrancar (vía
-  `~/.config/hypr/autostart.conf`). El hook aplica dos pasadas (`--mode direct` y
+  `~/.config/hypr/autostart.lua`). El hook aplica dos pasadas (`--mode direct` y
   `--mode static`) porque los dispositivos no comparten un único modo de color
   fijo: el Lian Li Strimer y la RAM Corsair solo soportan `direct`, mientras que
   GPU y teclado solo soportan `static`. Overrides de color por tema se ajustan en
