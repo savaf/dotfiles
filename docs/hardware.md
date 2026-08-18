@@ -9,6 +9,7 @@ My machines, for reference.
 - **GPU:** ZOTAC Gaming GeForce RTX™ 3080 Trinity OC White Edition LHR 10GB
 - **RAM:** Corsair Dominator Platinum RGB 64 GB (4 × 16 GB) DDR5-5200
 - **Cooling:** NZXT Kraken Z73 RGB 52.44 CFM Liquid CPU Cooler
-- **Storage:** WD Black SN850 500 GB · WD Black SN850 1 TB · 2× Samsung 980 PRO 2 TB (M.2 NVMe Gen4)
+- **Storage:** WD Black SN850 500 GB (Windows) · WD Black SN850 1 TB (Arch, btrfs+LUKS) ·
+  2× Samsung 980 PRO 2 TB (M.2 NVMe Gen4) — `Games` y `LIBRARY`, ver [storage.md](storage.md)
 - **Mouse:** Logitech G305 LIGHTSPEED
 - **Keyboard:** Keychron K2
