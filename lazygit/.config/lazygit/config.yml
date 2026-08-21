@@ -17,8 +17,9 @@ gui:
 os:
   editPreset: "nvim" # open files / edit commits in Neovim
 git:
-  pagers:
+  diffRenderers:
     - colorArg: always
+      type: rawGit
   autoFetch: true
   parseEmoji: true
 confirmOnQuit: false
