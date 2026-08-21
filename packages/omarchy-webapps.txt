@@ -11,7 +11,7 @@
 # le da a cada cuenta su propio perfil aislado.
 Teams UNAPEC|https://teams.microsoft.com|https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/microsoft-teams.png|omarchy-launch-webapp https://teams.microsoft.com --user-data-dir=$HOME/.local/share/omarchy-webapps/teams-unapec --no-first-run --no-default-browser-check --class=teams-unapec
 Teams CNC|https://teams.microsoft.com|https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/microsoft-teams.png|omarchy-launch-webapp https://teams.microsoft.com --user-data-dir=$HOME/.local/share/omarchy-webapps/teams-cnc --no-first-run --no-default-browser-check --class=teams-cnc
-Teams URBN|https://teams.microsoft.com|https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/microsoft-teams.png|omarchy-launch-webapp https://teams.microsoft.com --user-data-dir=$HOME/.local/share/omarchy-webapps/teams-urbn --no-first-run --no-default-browser-check --class=teams-urbn
+Teams Work|https://teams.microsoft.com|https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/microsoft-teams.png|omarchy-launch-webapp https://teams.microsoft.com --user-data-dir=$HOME/.local/share/omarchy-webapps/teams-work --no-first-run --no-default-browser-check --class=teams-work
 Microsoft Outlook|https://outlook.office.com/mail/|https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/microsoft-outlook.png
 Discord|https://discord.com/app|https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/discord.png
 WhatsApp|https://web.whatsapp.com|https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/whatsapp.png

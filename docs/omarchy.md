@@ -169,7 +169,7 @@ hyprctl devices -j | jq -r '.keyboards[] | "\(.name)\t\(.layout)\t\(.active_keym
   browser's `Default` profile, so one entry can't hold two sessions of the same
   provider — signing into a second tenant evicts the first. Give each account its
   own entry with a separate `--user-data-dir`. Teams does this for three
-  Microsoft tenants (`teams-unapec`, `teams-cnc`, `teams-urbn`); profiles live in
+  Microsoft tenants (`teams-unapec`, `teams-cnc`, `teams-work`); profiles live in
   `~/.local/share/omarchy-webapps/<name>/`, outside the browser's own config, so
   normal browsing is untouched and a profile is disposable with `rm -rf`. Pair it
   with `--no-first-run --no-default-browser-check` (skips Brave's welcome screen
