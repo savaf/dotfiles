@@ -141,6 +141,27 @@ review format overrides it.
 Do NOT set `CLAUDE_CODE_SUBAGENT_MODEL` in `settings.json`: that env var takes precedence over
 per-agent `model:` frontmatter and would force a single model for every subagent.
 
+### Main-thread model
+
+The table above routes subagents. The main thread is the expensive one — it carries the whole
+conversation and re-sends it on every tool call — so it gets its own default.
+
+`settings.json` sets `"model": "sonnet"` as the floor. Opus is an opt-in escalation.
+
+| Work | Model | Why |
+|---|---|---|
+| Editing code, features, refactors | sonnet | The workhorse, same call as `general-purpose` |
+| Config, dotfiles, docs | sonnet | Editing JSON and shell is not Opus work |
+| Architecture and design | opus | Trade-offs before implementation pay for it |
+| Hard debugging, security | opus | Escalate per session, not by default |
+
+Escalate mid-session with `/model opus`; start there with `cco` (alias in `aliases.zsh`).
+`/model` beats `settings.json`, so the floor never blocks anything.
+
+The `statusLine` exists for this: without the active model on screen, sessions stay on whatever
+they opened with. Before it was added, 100% of sampled requests in `~/.claude/projects/` were
+Opus 5.
+
 ### Skills
 
 `claude/.claude/skills/`, versioned here rather than installed by `npx skills add`. Stow links
@@ -242,9 +263,10 @@ So the levers that matter, in order:
    subsequent tool call re-read ~292k tokens.
 2. **Short, single-goal sessions.** Cost grows with turns × context-per-turn, so it compounds.
 3. **Trim the fixed prompt overhead** (skills above, `/mcp` connectors).
-4. **Model per task** — Sonnet 5 ($3/$15, intro $2/$10 through 2026-08-31) vs Opus 5 ($5/$25) for
-   mechanical work. Note Opus's 1M context carries **no long-context premium**; `[1m]` costs
-   nothing extra by itself.
+4. **Model per task** — Sonnet 5 ($3/$15, intro $2/$10 through 2026-08-31) is 0.6× Opus 5
+   ($5/$25), 0.4× while the intro price lasts. `settings.json` makes `sonnet` the floor; see
+   "Main-thread model" for when to escalate. Opus's 1M context carries **no long-context
+   premium**; `[1m]` costs nothing extra by itself.
 
 `CLAUDE.md` is *not* on this list: at ~100 tokens it's 0.04% of consumption. Keep it short for
 signal-to-noise, not for savings.

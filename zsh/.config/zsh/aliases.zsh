@@ -109,3 +109,6 @@ alias ptree="eza --tree -L 2 -I 'node_modules|.git|dist'"
 # cuenta de trabajo en ~/.claude-work (ver claude-profile en functions.zsh).
 alias ccw='claude-profile work'
 alias claude-work='claude-profile work'
+# settings.json arranca en sonnet; `cco` sube a Opus ya desde el arranque, para
+# arquitectura o debugging difícil (ver docs/claude-code.md).
+alias cco='claude --model opus'
