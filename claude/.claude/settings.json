@@ -108,6 +108,4 @@
       }
     ]
   }
-  "theme": "custom:omarchy",
-  "skipDangerousModePermissionPrompt": true
 }
