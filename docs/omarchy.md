@@ -210,16 +210,35 @@ hyprctl devices -j | jq -r '.keyboards[] | "\(.name)\t\(.layout)\t\(.active_keym
   Los hooks propios van en `~/.config/omarchy/hooks/theme-set.d/`; `omarchy-theme-set`
   los ejecuta todos al final de cada cambio de tema (`omarchy-hook theme-set <slug>`).
   El paquete stow `omarchy` aporta dos: `openrgb` y `claude`.
-- RGB (OpenRGB): el paquete stow `omarchy` instala un hook
-  (`~/.config/omarchy/hooks/theme-set.d/openrgb`) que pone todo el RGB del PC
-  (NZXT, Lian Li Strimer, RAM, GPU, placa, teclado Keychron) al color accent del
-  tema activo, en cada cambio de tema y al arrancar (vía
-  `~/.config/hypr/autostart.lua`). El hook aplica dos pasadas (`--mode direct` y
-  `--mode static`) porque los dispositivos no comparten un único modo de color
-  fijo: el Lian Li Strimer y la RAM Corsair solo soportan `direct`, mientras que
-  GPU y teclado solo soportan `static`. Overrides de color por tema se ajustan en
-  el `case` del hook. El módulo `i2c-dev` (necesario para el RGB de RAM/placa por
-  SMBus) lo persiste el bootstrap en `/etc/modules-load.d/i2c-dev.conf`.
+- RGB: el paquete stow `omarchy` instala `~/.local/bin/rgb`, que apaga todo el RGB
+  del PC o lo devuelve al color accent del tema activo.
+  - `rgb toggle` (por defecto) alterna. Es lo que invoca la fila **Style → RGB** del
+    menú, declarada en `~/.config/omarchy/extensions/omarchy-menu.jsonc`.
+  - `rgb off` y `rgb on` fuerzan un estado; `rgb theme` reaplica el tema salvo que lo
+    hayas apagado a mano.
+  - El estado vive en `$XDG_RUNTIME_DIR/omarchy-rgb-off`, que se borra al cerrar
+    sesión: tras reiniciar se vuelve al color del tema.
+  - El teclado Keychron queda fuera del apagado a propósito. `rgb on` sí lo cubre.
+  - Las velocidades de ventilador no se tocan nunca; siguen siendo de CoolerControl.
+- El RGB está repartido entre dos herramientas según quién posea el dispositivo:
+
+  | Dispositivos | Herramienta | Detalle |
+  |---|---|---|
+  | RAM Corsair, GPU ZOTAC, Lian Li Strimer, placa MSI, teclado Keychron | `openrgb` | dos pasadas, `--mode direct` y `--mode static`: ningún modo de color fijo es común a todos |
+  | Hub `NZXT RGB & Fan Controller`, canales `led1` y `led2` | `liquidctl` | OpenRGB lo lista, pero `coolercontrold` posee el USB y sus escrituras no llegan |
+  | Conector RGB externo del Kraken Z53, canal `external` | `liquidctl` | de ahí cuelgan ventiladores que OpenRGB no ve en absoluto |
+  | Pantalla LCD del Kraken Z53 | `liquidctl` | `set lcd screen brightness` |
+
+  El canal agregado `sync` del hub no alcanza a `led2`: hay que recorrerlos uno a uno.
+  Los dispositivos de OpenRGB se seleccionan por nombre (`-d Dominator`), no por
+  índice, porque el índice cambia entre arranques; un nombre alcanza a todas sus
+  coincidencias.
+- El hook `theme-set.d/openrgb` es un wrapper de una línea sobre `rgb theme`, en
+  segundo plano para no bloquear el cambio de tema. `omarchy-theme-set` lo ejecuta en
+  cada cambio y `~/.config/hypr/autostart.lua` al arrancar. Los overrides de color por
+  tema están en el `case` de la función `accent()` de `rgb`. El módulo `i2c-dev`
+  (RGB de RAM/placa por SMBus) lo persiste el bootstrap en
+  `/etc/modules-load.d/i2c-dev.conf`.
 - Refrigeración y Kraken (CoolerControl): `coolercontrol` (en `arch-apps.txt`)
   controla el AIO NZXT Kraken —bomba, ventiladores y **pantalla LCD**— vía su
   daemon `coolercontrold`, que el bootstrap habilita (`systemctl enable --now`).
@@ -228,5 +247,6 @@ hyprctl devices -j | jq -r '.keyboards[] | "\(.name)\t\(.layout)\t\(.active_keym
   reloj) se configura desde la **GUI de CoolerControl**; esa config vive en el
   daemon (root, fuera de `$HOME`) y no se gestiona por stow. Para exponer todos
   los sensores del sistema, opcionalmente: `sudo sensors-detect --auto`.
-  OpenRGB no ve el Kraken, así que no hay conflicto entre ambas herramientas.
+  `coolercontrold` posee por USB tanto el Kraken como el hub NZXT: OpenRGB lista el
+  hub pero no puede escribirle, así que su iluminación va por `liquidctl`.
 - To re-apply config after pulling changes: `cd ~/dotfiles && stow -R zsh git p10k nvim tmux shell lazygit`.

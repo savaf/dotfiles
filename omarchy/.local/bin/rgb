@@ -1,0 +1,122 @@
+#!/bin/bash
+# Control del RGB de la máquina: apagarlo entero, o devolverlo al color del tema
+# de Omarchy.
+#
+# Uso: rgb [toggle|off|on|theme]
+#   toggle  alterna; es lo que invoca la entrada "Style > RGB" del menú (por defecto)
+#   off     apaga los LEDs
+#   on      vuelve al color del tema actual
+#   theme   como `on`, pero no hace nada si lo dejaste apagado a mano; lo invoca
+#           el hook theme-set.d/openrgb
+#
+# El hardware está repartido entre dos programas y hay que hablarle a cada uno:
+#   - OpenRGB: RAM, GPU, Strimer, teclado y los headers ARGB de la placa MSI.
+#   - liquidctl: el hub "NZXT RGB & Fan Controller", el conector RGB externo del
+#     Kraken Z53 y su pantalla LCD. coolercontrold es dueño de esos dos aparatos
+#     por USB, así que OpenRGB lista el hub pero sus escrituras no llegan; por eso
+#     los ventiladores se quedaban blancos.
+#
+# Las velocidades de los ventiladores NO se tocan: siguen siendo cosa exclusiva
+# de CoolerControl.
+
+set -uo pipefail
+
+# El marcador vive en $XDG_RUNTIME_DIR (/run/user/1000), que se borra al cerrar
+# sesión. Eso *es* la persistencia "solo de sesión": tras reiniciar se vuelve solo
+# al color del tema, sin código extra.
+STATE="${XDG_RUNTIME_DIR:-/tmp}/omarchy-rgb-off"
+
+# liquidctl no sabe leer el brillo actual del LCD, así que no hay valor previo que
+# guardar: al encender se vuelve a este.
+LCD_BRIGHTNESS=50
+
+# Color accent del tema activo, con los retoques donde no luce bien en LEDs.
+accent() {
+  # El estado del tema vive en ~/.local/state/omarchy/ (antes en ~/.config/omarchy/).
+  local current="$HOME/.local/state/omarchy/current" theme value
+  theme=$(cat "$current/theme.name" 2>/dev/null)
+  value=$(grep -m1 '^accent' "$current/theme/colors.toml" 2>/dev/null | grep -oE '[0-9a-fA-F]{6}')
+
+  case $theme in
+    gruvbox)    value=d79921 ;; # naranja cálido, la firma de gruvbox
+    rose-pine)  value=ebbcba ;; # rosa, la firma de rose pine
+    vantablack) value=000000 ;; # negro absoluto = LEDs apagados
+    white)      value=ffffff ;; # blanco real, no gris
+  esac
+  echo "$value"
+}
+
+# Cada invocación de openrgb re-detecta todo el hardware y eso cuesta segundos,
+# así que siempre una sola llamada por operación.
+# --noautoconnect: no hay servidor SDK corriendo (openrgb.service está deshabilitado)
+# y el intento de conexión solo añade latencia.
+
+# Color a todos los dispositivos, teclado incluido.
+openrgb_all() {
+  # Dos pasadas porque no hay un modo de "color fijo" común: los aparatos soportan
+  # *o* Direct *o* Static, nunca ambos. Cada pasada ignora a quien no lo soporte;
+  # juntas cubren todo.
+  openrgb --noautoconnect -m direct -c "$1" >/dev/null 2>&1
+  openrgb --noautoconnect -m static -c "$1" >/dev/null 2>&1
+}
+
+# Apagado selectivo: el teclado Keychron se queda fuera a propósito, sin
+# retroiluminación no se ve en la oscuridad. Por eso aquí hay que nombrar los
+# dispositivos en vez de ir a saco como en openrgb_all.
+# Se eligen por nombre y no por índice, que baila entre arranques; un nombre
+# alcanza a todas sus coincidencias, así que "Dominator" cubre los 4 módulos.
+openrgb_off() {
+  openrgb --noautoconnect \
+    -d Dominator  -m direct -c 000000 \
+    -d ZOTAC      -m static -c 000000 \
+    -d Strimer    -m direct -c 000000 \
+    -d "MPG Z690" -m static -c 000000 >/dev/null 2>&1
+}
+
+# El hub tiene dos canales de iluminación (led1 y led2). Se recorren uno a uno
+# porque el canal agregado `sync` no siempre los alcanza a los dos y quedaban
+# ventiladores encendidos.
+nzxt() {
+  local ch
+  for ch in led1 led2; do
+    liquidctl --match "RGB & Fan" set "$ch" color "$@" >/dev/null 2>&1
+  done
+  # El Kraken tiene su propio conector RGB ("external"), y de ahí cuelgan más
+  # ventiladores. No lo ve OpenRGB ni forma parte del hub: sin esta línea se
+  # quedaban encendidos.
+  liquidctl --match kraken set external color "$@" >/dev/null 2>&1
+}
+lcd()  { liquidctl --match kraken set lcd screen brightness "$1" >/dev/null 2>&1; }
+
+light_up() {
+  local color
+  color=$(accent)
+  [[ -n $color ]] || return 0
+  openrgb_all "$color"
+  nzxt fixed "$color"
+  lcd "$LCD_BRIGHTNESS"
+}
+
+case "${1:-toggle}" in
+  off)
+    : >"$STATE"
+    openrgb_off
+    nzxt off
+    lcd 0
+    ;;
+  on)
+    rm -f "$STATE"
+    light_up
+    ;;
+  theme)
+    [[ -e $STATE ]] && exit 0
+    light_up
+    ;;
+  toggle)
+    if [[ -e $STATE ]]; then exec "$0" on; else exec "$0" off; fi
+    ;;
+  *)
+    echo "Uso: ${0##*/} [toggle|off|on|theme]" >&2
+    exit 1
+    ;;
+esac

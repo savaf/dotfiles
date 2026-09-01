@@ -1,0 +1,13 @@
+{
+  // Apaga/enciende todo el RGB de un tirón. Va bajo "Style" porque es donde
+  // Omarchy pone los toggles de apariencia (cf. style.bar.transparency).
+  // El ✓ aparece cuando está apagado.
+  "style.rgb": {
+    "icon": "󰌵",
+    "label": "RGB",
+    "aliases": ["rgb", "lights", "luces"],
+    "description": "Apagar los LEDs o devolverlos al color del tema",
+    "action": "$HOME/.local/bin/rgb toggle",
+    "checked": "test -e \"${XDG_RUNTIME_DIR:-/tmp}/omarchy-rgb-off\""
+  }
+}

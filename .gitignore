@@ -11,6 +11,9 @@
 .env
 .env.*
 *.local
+# ...pero `*.local` también captura el directorio `.local` de los paquetes stow,
+# que sí es contenido versionado (p.ej. omarchy/.local/bin/rgb).
+!*/.local/
 
 # Claude Code (config local de sesión; anclado para no ignorar claude/.claude/)
 /.claude/

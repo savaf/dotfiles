@@ -1,21 +1,6 @@
 #!/bin/bash
-# Aplica el color accent del tema actual de omarchy a todo el RGB
-# El estado del tema vive en ~/.local/state/omarchy/ (antes estaba en ~/.config/omarchy/).
-current=~/.local/state/omarchy/current
-theme=$(cat "$current/theme.name" 2>/dev/null)
-accent=$(grep -m1 '^accent' "$current/theme/colors.toml" 2>/dev/null | grep -oE '[0-9a-fA-F]{6}')
-
-# Overrides donde el accent del tema no luce bien en LEDs
-case $theme in
-  gruvbox)    accent=d79921 ;; # naranja cálido, la firma de gruvbox
-  rose-pine)  accent=ebbcba ;; # rosa, la firma de rose pine
-  vantablack) accent=000000 ;; # negro absoluto = LEDs apagados
-  white)      accent=ffffff ;; # blanco real, no gris
-esac
-
-# Dos pasadas porque los dispositivos no comparten un único modo de "color fijo":
-#   - direct: Lian Li Strimer y RAM Corsair (solo tienen Direct, no Static)
-#   - static: GPU y teclado (solo tienen Static, no Direct)
-# Cada pasada ignora los dispositivos que no soportan ese modo; juntas cubren todo.
-[[ -n $accent ]] && { openrgb --mode direct --color "$accent"
-                      openrgb --mode static --color "$accent"; } >/dev/null 2>&1 &
+# Devuelve el RGB al color del tema recién aplicado.
+# La lógica vive en ~/.local/bin/rgb; esto es solo el enganche de Omarchy.
+# En segundo plano porque openrgb re-detecta todo el hardware y tarda varios
+# segundos: no queremos que el cambio de tema se quede colgado esperándolo.
+"$HOME/.local/bin/rgb" theme >/dev/null 2>&1 &
