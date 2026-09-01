@@ -25,6 +25,7 @@ repo entero.
 | VS Code | `docs/vscode.md` |
 | Claude Code (settings, agentes, skills, hooks) | `docs/claude-code.md` |
 | Node.js | `docs/nodejs.md` |
+| Discos `Games` / `LIBRARY`, fstab o montajes | `docs/storage.md` |
 | Setup de una plataforma concreta | `docs/{ubuntu-wsl,bazzite,omarchy,macos-setup}.md` |
 
 ## Dónde editar

@@ -123,3 +123,4 @@ Step-by-step guides for a fresh machine live in [`docs/`](docs):
 | [tmux.md](docs/tmux.md) | tmux prefix, panes/windows and copy mode |
 | [lazygit.md](docs/lazygit.md) | lazygit keybindings and workflows |
 | [hardware.md](docs/hardware.md) | My machines, for reference |
+| [storage.md](docs/storage.md) | `Games` / `LIBRARY` disks: fstab, mountpoints, Kavita |

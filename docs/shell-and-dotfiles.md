@@ -56,14 +56,46 @@ Or link packages manually:
 
 ```sh
 cd ~/dotfiles
-stow zsh git p10k nvim tmux shell lazygit   # link everything
-stow nvim                                     # just one package
-stow -D nvim                                  # unlink
-stow -R zsh                                   # restow after changes
+stow --no-folding zsh git p10k nvim tmux shell lazygit claude   # link everything
+stow --no-folding omarchy                                       # Omarchy only
+stow --no-folding nvim                                          # just one package
+stow -D nvim                                                    # unlink
+stow -R --no-folding zsh                                        # restow after changes
 ```
+
+`--no-folding` matches what the bootstrap does: it links every file individually instead of
+symlinking whole directories, so apps that write new files into `~/.config/<tool>/` do not
+end up writing them into the repo.
 
 The bootstrap backs up any conflicting real files to
 `~/.dotfiles-backup/<timestamp>/` before linking.
+
+### When a symlink turns back into a real file
+
+Some apps rewrite their config by writing a temp file and `mv`-ing it over the target. `mv`
+replaces the symlink with a regular file, so the repo stops receiving the changes and the
+next `stow` aborts with a conflict. Known cases on Omarchy: `~/.config/omarchy/shell.json`
+(any `omarchy bar …` command) and `~/.config/hypr/monitors.lua` (the quattro upgrade).
+
+Find every package file that is no longer a link to the repo:
+
+```sh
+cd ~/dotfiles
+for pkg in zsh git p10k nvim tmux shell lazygit claude omarchy; do
+  [ -d "$pkg" ] || continue
+  find "$pkg" -type f | while read -r f; do
+    t="$HOME/${f#$pkg/}"
+    [ -L "$t" ] || { [ -e "$t" ] && echo "DIVERGED $t"; }
+  done
+done
+```
+
+Resolve one by deciding which side wins, then re-link:
+
+```sh
+stow --adopt --no-folding <pkg>   # pull the live file INTO the repo, then git diff
+git diff                          # keep it, or `git checkout --` to keep the repo version
+```
 
 ## Other CLI tools
 
