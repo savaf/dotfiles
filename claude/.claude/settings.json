@@ -1,22 +1,4 @@
 {
-  "model": "sonnet",
-  "statusLine": {
-    "type": "command",
-    "command": "bash \"$HOME/.claude/hooks/statusline.sh\""
-  },
-  "extraKnownMarketplaces": {
-    "cloudflare": {
-      "source": {
-        "source": "github",
-        "repo": "cloudflare/skills"
-      }
-    }
-  },
-  "skipDangerousModePermissionPrompt": true,
-  "theme": "custom:omarchy",
-  "enabledPlugins": {
-    "cloudflare@cloudflare": true
-  },
   "permissions": {
     "allow": [
       "Bash(git status:*)",
@@ -80,6 +62,7 @@
       "Bash(shfmt -d:*)"
     ]
   },
+  "model": "opus[1m]",
   "hooks": {
     "SessionStart": [
       {
@@ -112,5 +95,23 @@
         ]
       }
     ]
-  }
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash \"$HOME/.claude/hooks/statusline.sh\""
+  },
+  "enabledPlugins": {
+    "cloudflare@cloudflare": true
+  },
+  "extraKnownMarketplaces": {
+    "cloudflare": {
+      "source": {
+        "source": "github",
+        "repo": "cloudflare/skills"
+      }
+    }
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "theme": "custom:omarchy",
+  "agentPushNotifEnabled": true
 }
