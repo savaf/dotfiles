@@ -7,7 +7,7 @@
 hl.env("GDK_SCALE", "1")
 
 -- Default: ThinkPad (eDP-1 1920x1200) y el monitor externo 1080p.
-hl.monitor({ output = "", mode = "preferred", position = "auto", scale = 1.25 })
+hl.monitor({ output = "", mode = "preferred", position = "auto", scale = 1 })
 
 -- Desktop ANDREA: ultrawide Samsung C49RG9x (3840x1080) a 1x. Rellenar el output con lo que
 -- reporte `hyprctl monitors all` en esa máquina (nombre de puerto o "desc:<description>").
