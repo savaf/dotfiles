@@ -2,7 +2,11 @@
 
 The Neovim config is a [**LazyVim**](https://www.lazyvim.org/) setup living in
 [`nvim/.config/nvim/`](../nvim/.config/nvim/). It's stowed to `~/.config/nvim/`
-and works on macOS and Ubuntu/WSL.
+and works identically on Ubuntu/WSL, Fedora/Bazzite, Arch/Omarchy and macOS —
+the config itself has no platform-specific code; only the underlying tools it
+needs (Neovim, a C compiler, `fd`/`ripgrep`/`fzf`, a Nerd Font, …) are
+provisioned differently per package manager, see [Requirements](#requirements)
+below and `scripts/install-packages.sh`.
 
 Launch with `nvim` (or the aliases `vim` / `vi` / `v` from the zsh config). On the
 first launch `lazy.nvim` bootstraps itself, installs all plugins and compiles the
@@ -86,6 +90,21 @@ LSP servers/formatters install on demand via **Mason** (`:Mason`).
 Update plugins with `:Lazy update` on each machine. The regenerated `lazy-lock.json`
 stays local (gitignored), so there's nothing to commit and nothing to restore from a
 shared lock — `:Lazy restore` only re-pins to *this* machine's lock.
+
+### Hidden files in the explorer/picker
+
+`<leader>e` and `<leader>ff`/`<leader><space>` show and let you edit dotfiles
+(`hide_dotfiles`/`hidden` are off). This is set **twice on purpose**, in
+`lua/plugins/neo-tree.lua` and `lua/plugins/snacks.lua`: LazyVim has changed its
+default explorer/picker backend before (neo-tree → snacks), and each backend has
+its own "show hidden" option that the other doesn't inherit — this has silently
+regressed after a LazyVim update at least once already. If hidden files stop
+showing after `:Lazy update` (or an Omarchy update that bumps LazyVim), check with `:Lazy`
+which plugin is now behind `<leader>e`/`<leader>ff` and mirror the hidden-files
+option there, same pattern as the existing two files. And remember this only
+takes effect once the machine is up to date: `git pull` alone doesn't touch
+`~/.config/nvim` — re-run `stow -R nvim` (or the full re-stow in
+[omarchy.md](omarchy.md)) after pulling.
 
 ## Colorscheme
 
