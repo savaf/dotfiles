@@ -62,7 +62,7 @@
       "Bash(shfmt -d:*)"
     ]
   },
-  "model": "opus[1m]",
+  "model": "sonnet",
   "hooks": {
     "SessionStart": [
       {
@@ -71,6 +71,16 @@
           {
             "type": "command",
             "command": "bash \"$HOME/.claude/hooks/load-agents-md.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/home/savaf/.claude/hooks/herdr-agent-state.sh' session",
+            "timeout": 10
           }
         ]
       }
