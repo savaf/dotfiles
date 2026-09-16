@@ -1,0 +1,41 @@
+{
+  "_comment": "Curvas temp->%duty para los modos Silencio/Rendimiento de CoolerControl. Consumido por coolercontrol-provision. Los device_uid NO viven aquí: se resuelven por nombre en cada ejecucion (ver cabecera del script).",
+
+  "functions": {
+    "silencio": {
+      "duty_minimum": 15,
+      "duty_maximum": 100,
+      "response_delay": 3,
+      "deviance": 2.0,
+      "only_downward": true
+    },
+    "rendimiento": {
+      "duty_minimum": 25,
+      "duty_maximum": 100,
+      "response_delay": 1,
+      "deviance": 1.0,
+      "only_downward": false
+    }
+  },
+
+  "modes": [
+    {
+      "name": "Silencio",
+      "channels": {
+        "cpu_fan":  { "curve": [[30,20],[50,20],[58,28],[66,45],[73,62],[79,82],[85,100]] },
+        "cpu_pump": { "curve": [[25,55],[33,60],[38,75],[42,90],[46,100]] },
+        "hub_fan3": { "curve": [[30,25],[52,25],[62,35],[70,50],[78,70],[85,100]] },
+        "gpu_fan":  { "curve": [[30,30],[52,30],[62,45],[70,60],[78,80],[84,100]] }
+      }
+    },
+    {
+      "name": "Rendimiento",
+      "channels": {
+        "cpu_fan":  { "curve": [[30,40],[50,52],[60,68],[68,82],[74,92],[80,100]] },
+        "cpu_pump": { "curve": [[25,80],[33,90],[40,100]] },
+        "hub_fan3": { "curve": [[30,45],[52,55],[64,70],[74,86],[80,100]] },
+        "gpu_fan":  { "curve": [[30,45],[50,58],[60,72],[70,86],[78,100]] }
+      }
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+#!/bin/bash
+# Cambia el modo activo de CoolerControl entre "Silencio" y "Rendimiento" según
+# si hay alguna ventana de Hyprland cuya clase esté en gaming-classes.conf.
+#
+# Sin estado propio a propósito: en cada evento de ventana relee TODAS las
+# ventanas abiertas (hyprctl clients) en vez de llevar un mapa dirección→clase,
+# porque el evento closewindow>> de Hyprland solo trae la dirección (nunca la
+# clase) — un mapa en memoria se desincroniza en cuanto se pierde un evento o
+# se reinicia este servicio. El coste extra de un hyprctl por evento es
+# despreciable.
+
+set -uo pipefail
+
+CC_URL="http://127.0.0.1:11987"
+CC_TOKEN_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/coolercontrol-modes/api-token"
+CLASSES_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/coolercontrol-modes/gaming-classes.conf"
+MODE_IDLE="Silencio"
+MODE_GAMING="Rendimiento"
+
+log() { echo "[coolercontrol-mode-watcher] $*" >&2; }
+
+if [[ ! -s "$CC_TOKEN_FILE" ]]; then
+  log "falta el token en ${CC_TOKEN_FILE}; saliendo"
+  exit 1
+fi
+TOKEN="$(<"$CC_TOKEN_FILE")"
+
+# A propósito SIN abortar en error: un timeout puntual del daemon (ya visto en
+# los logs con liquidctl) no debe tumbar el watcher, solo se reintenta en el
+# siguiente evento de ventana.
+cc_api() {
+  curl -sS -m 10 -H "Authorization: Bearer ${TOKEN}" -H 'Content-Type: application/json' \
+    -X "$1" "${CC_URL}${2}" ${3:+-d "$3"} 2>/dev/null
+}
+
+resolve_mode_uid() {  # resolve_mode_uid NOMBRE
+  jq -r --arg n "$1" '.modes[]? | select(.name==$n) | .uid' <<<"$(cc_api GET /modes)" 2>/dev/null | head -1
+}
+
+UID_IDLE="$(resolve_mode_uid "$MODE_IDLE")"
+UID_GAMING="$(resolve_mode_uid "$MODE_GAMING")"
+
+if [[ -z "$UID_IDLE" || -z "$UID_GAMING" ]]; then
+  log "faltan los modos '${MODE_IDLE}'/'${MODE_GAMING}'; aprovisionando…"
+  "$(dirname "$0")/coolercontrol-provision" || { log "aprovisionamiento falló; saliendo"; exit 1; }
+  UID_IDLE="$(resolve_mode_uid "$MODE_IDLE")"
+  UID_GAMING="$(resolve_mode_uid "$MODE_GAMING")"
+  [[ -n "$UID_IDLE" && -n "$UID_GAMING" ]] || { log "los modos siguen sin existir; saliendo"; exit 1; }
+fi
+log "modos resueltos: ${MODE_IDLE}=${UID_IDLE} ${MODE_GAMING}=${UID_GAMING}"
+
+# ¿Hay alguna ventana abierta cuya class/initialClass matchee un patrón (glob)
+# de gaming-classes.conf? Se relee el fichero en cada llamada: así añadir un
+# juego no requiere reiniciar el servicio.
+any_game_open() {
+  local patterns classes cls pat
+  patterns="$(sed 's/#.*//' "$CLASSES_FILE" 2>/dev/null | grep -v '^[[:space:]]*$')"
+  [[ -n "$patterns" ]] || return 1
+  classes="$(hyprctl clients -j 2>/dev/null | jq -r '.[] | .class, .initialClass' 2>/dev/null)"
+  while IFS= read -r cls; do
+    [[ -n "$cls" ]] || continue
+    while IFS= read -r pat; do
+      [[ -n "$pat" ]] || continue
+      # shellcheck disable=SC2053
+      [[ "$cls" == $pat ]] && return 0
+    done <<<"$patterns"
+  done <<<"$classes"
+  return 1
+}
+
+reconcile() {
+  local want cur
+  want="$UID_IDLE"
+  any_game_open && want="$UID_GAMING"
+  cur="$(jq -r '.current_mode_uid // empty' <<<"$(cc_api GET /modes-active)" 2>/dev/null)"
+  [[ -n "$cur" && "$cur" == "$want" ]] && return 0
+  cc_api POST "/modes-active/${want}" >/dev/null
+  [[ "$want" == "$UID_GAMING" ]] && log "juego detectado → modo ${MODE_GAMING}" \
+                                  || log "sin juegos detectados → modo ${MODE_IDLE}"
+}
+
+revert_on_exit() {
+  log "parando: forzando modo ${MODE_IDLE}"
+  cc_api POST "/modes-active/${UID_IDLE}" >/dev/null
+}
+trap revert_on_exit EXIT
+
+SOCK="$(ls "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"/hypr/*/.socket2.sock 2>/dev/null | head -1)"
+if [[ -z "$SOCK" ]]; then
+  log "no encontré el socket de eventos de Hyprland (\$XDG_RUNTIME_DIR/hypr/*/.socket2.sock)"
+  exit 1
+fi
+
+reconcile   # cubre arrancar/reiniciar con un juego ya abierto
+
+# Debounce: coalescer ráfagas de eventos (varias ventanas al lanzar un juego)
+# en como mucho una reconciliación por segundo.
+last=0
+socat -u UNIX-CONNECT:"$SOCK" - | while IFS= read -r line; do
+  case "$line" in
+    openwindow\>\>*|closewindow\>\>*)
+      now="$(date +%s)"
+      if (( now - last >= 1 )); then
+        reconcile
+        last="$now"
+      fi
+      ;;
+  esac
+done

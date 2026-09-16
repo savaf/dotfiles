@@ -1,0 +1,16 @@
+[Unit]
+Description=CoolerControl: cambia de modo termico segun las ventanas de Hyprland (Silencio <-> Rendimiento)
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+Type=simple
+# coolercontrold puede tardar en levantar tras el arranque (startup_delay +
+# reconexion a liquidctl); esperar hasta 30s a que responda antes de arrancar.
+ExecStartPre=/bin/sh -c 'for i in $(seq 30); do curl -sf -m2 http://127.0.0.1:11987/handshake >/dev/null 2>&1 && exit 0; sleep 1; done; exit 1'
+ExecStart=%h/.local/bin/coolercontrol-mode-watcher
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target

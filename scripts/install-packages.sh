@@ -398,6 +398,9 @@ ensure_omarchy_webapps() {
 # CoolerControl controla el AIO NZXT Kraken (bomba/ventiladores + pantalla LCD) vía
 # su daemon. Se instala como paquete (arch-apps.txt) con sus deps opcionales
 # liquidctl y lm_sensors; aquí solo garantizamos el servicio activo. Idempotente.
+# Los perfiles/modos de temperatura y el watcher que cambia entre ellos según
+# la app en uso viven en el paquete stow `coolercontrol/` (ver
+# ensure_coolercontrol_mode_watcher en bootstrap.sh y docs/omarchy.md).
 ensure_coolercontrol() {
   exists systemctl || return 0
   if systemctl is-enabled --quiet coolercontrold.service 2>/dev/null; then

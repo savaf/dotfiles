@@ -1,0 +1,216 @@
+#!/bin/bash
+# Aprovisiona en CoolerControl (vía su API REST) los perfiles/funciones/modos
+# "Silencio" y "Rendimiento" definidos en curves.json. Idempotente: re-ejecutar
+# no duplica nada.
+#
+# Por qué existe: coolercontrold detecta bien todo el hardware pero llega sin
+# ninguna curva configurada (todo en "Unmanaged"/Identity) — ningún ventilador
+# ni la bomba reaccionan a la temperatura real. Este script es la única forma
+# reproducible de fijar eso, porque la config de perfiles vive en el daemon
+# (root, fuera de $HOME) y normalmente solo se toca desde la GUI.
+#
+# En esta máquina solo hay 5 canales con algo físicamente conectado (el resto
+# de NZXT/NCT6687 no controla nada real); los dispositivos se resuelven por
+# NOMBRE en cada ejecución porque los device_uid son hashes que cambian si se
+# mueve el Kraken de puerto USB o cambia la GPU.
+#
+# Requiere un access token Bearer ya creado a mano desde la GUI de
+# CoolerControl (Settings > Access Tokens, con permiso de escritura) y guardado
+# en $CC_TOKEN_FILE con permisos 600. Ver docs/omarchy.md.
+
+set -uo pipefail
+
+CC_URL="http://127.0.0.1:11987"
+CC_TOKEN_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/coolercontrol-modes/api-token"
+CURVES_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/coolercontrol-modes/curves.json"
+
+# A stderr a propósito: varias funciones (ensure_function, ensure_profile...)
+# se llaman dentro de $(...) para capturar el uid que devuelven por stdout; si
+# log escribiera ahí también, el texto del log se colaría en el uid capturado.
+log() { echo "[coolercontrol-provision] $*" >&2; }
+die() { echo "[coolercontrol-provision] ERROR: $*" >&2; exit 1; }
+
+command -v jq >/dev/null || die "falta jq"
+command -v curl >/dev/null || die "falta curl"
+[[ -s "$CC_TOKEN_FILE" ]] || die "falta el token en $CC_TOKEN_FILE (créalo desde la GUI: Settings > Access Tokens, con permiso de escritura)"
+[[ -s "$CURVES_FILE" ]] || die "falta $CURVES_FILE"
+
+TOKEN="$(<"$CC_TOKEN_FILE")"
+
+# $1=method $2=path $3=body opcional (JSON). Aborta con el status+body de error
+# de la API si algo falla, para detectar un cambio de esquema de inmediato en
+# vez de dejar el hardware a medio configurar en silencio.
+cc_api() {
+  local method="$1" path="$2" body="${3:-}" resp status
+  resp="$(curl -sS -m 10 -w $'\n%{http_code}' \
+    -H "Authorization: Bearer ${TOKEN}" -H 'Content-Type: application/json' \
+    -X "$method" "${CC_URL}${path}" ${body:+-d "$body"})" || die "curl a ${path} falló"
+  status="${resp##*$'\n'}"
+  resp="${resp%$'\n'*}"
+  [[ "$status" -lt 300 ]] || die "$method $path → HTTP $status: $resp"
+  printf '%s' "$resp"
+}
+
+log "Comprobando conexión con coolercontrold…"
+cc_api GET /handshake >/dev/null
+
+DEVICES_JSON="$(cc_api GET /devices)"
+
+# Primer dispositivo cuyo nombre contenga (case-insensitive) alguno de los
+# patrones dados, probados en orden. Aborta listando los nombres disponibles.
+resolve_device() {
+  local pat uid
+  for pat in "$@"; do
+    uid="$(jq -r --arg p "${pat,,}" \
+      '.devices[] | select((.name|ascii_downcase)|contains($p)) | .uid' \
+      <<<"$DEVICES_JSON" | head -1)"
+    [[ -n "$uid" ]] && { printf '%s' "$uid"; return 0; }
+  done
+  echo "Dispositivos detectados:" >&2
+  jq -r '.devices[].name' <<<"$DEVICES_JSON" >&2
+  die "no encontré ningún dispositivo para: $*"
+}
+
+# Verifica que $uid tenga $name en info.$field ("temps" o "channels"), sin
+# asumir si la API lo da como objeto (claves) o como array de strings/objetos.
+require_leaf() {
+  local uid="$1" field="$2" name="$3" dev ok
+  dev="$(jq -c --arg u "$uid" '.devices[] | select(.uid==$u)' <<<"$DEVICES_JSON")"
+  ok="$(jq -r --arg f "$field" --arg n "$name" '
+    (.info[$f] // {}) as $v
+    | if ($v|type)=="object" then ($v|has($n))
+      else ($v|any(.==$n or (.name?==$n))) end' <<<"$dev")"
+  if [[ "$ok" != "true" ]]; then
+    echo "info.${field} de ${uid}:" >&2
+    jq --arg f "$field" '.info[$f]' <<<"$dev" >&2
+    die "'${name}' no está en info.${field} de ${uid} — ajusta las constantes de este script"
+  fi
+}
+
+log "Resolviendo hardware…"
+CPU_DEV="$(resolve_device "core(tm)" "12700k" "coretemp")"
+AIO_DEV="$(resolve_device "kraken")"
+HUB_DEV="$(resolve_device "rgb & fan" "smartdevice" "fan controller")"
+GPU_DEV="$(resolve_device "geforce" "nvidia")"
+
+require_leaf "$CPU_DEV" temps temp1
+require_leaf "$AIO_DEV" temps liquid
+require_leaf "$AIO_DEV" channels fan
+require_leaf "$AIO_DEV" channels pump
+require_leaf "$HUB_DEV" channels fan3
+require_leaf "$GPU_DEV" temps "GPU Temp"
+require_leaf "$GPU_DEV" channels fan1
+require_leaf "$GPU_DEV" channels fan2
+log "Hardware OK: cpu=${CPU_DEV} aio=${AIO_DEV} hub=${HUB_DEV} gpu=${GPU_DEV}"
+
+# La API espera que el CLIENTE genere el uid (no lo asigna el servidor al crear).
+new_uuid() { cat /proc/sys/kernel/random/uuid; }
+
+# Esquema completo verificado en vivo contra GET /functions y GET /profiles
+# (la "Default Function"/"Unmanaged" que trae coolercontrold de fábrica): la
+# API rechaza el POST si falta cualquiera de estos campos, aunque no se usen
+# para el f_type/p_type elegido.
+FUNCTION_DEFAULTS='{step_size_min_decreasing:0, step_size_max_decreasing:0, sample_window:null, threshold_hopping:true, bypass_min_at_extremes:false}'
+PROFILE_DEFAULTS='{speed_fixed:null, temp_min:null, temp_max:null, member_profile_uids:[], mix_function_type:null, offset_profile:null}'
+
+# Crea (o reutiliza) una function por nombre. $2 = JSON de parámetros
+# (duty_minimum/duty_maximum/response_delay/deviance/only_downward).
+ensure_function() {
+  local name="$1" params="$2" uid body
+  uid="$(jq -r --arg n "$name" '.functions[] | select(.name==$n) | .uid' \
+    <<<"$(cc_api GET /functions)" | head -1)"
+  if [[ -n "$uid" ]]; then printf '%s' "$uid"; return 0; fi
+  uid="$(new_uuid)"
+  log "Creando function '${name}'…"
+  body="$(jq -c --arg n "$name" --arg u "$uid" \
+    "${FUNCTION_DEFAULTS} + . + {uid:\$u, name:\$n, f_type:\"Standard\"}" <<<"$params")"
+  cc_api POST /functions "$body" >/dev/null
+  printf '%s' "$uid"
+}
+
+# Crea o actualiza (por nombre) un profile Graph. $2=device del temp_source
+# $3=temp_name $4=function_uid $5=curve JSON ([[temp,duty],...]).
+ensure_profile() {
+  local name="$1" dev="$2" temp="$3" func="$4" curve="$5" uid existed body
+  uid="$(jq -r --arg n "$name" '.profiles[] | select(.name==$n) | .uid' \
+    <<<"$(cc_api GET /profiles)" | head -1)"
+  existed=0; [[ -n "$uid" ]] && existed=1
+  [[ -n "$uid" ]] || uid="$(new_uuid)"
+  body="$(jq -nc --arg u "$uid" --arg n "$name" --arg d "$dev" --arg t "$temp" --arg f "$func" --argjson c "$curve" \
+    "${PROFILE_DEFAULTS} + {uid:\$u, name:\$n, p_type:\"Graph\", speed_profile:\$c, temp_source:{temp_name:\$t, device_uid:\$d}, function_uid:\$f}")"
+  if [[ "$existed" == 1 ]]; then
+    # La API no tiene /profiles/{uid} para actualizar (solo DELETE); el update
+    # real es un PUT a la colección /profiles con el uid dentro del body.
+    log "Actualizando profile '${name}'…"
+    cc_api PUT /profiles "$body" >/dev/null
+  else
+    log "Creando profile '${name}'…"
+    cc_api POST /profiles "$body" >/dev/null
+  fi
+  printf '%s' "$uid"
+}
+
+apply_channel() {  # apply_channel DEVICE_UID CHANNEL PROFILE_UID
+  # channel_name es obligatorio en el body aunque ya vaya en la URL (confirmado
+  # en vivo: sin él, el motor falla con "Profile should be present").
+  cc_api PUT "/devices/${1}/settings/${2}/profile" \
+    "$(jq -nc --arg ch "$2" --arg p "$3" '{channel_name:$ch, profile_uid:$p}')" >/dev/null
+}
+
+# Crea el mode si hace falta; POST /modes ya captura por sí solo el estado
+# actual de los dispositivos como snapshot (confirmado en vivo: no existe un
+# paso de "guardar" aparte). A diferencia de profiles/functions, el servidor
+# IGNORA el uid que le mandemos y asigna el suyo propio, así que tras crear
+# hay que releerlo por nombre. Como las actualizaciones de profile preservan
+# su uid (ver ensure_profile), un mode ya existente nunca necesita re-sync:
+# sus channel_name→profile_uid siguen siendo válidos aunque cambien las curvas.
+ensure_mode_from_current_state() {
+  local name="$1" uid
+  uid="$(jq -r --arg n "$name" '.modes[] | select(.name==$n) | .uid' \
+    <<<"$(cc_api GET /modes)" | head -1)"
+  if [[ -z "$uid" ]]; then
+    log "Creando mode '${name}' (snapshot del estado actual de los dispositivos)…"
+    cc_api POST /modes "$(jq -nc --arg u "$(new_uuid)" --arg n "$name" '{uid:$u, name:$n}')" >/dev/null
+    uid="$(jq -r --arg n "$name" '.modes[] | select(.name==$n) | .uid' \
+      <<<"$(cc_api GET /modes)" | head -1)"
+    [[ -n "$uid" ]] || die "el mode '${name}' no apareció tras crearlo"
+  fi
+  printf '%s' "$uid"
+}
+
+CURVES="$(<"$CURVES_FILE")"
+declare -A MODE_UID
+
+for mode_name in Silencio Rendimiento; do
+  key="silencio"; [[ "$mode_name" == "Rendimiento" ]] && key="rendimiento"
+  log "== Modo ${mode_name} =="
+
+  func_params="$(jq -c --arg k "$key" '.functions[$k]' <<<"$CURVES")"
+  func_uid="$(ensure_function "dotfiles-${key}" "$func_params")"
+
+  mode_block="$(jq -c --arg n "$mode_name" '.modes[] | select(.name==$n)' <<<"$CURVES")"
+
+  curve="$(jq -c '.channels.cpu_fan.curve' <<<"$mode_block")"
+  prof="$(ensure_profile "dotfiles-${key}-cpu-fan" "$CPU_DEV" temp1 "$func_uid" "$curve")"
+  apply_channel "$AIO_DEV" fan "$prof"
+
+  curve="$(jq -c '.channels.cpu_pump.curve' <<<"$mode_block")"
+  prof="$(ensure_profile "dotfiles-${key}-cpu-pump" "$AIO_DEV" liquid "$func_uid" "$curve")"
+  apply_channel "$AIO_DEV" pump "$prof"
+
+  curve="$(jq -c '.channels.hub_fan3.curve' <<<"$mode_block")"
+  prof="$(ensure_profile "dotfiles-${key}-hub-fan3" "$CPU_DEV" temp1 "$func_uid" "$curve")"
+  apply_channel "$HUB_DEV" fan3 "$prof"
+
+  curve="$(jq -c '.channels.gpu_fan.curve' <<<"$mode_block")"
+  prof="$(ensure_profile "dotfiles-${key}-gpu-fan" "$GPU_DEV" "GPU Temp" "$func_uid" "$curve")"
+  apply_channel "$GPU_DEV" fan1 "$prof"
+  apply_channel "$GPU_DEV" fan2 "$prof"
+
+  MODE_UID["$key"]="$(ensure_mode_from_current_state "$mode_name")"
+done
+
+log "Activando modo por defecto: Silencio"
+cc_api POST "/modes-active/${MODE_UID[silencio]}" >/dev/null
+
+log "Listo. Silencio=${MODE_UID[silencio]} Rendimiento=${MODE_UID[rendimiento]}"

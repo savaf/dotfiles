@@ -30,4 +30,7 @@ neovim
 liquidctl
 lm_sensors
 i2c-tools
+# deps de coolercontrol-mode-watcher: jq parsea la API/hyprctl, socat lee el socket de eventos de Hyprland
+jq
+socat
 nginx

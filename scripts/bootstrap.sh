@@ -118,6 +118,32 @@ link_claude_profiles() {
   done
 }
 
+# El watcher de modos de CoolerControl es un servicio de USUARIO (necesita el
+# socket de eventos de Hyprland, que vive en $XDG_RUNTIME_DIR) y su unidad la
+# enlaza stow, así que esto va DESPUÉS de stow_packages y no en
+# install-packages.sh (que corre antes del stow). Sin el token de la API
+# (creado a mano desde la GUI, ver docs/omarchy.md) no hay nada que habilitar
+# todavía. Idempotente.
+ensure_coolercontrol_mode_watcher() {
+  [[ "${OS}" == "omarchy" ]] || return 0
+  exists systemctl || return 0
+  local token="${XDG_STATE_HOME:-${HOME}/.local/state}/coolercontrol-modes/api-token"
+  if [[ ! -s "${token}" ]]; then
+    log "Falta el token de la API de CoolerControl (${token}); watcher no habilitado."
+    log "Créalo desde la GUI (Settings > Access Tokens) y reejecuta el bootstrap; ver docs/omarchy.md."
+    return 0
+  fi
+  systemctl --user daemon-reload
+  if systemctl --user is-enabled --quiet coolercontrol-mode-watcher.service 2>/dev/null; then
+    log "coolercontrol-mode-watcher ya habilitado; se omite."
+  else
+    log "Aprovisionando perfiles/modos de CoolerControl…"
+    "${HOME}/.local/bin/coolercontrol-provision" || log "Aprovisionamiento falló; revisa manual."
+    log "Habilitando coolercontrol-mode-watcher (Silencio ⇄ Rendimiento)…"
+    systemctl --user enable --now coolercontrol-mode-watcher.service || true
+  fi
+}
+
 # Fusiona caps:escape en el array xkb-options actual, preservando lo existente.
 # $1 = valor crudo de `gsettings get`; echo del array fusionado.
 xkb_merge() {
@@ -240,7 +266,9 @@ main() {
   log "OS detectado: ${OS}"
 
   # Paquete solo-Omarchy: hook de OpenRGB (RGB sync con el tema) + autostart de hypr.
-  [[ "${OS}" == "omarchy" ]] && STOW_PACKAGES+=(omarchy)
+  # coolercontrol: perfiles/modos de temperatura + watcher que cambia de modo
+  # según las ventanas abiertas (ver docs/omarchy.md).
+  [[ "${OS}" == "omarchy" ]] && STOW_PACKAGES+=(omarchy coolercontrol)
 
   # Un solo prompt de sudo para todo el bootstrap; el keep-alive del padre cubre
   # install-packages.sh, ensure_locale y ensure_stow.
@@ -265,6 +293,7 @@ main() {
   ensure_stow
   stow_packages
   link_claude_profiles
+  ensure_coolercontrol_mode_watcher
 
   # Node antes del sync para que Mason pueda instalar el LSP de TypeScript.
   ensure_node
