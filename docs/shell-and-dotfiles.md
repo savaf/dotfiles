@@ -56,11 +56,11 @@ Or link packages manually:
 
 ```sh
 cd ~/dotfiles
-stow --no-folding zsh git p10k nvim tmux shell lazygit claude   # link everything
-stow --no-folding omarchy                                       # Omarchy only
-stow --no-folding nvim                                          # just one package
-stow -D nvim                                                    # unlink
-stow -R --no-folding zsh                                        # restow after changes
+stow --no-folding zsh git p10k nvim tmux herdr shell lazygit claude   # link everything
+stow --no-folding omarchy                                             # Omarchy only
+stow --no-folding nvim                                                # just one package
+stow -D nvim                                                          # unlink
+stow -R --no-folding zsh                                              # restow after changes
 ```
 
 `--no-folding` matches what the bootstrap does: it links every file individually instead of
@@ -81,7 +81,7 @@ Find every package file that is no longer a link to the repo:
 
 ```sh
 cd ~/dotfiles
-for pkg in zsh git p10k nvim tmux shell lazygit claude omarchy; do
+for pkg in zsh git p10k nvim tmux herdr shell lazygit claude omarchy; do
   [ -d "$pkg" ] || continue
   find "$pkg" -type f | while read -r f; do
     t="$HOME/${f#$pkg/}"

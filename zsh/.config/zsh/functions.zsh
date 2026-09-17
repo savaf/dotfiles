@@ -148,3 +148,64 @@ function nic() {
   _nic_cockpit "$name:1" "$PWD" "$profile"
   tmux attach-session -t "$name"
 }
+
+# Coding cockpit: neovim + claude en herdr (equivalente a nic, pero sobre herdr
+# en vez de tmux)
+#
+# Layout: dos paneles a alto completo dentro de un workspace de herdr
+#   +-----------------+------------+
+#   |                 |            |
+#   |      nvim       |   claude   |
+#   |      (60%)      |   (40%)    |
+#   +-----------------+------------+
+#
+#   $1 = root pane id   $2 = working dir   $3 = perfil (opcional)
+function _nih_cockpit() {
+  local root_pane="$1" dir="$2" profile="${3:-}" cmd p_claude
+  cmd='claude'
+  [[ -n "$profile" ]] && cmd="claude-profile $profile"
+  p_claude=$(herdr pane split "$root_pane" --direction right --ratio 0.4 \
+    --cwd "$dir" --no-focus | jq -r '.result.pane.pane_id')
+  herdr pane run "$root_pane" 'nvim'
+  herdr pane run "$p_claude" "$cmd"
+}
+
+# usage: nih [-p perfil] [name]   (default: basename del directorio actual)
+#   - herdr solo tiene una sesión persistente ("default"): nih añade/reusa un
+#     workspace dentro de ella en vez de crear sesiones por proyecto
+#   - si el workspace ya existe: lo enfoca
+#   - si no existe: lo crea con el cockpit (nvim + claude)
+#   - dentro de un pane de herdr ($HERDR_ENV): no reattachea el cliente, solo
+#     enfoca/crea el workspace
+#   - -p <perfil>: el pane de claude usa ese config dir (ver claude-profile)
+function nih() {
+  local profile=""
+  while [[ "${1:-}" == -* ]]; do
+    case "$1" in
+      -p) profile="${2:-}"; shift 2 ;;
+      *)  echo "nih: opción desconocida '$1' (uso: nih [-p perfil] [nombre])"; return 1 ;;
+    esac
+  done
+  if [[ -n "$profile" && ! -d "$HOME/.claude-$profile" ]]; then
+    echo "nih: perfil '$profile' sin config dir (~/.claude-$profile); corre el bootstrap."
+    return 1
+  fi
+
+  local name="${1:-$(basename "$PWD")}"
+  local existing
+  existing=$(herdr workspace list 2>/dev/null \
+    | jq -r --arg n "$name" '.result.workspaces[]? | select(.label == $n) | .workspace_id')
+
+  if [[ -n "$existing" ]]; then
+    herdr workspace focus "$existing"
+  else
+    local created root_pane
+    created=$(herdr workspace create --cwd "$PWD" --label "$name" --focus)
+    root_pane=$(echo "$created" | jq -r '.result.root_pane.pane_id')
+    _nih_cockpit "$root_pane" "$PWD" "$profile"
+  fi
+
+  # Si ya estás dentro de un pane de herdr, el focus/create de arriba ya te
+  # movió ahí; solo attacheamos el cliente cuando arrancamos desde fuera.
+  [[ -z "${HERDR_ENV:-}" ]] && herdr
+}

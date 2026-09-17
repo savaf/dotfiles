@@ -9,6 +9,7 @@ eza
 # en Fedora fd-find instala el binario como `fd` (sin symlink fdfind)
 fd-find
 fzf
+jq
 ripgrep
 tldr
 wget

@@ -29,7 +29,7 @@ os_detect() {
 is_wsl() { grep -qi microsoft /proc/version 2>/dev/null; }
 
 # Config packages that get symlinked into $HOME via stow.
-STOW_PACKAGES=(zsh git p10k nvim tmux shell lazygit claude)
+STOW_PACKAGES=(zsh git p10k nvim tmux herdr shell lazygit claude)
 
 # Shared backup dir for this run; created lazily on first real file moved.
 BACKUP_DIR="${HOME}/.dotfiles-backup/$(date +%Y%m%d_%H%M%S)"
@@ -69,6 +69,15 @@ ensure_stow() {
     bazzite)      log "stow se capeó con rpm-ostree; reinicia y re-ejecuta el bootstrap."; exit 1 ;;
     *) log "Instala 'stow' manualmente y reintenta."; exit 1 ;;
   esac
+}
+
+# herdr no está en apt/dnf/pacman/brew (salvo brew, que ya cubre el script);
+# el instalador oficial funciona igual en Ubuntu/WSL, Fedora/Bazzite,
+# Arch/Omarchy y macOS, así que no hace falta bifurcar por OS. Ver docs/herdr.md.
+ensure_herdr() {
+  exists herdr && return 0
+  log "herdr no encontrado; instalando…"
+  curl -fsSL https://herdr.dev/install.sh | sh
 }
 
 # Back up any real (non-symlink) files that would collide, then stow.
@@ -291,6 +300,7 @@ main() {
 
   ensure_locale
   ensure_stow
+  ensure_herdr
   stow_packages
   link_claude_profiles
   ensure_coolercontrol_mode_watcher

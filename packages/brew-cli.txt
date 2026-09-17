@@ -7,6 +7,7 @@ fzf
 gettext
 git
 imagemagick
+jq
 libgit2
 libssh2
 libuv
