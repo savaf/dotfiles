@@ -16,7 +16,9 @@ For each alternative:
 - Note ongoing maintenance cost: new code to own, external tools/APIs that could change
   underneath it, coupling it introduces.
 - If the stated problem might not need new tooling at all (a habit/process fix beats a
-  build), say so plainly and use the cheapest alternative as the honest baseline.
+  build), say so plainly and use the cheapest alternative as the honest baseline. The
+  baseline ladder is `ponytail`: does it need to exist, is it already in the repo, does the
+  stdlib or a native feature cover it.
 
 Finish with a verdict: which alternative is weakest and why, and whether building
 anything is actually justified given what you found.

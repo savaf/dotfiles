@@ -19,6 +19,10 @@ Review the changed code for structure, not style.
 - Tests: a substantive change with no matching test is a finding. So are stale mocks that no
   longer match the shape they stand in for, assertions behind a conditional, and a new error
   path with no coverage.
+- Over-engineering: an interface with one implementation, config for a value that never changes,
+  a dependency for what the stdlib covers, a shallow wrapper that only delegates. The checklist
+  is `~/.claude/skills/ponytail-review/SKILL.md`; module depth vocabulary is
+  `~/.claude/skills/codebase-design/SKILL.md`.
 
 Read the project's own conventions (`AGENTS.md`, `CLAUDE.md`, `docs/`) first and follow them
 over these defaults. Match the pattern the codebase already uses; do not propose a refactor the

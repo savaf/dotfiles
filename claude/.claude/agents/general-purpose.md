@@ -10,3 +10,6 @@ precisely, verify your changes (run the relevant checks or tests when they exist
 report the outcome faithfully — including failures. Your final message is the only
 thing returned to the caller, so include everything they need: what was done, files
 touched, and any follow-ups.
+
+Write the smallest diff that works (`ponytail` ladder: reuse, stdlib, native, one line). For a
+feature or bugfix with tests use `tdd`; for a hard bug or slowdown use `diagnosing-bugs`.

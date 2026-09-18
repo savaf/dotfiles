@@ -175,6 +175,30 @@ coexist. Unprefixed on purpose: a project skill of the same name shadows the glo
 | `doc-write` | House style for persistent markdown: rules first, one idea per line, no filler |
 | `git-commit` | Commit using the convention inferred from `git log`, not an imposed one |
 
+### Workflow and agents
+
+The third-party skills (`ponytail`, `mattpocock/skills`) are wired in by name, not copied: the
+global `CLAUDE.md` carries a five-line "Workflow" map, and each agent body points at the skill
+that fits its job. Bodies load only when an agent runs, so this costs no per-request tokens.
+
+| Situation | Skill |
+|---|---|
+| Any coding task | `ponytail` (reuse, stdlib, native, one line) |
+| Feature or fix with tests | `tdd` |
+| Hard bug, perf regression | `diagnosing-bugs` |
+| Fuzzy plan or design | `grilling`, then `domain-modeling` |
+| Pre-merge review | `code-review`; over-engineering only: `ponytail-review` |
+
+| Agent | Wired to |
+|---|---|
+| `Plan` | `ponytail` ladder, repo `CONTEXT.md`/ADRs, `codebase-design` |
+| `general-purpose` | `ponytail` ladder, `tdd`, `diagnosing-bugs` |
+| `architecture-reviewer` | over-engineering bullet reading `ponytail-review` and `codebase-design` |
+| `contrarian` | `ponytail` ladder as the "build nothing" baseline |
+
+`security-reviewer` and `performance-reviewer` stay unwired on purpose: minimalism is not a
+lens for security. Reviewers have no `Skill` tool, so they `Read` the `SKILL.md` by path.
+
 ### AGENTS.md over CLAUDE.md
 
 `AGENTS.md` is the cross-tool standard (Claude Code, Codex, Cursor, Gemini). Claude Code only
@@ -214,10 +238,15 @@ in `claude/.claude/skills/` and linked by stow. They sit side by side; `npx skil
 symlinked directories alone unless a repo ships a skill with the same name.
 
 Token note: every installed skill puts its `name` + `description` in the system prompt of
-**every** request (the body loads on demand, so size on disk is irrelevant). Currently 27 skills
-= ~2,860 tokens per request, down from 71 skills = ~10,800 tokens. `marketingskills` was 47 of
-them (~8,000 tokens) and is now commented out of the manifest — its directories sit in
-`~/.claude/skills-disabled/`.
+**every** request (the body loads on demand, so size on disk is irrelevant). Currently 53 skills
+= ~4,020 tokens per request, up from 27 skills = ~2,860 after adding `mattpocock/skills`.
+`marketingskills` was 47 skills (~8,000 tokens) and is commented out of the manifest — its
+directories sit in `~/.claude/skills-disabled/`.
+
+`mattpocock/skills` is installed through the manifest, **not** as the
+`mattpocock-skills@claude-plugins-official` plugin: enabling both lists every skill twice
+(`tdd` and `mattpocock-skills:tdd`). Per repo, run `/setup-matt-pocock-skills` once (issue
+tracker, triage labels, `docs/agents/`); `code-review` and `triage` need it.
 Re-enable a single one with `mv ~/.claude/skills-disabled/<skill> ~/.claude/skills/`.
 
 To re-measure after adding or removing skills:
