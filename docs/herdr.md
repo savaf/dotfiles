@@ -91,3 +91,33 @@ nih -p work  # cockpit using the "work" Claude Code profile
 Keybindings and theme live entirely in `config.toml`'s `[keys]`/`[ui]`
 sections — edit there and `prefix q` reloads without restarting the server.
 Keep the file at `~/.config/herdr/config.toml` so stow keeps managing it.
+
+## Claude Code integration hook
+
+`~/.claude/hooks/herdr-agent-state.sh` reports Claude Code's agent lifecycle
+state to herdr (`herdr agent list/wait/prompt`). It's stowed from
+[`claude/.claude/hooks/herdr-agent-state.sh`](../claude/.claude/hooks/herdr-agent-state.sh)
+like every other Claude Code hook.
+
+**Do not run `herdr integration install claude` by hand.** `~/.claude/settings.json`
+is a symlink into this repo; that command rewrites it in place and can reorder
+or drop the other hooks already registered there (`git-guardrails`,
+`guard-protected-branch`, `load-agents-md`, `statusline`). If herdr ships a
+newer hook version, diff `herdr --skill`'s output (or the installer's target
+file) against the tracked hook manually and update the file in the repo
+instead.
+
+`herdr integration status` may still show `claude` as outdated — that's
+expected and harmless; the hook only needs to be present, executable, and
+correctly wired in `settings.json`, none of which the version number affects.
+
+**Decision: no LazyVim/Claude shortcut for now.** A quick-open/jump-to-nvim
+command from inside Claude Code was considered and rejected — a keybinding
+can't know *which file* to open (only Claude does), so the useful half of
+that idea can only be triggered by Claude itself, inheriting the fragility of
+piping keystrokes into a pane (`pane send-text` races with insert mode and
+mis-escapes paths). Existing navigation (`ctrl+alt+←/↓/↑/→`, `nic`/`nih`)
+already covers this once a cockpit is open. Revisit only if nvim panes are in
+regular use again; the low-risk design then is a slash command that opens
+nvim with `nvim --listen <socket>` and sends files via
+`nvim --server <socket> --remote <file>`, not `pane send-text`.
