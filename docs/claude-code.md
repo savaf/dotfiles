@@ -174,6 +174,7 @@ coexist. Unprefixed on purpose: a project skill of the same name shadows the glo
 | `session-retro` | Turn friction in a chat into a fix in the narrowest config that would have prevented it |
 | `doc-write` | House style for persistent markdown: rules first, one idea per line, no filler |
 | `git-commit` | Commit using the convention inferred from `git log`, not an imposed one |
+| `create-pr` | Open a PR with title, template, labels and base inferred from recent merged PRs; draft approved before creating. Its `pr-template.md` is only a fallback: the repo's template wins |
 
 ### Workflow and agents
 
