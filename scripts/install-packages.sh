@@ -373,6 +373,31 @@ ensure_omarchy_initramfs() {
   rm -f "${tmp}"
 }
 
+# GPU (RTX 3080): el firmware GSP del driver nvidia-open crasheaba bajo carga
+# 3D sostenida (Xid 120 "GSP task exception: load address misaligned"),
+# tumbando todo Hyprland — pasó dos veces jugando Marvel Rivals vía Proton
+# (2026-09-11 y 2026-09-16, ver coredumpctl / journalctl -k). Workaround:
+# desactivar GSP. El contenido versionado vive en system/etc/modprobe.d/,
+# aquí solo se instala si difiere y se regenera el initramfs (necesario:
+# nvidia se carga temprano vía el hook kms). Idempotente.
+ensure_nvidia_gsp_disabled() {
+  local src="${ROOT_DIR}/system/etc/modprobe.d/nvidia.conf"
+  local dst="/etc/modprobe.d/nvidia.conf"
+  [[ -f "${src}" ]] || return 0
+  exists nvidia-smi || return 0
+  if [[ -f "${dst}" ]] && cmp -s "${src}" "${dst}"; then
+    log "GSP de NVIDIA ya desactivado (${dst} al día); se omite."
+    return 0
+  fi
+  log "Instalando ${dst} (desactiva firmware GSP; fix Xid 120)..."
+  sudo cp "${src}" "${dst}"
+  if exists limine-mkinitcpio; then
+    log "Regenerando initramfs para que el cambio aplique desde el próximo arranque..."
+    sudo limine-mkinitcpio
+  fi
+  log "AVISO: reinicia para que el firmware GSP quede desactivado."
+}
+
 # Webapps de Omarchy (equivalente a casks sin buen paquete Linux). Lista en
 # omarchy-webapps.txt con formato Nombre|URL|IconoURL[|ExecPersonalizado], los
 # 4 args no interactivos de omarchy-webapp-install. El 4º es opcional: si va
@@ -460,6 +485,7 @@ install_arch() {
     ensure_omarchy_zsh
     ensure_omarchy_webapps
     ensure_omarchy_initramfs
+    ensure_nvidia_gsp_disabled
     ensure_i2c_dev
     ensure_coolercontrol
   fi

@@ -15,8 +15,10 @@ Cross-platform dotfiles for **Ubuntu/WSL**, **Fedora/Bazzite**, **Arch/Omarchy**
 
 ## Repository structure
 
-Each top-level folder is a Stow *package*: running `stow <package>` symlinks
+Most top-level folders are a Stow *package*: running `stow <package>` symlinks
 its contents into `$HOME`, preserving the internal directory layout.
+`packages/`, `scripts/`, `docs/` and `system/` are the exceptions — plain
+utility/reference dirs, not linked by Stow.
 
 ```
 dotfiles/
@@ -32,6 +34,7 @@ dotfiles/
 ├── wsl/            # .wslconfig (copied to the Windows profile on WSL)
 ├── packages/       # package lists (brew/apt/dnf/node/vscode extensions)
 ├── scripts/        # bootstrap + install/sync helpers
+├── system/         # non-$HOME system files (/etc/…), installed by a script, not Stow
 ├── docs/           # setup guides (macOS, shell, git/ssh, lazygit, …)
 └── README.md
 ```

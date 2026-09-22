@@ -199,6 +199,22 @@ hyprctl devices -j | jq -r '.keyboards[] | "\(.name)\t\(.layout)\t\(.active_keym
   `/etc/mkinitcpio.conf.d/nvidia.conf` after the last image rebuild). The
   bootstrap detects this and regenerates via `limine-mkinitcpio`; manual fix:
   `sudo limine-mkinitcpio`.
+- NVIDIA GSP crash (Xid 120): el firmware GSP del driver `nvidia-open`
+  crasheaba bajo carga 3D sostenida (`NVRM: Xid ... 120, GSP task exception:
+  load address misaligned`), tumbando todo Hyprland de golpe — pasó dos veces
+  jugando Marvel Rivals vía Proton (2026-09-11 y 2026-09-16). Se ve en
+  `coredumpctl list` como un `SIGABRT` de Hyprland + `SIGSEGV` de
+  `xdg-desktop-portal-hyprland` en el mismo segundo, y en
+  `journalctl -k -b <n> | grep Xid` como cientos/miles de líneas repetidas
+  (el GSP queda reintentando y fallando hasta el reinicio). Workaround:
+  desactivar GSP con `NVreg_EnableGpuFirmware=0` en
+  `/etc/modprobe.d/nvidia.conf` (vuelve al driver a modo "legacy" sin GSP; el
+  costo es algo de gestión de energía dinámica de menos). El contenido
+  canónico vive versionado en `system/etc/modprobe.d/nvidia.conf` — no es
+  stow (`/etc` está fuera de `$HOME`), lo instala `ensure_nvidia_gsp_disabled`
+  en `install-packages.sh`, que también regenera el initramfs si el archivo
+  cambió (el módulo `nvidia` se carga temprano vía el hook `kms`). Requiere
+  reiniciar para tomar efecto.
 - Temas: `omarchy-theme-set <slug>` interpola el `colors.toml` del tema sobre las
   plantillas de `~/.local/share/omarchy/default/themed/*.tpl`, deja el resultado en
   `~/.local/state/omarchy/current/theme/` (ojo: **antes vivía en `~/.config/omarchy/`**)

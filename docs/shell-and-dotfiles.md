@@ -42,7 +42,9 @@ just follows your terminal's theme. If you re-run `p10k configure`, convert the
 ## Applying the dotfiles
 
 These dotfiles are managed with [GNU Stow](https://www.gnu.org/software/stow/):
-each top-level folder is a *package* whose contents are symlinked into `$HOME`.
+most top-level folders are a *package* whose contents are symlinked into
+`$HOME` (see [repository structure](../README.md#repository-structure) for
+the non-Stow exceptions).
 
 The easiest path is the bootstrap, which installs packages and stows everything:
 
