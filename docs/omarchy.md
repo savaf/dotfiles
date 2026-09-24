@@ -77,6 +77,12 @@ aliases/functions are **not** loaded in zsh (by design) — your own
 dotfiles don't stow it), so bash still works in TTYs and scripts, and
 `omarchy update` won't conflict.
 
+mise on Omarchy is the preinstalled `mise-bin` (from the `omarchy` repo), so it
+is **not** listed in `packages/pacman-cli.txt` (`extra/mise` conflicts with it);
+`install_arch` only installs `mise` if it is missing. Updates come through
+`omarchy update`/pacman, not `mise self-update`, so `exports.zsh` sets
+`MISE_DISABLE_UPDATE_WARNING=1` when mise lives in `/usr/bin`.
+
 ## 5. Fonts
 
 The bootstrap installs the *Monaspace Nerd Font* into `~/.local/share/fonts`.

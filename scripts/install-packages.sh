@@ -220,7 +220,7 @@ install_lazydocker() {
 
 # mise (version manager de lenguajes) no está en apt/dnf; el instalador oficial
 # funciona igual en cualquier distro y no pide sudo (instala en ~/.local/bin).
-# Arch/Omarchy lo trae de pacman-cli.txt (repo oficial).
+# Arch/Omarchy: lo instala install_arch vía pacman (no va en pacman-cli.txt).
 ensure_mise() {
   if exists mise; then
     log "mise ya instalado ($(mise --version 2>/dev/null)); se omite."
@@ -515,6 +515,11 @@ install_arch() {
     # shellcheck disable=SC2086
     sudo pacman -S --needed --noconfirm ${pkgs}
   fi
+
+  # mise fuera de pacman-cli.txt: Omarchy trae mise-bin (repo omarchy), que
+  # entra en conflicto con extra/mise y --needed no lo detecta (compara nombres
+  # exactos), así que con --noconfirm abortaría toda la transacción de arriba.
+  exists mise || sudo pacman -S --needed --noconfirm mise
 
   # Apps GUI vía yay (repos + AUR); mismo mecanismo que usa Omarchy por defecto
   # (omarchy-pkg-aur-add es un wrapper de esto y solo existe en Omarchy).

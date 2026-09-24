@@ -37,6 +37,11 @@ if command -v dircolors >/dev/null 2>&1; then
   eval "$(dircolors -b)"
 fi
 
+# mise de un gestor de paquetes (/usr/bin/mise, p.ej. mise-bin en Omarchy) no
+# puede hacer self-update: se actualiza con pacman/omarchy-update, así que el
+# aviso "version X available" solo es ruido. Con mise.run (~/.local/bin) se deja.
+[[ -x /usr/bin/mise ]] && export MISE_DISABLE_UPDATE_WARNING=1
+
 # History timestamp format
 export HISTTIMEFORMAT="[%F %T] "
 
