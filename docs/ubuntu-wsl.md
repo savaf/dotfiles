@@ -59,6 +59,9 @@ through the Windows terminal). Install *MonaspiceAr Nerd Font* (or any Nerd Font
 from [nerdfonts.com](https://www.nerdfonts.com/), then select it in your terminal
 (Windows Terminal → Settings → your profile → Appearance → Font face).
 
+For automating this and the rest of the Windows side (apps, Windows Terminal
+config), see [windows-host.md](windows-host.md).
+
 ## Notes
 
 - `fd` and `bat` are installed as `fdfind`/`batcat` on Ubuntu; the bootstrap adds

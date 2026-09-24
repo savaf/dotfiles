@@ -1,0 +1,51 @@
+{
+    "$help": "https://aka.ms/terminal-documentation",
+    "$schema": "https://aka.ms/terminal-profiles-schema",
+    "theme": "dark",
+    "copyOnSelect": false,
+    "copyFormatting": "none",
+    // Pon aquí el GUID de tu perfil de Ubuntu/WSL para que abra por defecto en
+    // vez de PowerShell. Windows Terminal genera ese perfil solo la primera
+    // vez que lo ve instalado; su GUID sale en Settings (Ctrl+,) > Ubuntu >
+    // "Open JSON file" (ícono de lápiz abajo a la izquierda).
+    // "defaultProfile": "{PEGA-AQUI-EL-GUID-DE-UBUNTU}",
+    "profiles": {
+        "defaults": {
+            "font": {
+                "face": "JetBrainsMono Nerd Font",
+                "size": 11
+            },
+            "colorScheme": "Tokyo Night",
+            "opacity": 90,
+            "useAcrylic": false,
+            "cursorShape": "bar"
+        },
+        "list": []
+    },
+    "schemes": [
+        {
+            "name": "Tokyo Night",
+            "background": "#1A1B26",
+            "foreground": "#C0CAF5",
+            "black": "#15161E",
+            "red": "#F7768E",
+            "green": "#9ECE6A",
+            "yellow": "#E0AF68",
+            "blue": "#7AA2F7",
+            "purple": "#BB9AF7",
+            "cyan": "#7DCFFF",
+            "white": "#A9B1D6",
+            "brightBlack": "#414868",
+            "brightRed": "#F7768E",
+            "brightGreen": "#9ECE6A",
+            "brightYellow": "#E0AF68",
+            "brightBlue": "#7AA2F7",
+            "brightPurple": "#BB9AF7",
+            "brightCyan": "#7DCFFF",
+            "brightWhite": "#C0CAF5",
+            "cursorColor": "#C0CAF5",
+            "selectionBackground": "#283457"
+        }
+    ],
+    "keybindings": []
+}
