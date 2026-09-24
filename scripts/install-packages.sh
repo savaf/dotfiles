@@ -180,6 +180,56 @@ install_lazygit() {
   rm -rf "${tmp}"
 }
 
+# lazydocker no está empaquetado en apt/dnf; misma mecánica que install_lazygit
+# (mismo autor, mismo esquema de releases), sin el intento de apt previo porque
+# nunca existió ahí. Arch/Omarchy lo trae de pacman-cli.txt (repo oficial).
+install_lazydocker() {
+  if exists lazydocker; then
+    log "lazydocker ya instalado ($(lazydocker --version 2>/dev/null | head -1))"
+    return 0
+  fi
+
+  log "Descargando el último release de lazydocker desde GitHub…"
+  local arch tarball version tmp
+  case "$(uname -m)" in
+    x86_64|amd64) arch="x86_64" ;;
+    aarch64|arm64) arch="arm64" ;;
+    armv7l|armhf) arch="armv6" ;;
+    *) log "Arquitectura no soportada: $(uname -m); omitiendo lazydocker"; return 0 ;;
+  esac
+
+  version="$(curl -fsSL https://api.github.com/repos/jesseduffield/lazydocker/releases/latest \
+    | grep -Po '"tag_name":\s*"v\K[^"]*' || true)"
+  if [[ -z "${version}" ]]; then
+    log "No se pudo determinar la versión de lazydocker; omitiendo."
+    return 0
+  fi
+
+  tmp="$(mktemp -d)"
+  tarball="lazydocker_${version}_Linux_${arch}.tar.gz"
+  if curl -fsSL -o "${tmp}/${tarball}" \
+      "https://github.com/jesseduffield/lazydocker/releases/download/v${version}/${tarball}"; then
+    tar -xf "${tmp}/${tarball}" -C "${tmp}" lazydocker
+    sudo install "${tmp}/lazydocker" /usr/local/bin/lazydocker
+    log "lazydocker ${version} instalado en /usr/local/bin/lazydocker"
+  else
+    log "Fallo al descargar lazydocker; omitiendo."
+  fi
+  rm -rf "${tmp}"
+}
+
+# mise (version manager de lenguajes) no está en apt/dnf; el instalador oficial
+# funciona igual en cualquier distro y no pide sudo (instala en ~/.local/bin).
+# Arch/Omarchy lo trae de pacman-cli.txt (repo oficial).
+ensure_mise() {
+  if exists mise; then
+    log "mise ya instalado ($(mise --version 2>/dev/null)); se omite."
+    return 0
+  fi
+  log "Instalando mise…"
+  curl -fsSL https://mise.run | sh || log "Fallo al instalar mise; omitiendo."
+}
+
 # apt solo trae Neovim 0.9.x; LazyVim necesita >= 0.11.2. Instala el tarball
 # oficial en /opt y lo enlaza a /usr/local/bin (que precede a /usr/bin en PATH).
 ensure_neovim() {
@@ -291,7 +341,9 @@ install_ubuntu() {
   fi
 
   install_lazygit
+  install_lazydocker
   ensure_neovim
+  ensure_mise
   ensure_nerd_font
 
   ensure_zsh
@@ -324,7 +376,9 @@ install_fedora() {
   fi
 
   install_lazygit
+  install_lazydocker
   ensure_neovim
+  ensure_mise
   ensure_nerd_font
 
   ensure_zsh

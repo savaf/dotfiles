@@ -20,3 +20,7 @@ xclip
 wl-clipboard
 fontconfig
 nginx
+btop
+dua-cli
+inxi
+yt-dlp

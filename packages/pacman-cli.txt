@@ -34,3 +34,11 @@ i2c-tools
 jq
 socat
 nginx
+btop
+dua-cli
+inxi
+lazydocker
+yt-dlp
+# version manager de lenguajes (asdf-like); en apt/dnf no hay paquete, se
+# instala con el script oficial (ensure_mise en install-packages.sh)
+mise
