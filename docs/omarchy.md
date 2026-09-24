@@ -215,6 +215,20 @@ hyprctl devices -j | jq -r '.keyboards[] | "\(.name)\t\(.layout)\t\(.active_keym
   en `install-packages.sh`, que también regenera el initramfs si el archivo
   cambió (el módulo `nvidia` se carga temprano vía el hook `kms`). Requiere
   reiniciar para tomar efecto.
+- **Reboot to Windows**: el paquete stow `omarchy` instala `~/.local/bin/reboot-windows` y
+  la fila **System → Reboot to Windows** del menú (`SUPER+SPACE`), declarada en
+  `~/.config/omarchy/extensions/omarchy-menu.jsonc`.
+  - Windows vive en otro disco NVMe, con su propia entrada UEFI ("Windows Boot Manager")
+    presente en la NVRAM pero inactiva (sin `*` en `efibootmgr`) y fuera del `BootOrder`
+    de Limine.
+  - El script busca esa entrada por label, no por número — una reinstalación de Windows
+    puede correrlo —, la activa y arma `BootNext` (`efibootmgr -b <n> -a` / `-n <n>`).
+    Es one-shot: el firmware consume `BootNext` en el próximo arranque, así que el
+    reinicio siguiente vuelve solo a Omarchy sin tocar Limine ni el `BootOrder`.
+  - Pide confirmación por `omarchy-menu-select` antes de tocar la NVRAM.
+  - `sudo` no tiene tty al lanzarse desde el menú de Hyprland: usa un askpass de un solo
+    uso con `pinentry-gtk` en vez de pedir la contraseña por stdin.
+  - Reutiliza `omarchy-system-reboot` para el cierre de ventanas y el reinicio en sí.
 - Temas: `omarchy-theme-set <slug>` interpola el `colors.toml` del tema sobre las
   plantillas de `~/.local/share/omarchy/default/themed/*.tpl`, deja el resultado en
   `~/.local/state/omarchy/current/theme/` (ojo: **antes vivía en `~/.config/omarchy/`**)

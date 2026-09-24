@@ -1,0 +1,44 @@
+#!/bin/bash
+# Arranca Windows en el próximo reinicio, sin tocar Limine ni el BootOrder.
+#
+# Windows vive en un disco NVMe aparte con su propia entrada UEFI ("Windows
+# Boot Manager"), ya presente en la NVRAM pero marcada inactiva (efibootmgr
+# no le pone el "*"; el firmware la ignora tal cual). Para arrancarla una
+# sola vez: activarla y apuntar BootNext a su número. BootNext lo consume el
+# firmware en el próximo arranque y desaparece solo, así que el reinicio de
+# después vuelve a Omarchy sin código extra (one-shot).
+#
+# Se busca por label en vez de fijar "0000" a fuego porque una reinstalación
+# de Windows puede correr el número de entrada.
+#
+# Invocado desde el menú de Omarchy: System > Reboot to Windows (SUPER+SPACE).
+
+set -euo pipefail
+
+entry=$(efibootmgr | sed -n 's/^Boot\([0-9A-Fa-f]\{4\}\)\*\{0,1\}[[:space:]]*Windows Boot Manager.*/\1/p' | head -n1)
+
+if [[ -z $entry ]]; then
+  omarchy-osd -i reboot -m "No se encontró Windows Boot Manager en la NVRAM" -d 5000
+  exit 1
+fi
+
+choice=$(omarchy-menu-select "¿Reiniciar a Windows ahora?" "Sí" "No")
+[[ $choice == "Sí" ]] || exit 0
+
+# Sudo aquí no tiene tty (se lanza desde el menú de Hyprland, sin terminal),
+# así que pide la contraseña por pinentry en vez de por stdin.
+askpass=$(mktemp)
+trap 'rm -f "$askpass"' EXIT
+cat > "$askpass" <<'SH'
+#!/usr/bin/env bash
+printf 'SETTITLE sudo\nSETPROMPT Contrasena sudo:\nGETPIN\nBYE\n' | pinentry-gtk 2>/dev/null | sed -n 's/^D //p'
+SH
+chmod +x "$askpass"
+
+# Activar la entrada y armar BootNext en una sola invocación de sudo (una sola
+# contraseña).
+SUDO_ASKPASS="$askpass" sudo -A bash -c "efibootmgr -b '$entry' -a >/dev/null && efibootmgr -n '$entry' >/dev/null"
+
+# Reutiliza el flujo de reinicio normal de Omarchy (cierra ventanas, lo agenda
+# vía systemd-run, OSD): ya resuelve todo eso, no hay que repetirlo aquí.
+exec omarchy-system-reboot

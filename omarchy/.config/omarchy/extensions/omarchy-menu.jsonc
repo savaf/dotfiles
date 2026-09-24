@@ -9,5 +9,16 @@
     "description": "Apagar los LEDs o devolverlos al color del tema",
     "action": "$HOME/.local/bin/rgb toggle",
     "checked": "test -e \"${XDG_RUNTIME_DIR:-/tmp}/omarchy-rgb-off\""
+  },
+
+  // Va bajo "System" junto a Reboot/Shutdown. Arranca Windows una sola vez
+  // (one-shot vía efibootmgr --bootnext); el reinicio siguiente vuelve solo a
+  // Omarchy. Ver el propio script para el porqué de activar la entrada UEFI.
+  "system.reboot_windows": {
+    "icon": "",
+    "label": "Reboot to Windows",
+    "aliases": ["windows", "dualboot", "bootwindows"],
+    "description": "Arranca Windows una vez, sin tocar el orden de arranque",
+    "action": "$HOME/.local/bin/reboot-windows"
   }
 }
