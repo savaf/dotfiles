@@ -191,6 +191,22 @@ hyprctl devices -j | jq -r '.keyboards[] | "\(.name)\t\(.layout)\t\(.active_keym
   argument, so `StartupWMClass` can't be set in the generated `.desktop` —
   `--class` still applies to the window, but the compositor's
   launcher-to-window association isn't wired up.
+- **Netflix (u otro vídeo DRM) en negro con audio, en Brave/Chromium.** Causa:
+  con GPU NVIDIA + Wayland (Hyprland), cuando el vídeo cae al decodificador
+  software (`FFmpegVideoDecoder` — pasa con Widevine L3, que es lo único que
+  hay en Linux, y también con HEVC Main10), el frame se decodifica bien pero
+  el compositor no lo pinta: pantalla negra, audio normal. Es un bug conocido
+  de Chromium/Brave en NVIDIA+Wayland, no de Widevine ni de los codecs (ver
+  `brave/brave-browser#57974`). Solución aplicada: añadir `--use-gl=egl` y
+  `--disable-features=VaapiVideoDecoder` a `~/.config/brave-flags.conf` y
+  `~/.config/chromium-flags.conf` (se queda en Wayland, no hace falta forzar
+  X11 con `--ozone-platform=x11`). Estos ficheros están versionados en el
+  paquete Stow `omarchy/.config/{brave,chromium}-flags.conf`, así que
+  sobreviven a una reinstalación — tras `stow`, reinicia el navegador para que
+  tome los flags nuevos. Nota: si en algún momento reactivas la aceleración
+  por hardware del navegador (`brave://settings/system` /
+  `chrome://settings/system`), Netflix sigue topado en 1080p igualmente — Linux
+  nunca pasa de Widevine L3.
 - One-off extra packages: `omarchy pkg add <name>` (or plain `pacman`/`yay`).
 - Xbox controller: pair over Bluetooth (Super+Ctrl+B) — works with the
   in-kernel driver; run `omarchy-install-gaming-xbox-controllers` (xpadneo)
