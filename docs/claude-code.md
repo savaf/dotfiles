@@ -162,6 +162,16 @@ The `statusLine` exists for this: without the active model on screen, sessions s
 they opened with. Before it was added, 100% of sampled requests in `~/.claude/projects/` were
 Opus 5.
 
+`claude/.claude/hooks/statusline.sh` also surfaces, straight from the statusLine JSON (no
+transcript parsing needed):
+- context window usage as a color-coded bar, so `/context` is rarely needed mid-session
+- git branch, dirty file count, and ahead/behind vs. upstream
+- session cost and lines added/removed
+- output style, when it isn't `default`
+- 5-hour rate-limit usage, on plans that expose it
+
+Relies on `jq`, which every platform manifest in `packages/*.txt` installs as a base package.
+
 ### Skills
 
 `claude/.claude/skills/`, versioned here rather than installed by `npx skills add`. Stow links
