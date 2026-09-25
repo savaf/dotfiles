@@ -21,6 +21,7 @@ SlackTechnologies.Slack
 Google.Chrome
 7zip.7zip
 qBittorrent.qBittorrent
+jqlang.jq
 
 # --- Sin paquete en winget (instalación manual) ---
 # GlobalProtect: no existe paquete público (microsoft/winget-pkgs#188530,
