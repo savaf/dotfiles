@@ -202,6 +202,42 @@ install_lazydocker() {
   rm -rf "${tmp}"
 }
 
+# dua-cli no está empaquetado en apt; binario estático (musl) del release de
+# GitHub. Arch/Omarchy lo trae de pacman-cli.txt.
+install_dua() {
+  if exists dua; then
+    log "dua ya instalado ($(dua --version 2>/dev/null | head -1))"
+    return 0
+  fi
+
+  log "Descargando el último release de dua-cli desde GitHub…"
+  local target name version tmp
+  case "$(uname -m)" in
+    x86_64|amd64) target="x86_64-unknown-linux-musl" ;;
+    aarch64|arm64) target="aarch64-unknown-linux-musl" ;;
+    *) log "Arquitectura no soportada: $(uname -m); omitiendo dua"; return 0 ;;
+  esac
+
+  version="$(curl -fsSL https://api.github.com/repos/Byron/dua-cli/releases/latest \
+    | grep -Po '"tag_name":\s*"v\K[^"]*' || true)"
+  if [[ -z "${version}" ]]; then
+    log "No se pudo determinar la versión de dua-cli; omitiendo."
+    return 0
+  fi
+
+  tmp="$(mktemp -d)"
+  name="dua-v${version}-${target}"
+  if curl -fsSL -o "${tmp}/${name}.tar.gz" \
+      "https://github.com/Byron/dua-cli/releases/download/v${version}/${name}.tar.gz"; then
+    tar -xzf "${tmp}/${name}.tar.gz" -C "${tmp}"
+    sudo install "${tmp}/${name}/dua" /usr/local/bin/dua
+    log "dua ${version} instalado en /usr/local/bin/dua"
+  else
+    log "Fallo al descargar dua-cli; omitiendo."
+  fi
+  rm -rf "${tmp}"
+}
+
 # mise (version manager de lenguajes) no está en apt/dnf; el instalador oficial
 # funciona igual en cualquier distro y no pide sudo (instala en ~/.local/bin).
 # Arch/Omarchy: lo instala install_arch vía pacman (no va en pacman-cli.txt).
@@ -311,8 +347,23 @@ install_ubuntu() {
 
   if [[ -s "${APT_CLI}" ]]; then
     log "Installing apt packages from list..."
-    PKGS=$(grep -Ev '^\s*#|^\s*$' "${APT_CLI}" | tr '\n' ' ')
-    sudo apt install -y ${PKGS}
+    # apt aborta la transacción entera si UN paquete no tiene candidato (p.ej.
+    # renombrado/eliminado en una release nueva de Ubuntu): filtrar antes.
+    local p candidate pkgs=() skipped=()
+    for p in $(grep -Ev '^\s*#|^\s*$' "${APT_CLI}"); do
+      candidate="$(apt-cache policy "$p" 2>/dev/null | awk '/Candidate:/{print $2}')"
+      if [[ -n "${candidate}" && "${candidate}" != "(none)" ]]; then
+        pkgs+=("$p")
+      else
+        skipped+=("$p")
+      fi
+    done
+    if ((${#skipped[@]})); then
+      log "Sin candidato en apt (se omiten): ${skipped[*]}"
+    fi
+    if ((${#pkgs[@]})); then
+      sudo apt install -y "${pkgs[@]}"
+    fi
   fi
 
   if exists fdfind && ! exists fd; then
@@ -324,8 +375,15 @@ install_ubuntu() {
     sudo ln -sf "$(command -v batcat)" /usr/local/bin/bat
   fi
 
+  # tealdeer (cliente `tldr`) no trae páginas: bajar la caché la primera vez.
+  if exists tldr && [[ ! -d "${XDG_CACHE_HOME:-$HOME/.cache}/tealdeer" ]]; then
+    log "Descargando páginas de tldr (tealdeer)…"
+    tldr --update >/dev/null 2>&1 || log "Fallo al actualizar tldr; se omite."
+  fi
+
   install_lazygit
   install_lazydocker
+  install_dua
   ensure_neovim
   ensure_mise
   ensure_nerd_font
