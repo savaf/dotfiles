@@ -22,6 +22,7 @@ Google.Chrome
 7zip.7zip
 qBittorrent.qBittorrent
 jqlang.jq
+GitHub.cli
 
 # --- Sin paquete en winget (instalación manual) ---
 # GlobalProtect: no existe paquete público (microsoft/winget-pkgs#188530,
