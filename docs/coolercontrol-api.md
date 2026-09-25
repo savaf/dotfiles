@@ -18,8 +18,9 @@ spec. Keep it in English on purpose: it's an API reference, not usage docs.
   patterns that trigger `Rendimiento`.
 - `coolercontrol/.config/systemd/user/coolercontrol-mode-watcher.service`.
 
-`scripts/bootstrap.sh:ensure_coolercontrol_mode_watcher()` stows the package, runs the
-provisioning script and enables the service — but only once the API token below exists.
+`scripts/modules/coolercontrol.sh:ensure_coolercontrol_mode_watcher()` (called from
+`bootstrap.sh`) stows the package, runs the provisioning script and enables the service —
+but only once the API token below exists.
 
 ## Prerequisite: API token
 

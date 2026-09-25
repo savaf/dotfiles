@@ -10,28 +10,12 @@ PACMAN_CLI="${ROOT_DIR}/packages/pacman-cli.txt"
 ARCH_APPS="${ROOT_DIR}/packages/arch-apps.txt"
 OMARCHY_WEBAPPS="${ROOT_DIR}/packages/omarchy-webapps.txt"
 
-log() { echo "[setup] $*"; }
-exists() { command -v "$1" >/dev/null 2>&1; }
+# log/exists/os_detect: utilidades compartidas con bootstrap.sh.
+source "${ROOT_DIR}/scripts/lib/common.sh"
 
 # require_sudo: prompt único + keep-alive. Si se corre vía bootstrap.sh, hereda
 # el keep-alive del padre y no repregunta.
-source "${ROOT_DIR}/scripts/lib-sudo.sh"
-
-os_detect() {
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-    echo "macos"; return
-  fi
-  if [[ -r /etc/os-release ]]; then
-    . /etc/os-release
-    # Omarchy no altera /etc/os-release (queda ID=arch); detectarlo por su marca.
-    if [[ "${ID:-}" == "arch" ]] \
-        && { [[ -d "${HOME}/.local/share/omarchy" ]] || command -v omarchy >/dev/null 2>&1; }; then
-      echo "omarchy"; return
-    fi
-    echo "${ID:-linux}"; return
-  fi
-  echo "unknown"
-}
+source "${ROOT_DIR}/scripts/lib/sudo.sh"
 
 # Login shell actual del usuario, de forma portable: macOS no tiene getent, así
 # que se lee de Directory Services; en Linux, de /etc/passwd vía getent.

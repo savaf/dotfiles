@@ -34,6 +34,8 @@ dotfiles/
 ├── wsl/            # .wslconfig (copied to the Windows profile on WSL)
 ├── packages/       # package lists (brew/apt/dnf/node/vscode extensions)
 ├── scripts/        # bootstrap + install/sync helpers
+│   ├── lib/        # shared utilities (log, os_detect, sudo keep-alive…)
+│   └── modules/    # one installable/optional step per file, sourced by bootstrap.sh
 ├── system/         # non-$HOME system files (/etc/…), installed by a script, not Stow
 ├── docs/           # setup guides (macOS, shell, git/ssh, lazygit, …)
 └── README.md

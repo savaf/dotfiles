@@ -43,7 +43,7 @@ repo entero.
 ## Añadir un paquete Stow nuevo
 
 1. Crea `<tool>/` espejando la estructura de `$HOME` (p.ej. `<tool>/.config/<tool>/...`).
-2. Añádelo al array `STOW_PACKAGES` en `scripts/bootstrap.sh` para que se auto-enlace.
+2. Añádelo al array `STOW_PACKAGES` en `scripts/modules/stow.sh` para que se auto-enlace.
 3. Si trae paquetes que instalar, añádelos a los manifiestos `packages/*.txt` por gestor.
 
 ## Notas

@@ -27,8 +27,9 @@ writes them); extra profiles get a symlink to it.
 MCP servers can't be symlinked — they live inside each profile's `.claude.json` — so
 `scripts/install-claude-skills.sh` registers `context7` once per profile.
 
-To add a profile: append it to `CLAUDE_PROFILES` in both `scripts/bootstrap.sh` and
-`scripts/install-claude-skills.sh`, re-run the bootstrap, add an alias in
+To add a profile: append it to `CLAUDE_PROFILES` in both
+`scripts/modules/claude-profiles.sh` and `scripts/install-claude-skills.sh`, re-run the
+bootstrap, add an alias in
 `zsh/.config/zsh/aliases.zsh`, then `claude-profile <name>` → `/login`.
 
 `/status` shows which account the current session is on — worth checking when several panes are
