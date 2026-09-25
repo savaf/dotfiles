@@ -4,11 +4,13 @@
     "theme": "dark",
     "copyOnSelect": false,
     "copyFormatting": "none",
-    // Pon aquí el GUID de tu perfil de Ubuntu/WSL para que abra por defecto en
-    // vez de PowerShell. Windows Terminal genera ese perfil solo la primera
-    // vez que lo ve instalado; su GUID sale en Settings (Ctrl+,) > Ubuntu >
-    // "Open JSON file" (ícono de lápiz abajo a la izquierda).
-    // "defaultProfile": "{PEGA-AQUI-EL-GUID-DE-UBUNTU}",
+    // Abre Ubuntu (WSL) por defecto. El perfil "Ubuntu" de abajo lo definimos
+    // nosotros con un GUID fijo, así funciona igual en cualquier máquina (el
+    // que genera WSL solo cambia de GUID en cada instalación).
+    "defaultProfile": "{fc9beb41-664b-4815-9344-db0bca9a23b9}",
+    // Oculta los perfiles de Ubuntu autogenerados para no tenerlo duplicado
+    // en el menú. Si instalas otra distro, añádele su propio perfil a "list".
+    "disabledProfileSources": ["Windows.Terminal.Wsl", "Microsoft.WSL"],
     "profiles": {
         "defaults": {
             "font": {
@@ -20,7 +22,14 @@
             "useAcrylic": false,
             "cursorShape": "bar"
         },
-        "list": []
+        "list": [
+            {
+                "guid": "{fc9beb41-664b-4815-9344-db0bca9a23b9}",
+                "name": "Ubuntu",
+                "commandline": "wsl.exe -d Ubuntu --cd ~",
+                "icon": "ms-appx:///ProfileIcons/{9acb9455-ca41-5af7-950f-6bca1bc9722f}.png"
+            }
+        ]
     },
     "schemes": [
         {
