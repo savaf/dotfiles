@@ -1,4 +1,4 @@
-# IDs de winget (Windows Package Manager); instalados por scripts/bootstrap-windows.ps1.
+# IDs de winget (Windows Package Manager); instalados por scripts/bootstrap-windows.cmd.
 # Verificados contra github.com/microsoft/winget-pkgs (algunos IDs cambian de
 # nombre con el tiempo; si `winget install --id X` falla, busca el actual con
 # `winget search "<nombre>"`).
@@ -22,6 +22,7 @@ Google.Chrome
 7zip.7zip
 qBittorrent.qBittorrent
 jqlang.jq
+GitHub.cli
 
 # --- Sin paquete en winget (instalación manual) ---
 # GlobalProtect: no existe paquete público (microsoft/winget-pkgs#188530,

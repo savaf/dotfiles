@@ -7,10 +7,11 @@ estas dentro de Ubuntu/WSL).
 Requiere symlinks: activa "Modo desarrollador" (Settings > Privacidad y
 seguridad > Para desarrolladores) o corre este script como Administrador.
 
-Uso: clona este repo con Git for Windows y corre el script desde ahi.
+Uso: clona este repo con Git for Windows y corre el lanzador .cmd, que salta
+la ExecutionPolicy solo para este proceso (sin Set-ExecutionPolicy):
     git clone <repo-url> dotfiles
     cd dotfiles
-    .\scripts\bootstrap-windows.ps1
+    .\scripts\bootstrap-windows.cmd
 #>
 
 $ErrorActionPreference = 'Stop'
@@ -55,6 +56,12 @@ function Link-TerminalSettings {
         return
     }
 
+    # Si Windows Terminal esta abierto, al guardar desde su UI reescribe su copia
+    # en memoria encima del symlink y lo convierte en un archivo normal.
+    if (Get-Process WindowsTerminal -ErrorAction SilentlyContinue) {
+        Write-Log "AVISO: Windows Terminal esta abierto. Cierralo del todo tras el setup para que cargue el settings.json enlazado."
+    }
+
     $existing = Get-Item $TerminalSettingsDst -ErrorAction SilentlyContinue
     if ($existing -and $existing.LinkType -eq 'SymbolicLink') {
         Write-Log "settings.json ya es un symlink; se omite."
@@ -80,4 +87,3 @@ Install-WingetApps
 Link-TerminalSettings
 
 Write-Log "Listo. Abre una ventana nueva de Windows Terminal para ver los cambios."
-Write-Log "Pendiente manual: fijar 'defaultProfile' en windows\settings.json con el GUID de tu perfil Ubuntu."
