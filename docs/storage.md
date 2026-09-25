@@ -7,6 +7,10 @@ duplicada en ambos, así que ninguna ruta era estable entre arranques.
 Nada de esto se gestiona por stow: `/etc/fstab` es del sistema y el contenido de los discos
 no se versiona. Este documento es la referencia para reconstruirlo tras una reinstalación.
 
+> `scripts/bootstrap.sh` automatiza esto (`ensure_storage_mounts`) para el hostname
+> `andrea`, si los UUID de abajo están presentes (`blkid`); idempotente, no-op en
+> cualquier otro host. Los pasos de abajo son la referencia manual.
+
 ## Esquema
 
 | Etiqueta | UUID | Punto de montaje | Symlink | Contenido |
