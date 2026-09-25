@@ -238,6 +238,18 @@ install_dua() {
   rm -rf "${tmp}"
 }
 
+# Claude Code CLI: el instalador nativo oficial funciona igual en cualquier
+# distro Linux (mismo binario que empaqueta Omarchy/AUR y el cask de macOS);
+# no depende de Node.js/npm.
+install_claude_code() {
+  if exists claude; then
+    log "Claude Code ya instalado ($(claude --version 2>/dev/null | head -1))"
+    return 0
+  fi
+  log "Instalando Claude Code…"
+  curl -fsSL https://claude.ai/install.sh | bash || log "Fallo al instalar Claude Code; omitiendo."
+}
+
 # mise (version manager de lenguajes) no está en apt/dnf; el instalador oficial
 # funciona igual en cualquier distro y no pide sudo (instala en ~/.local/bin).
 # Arch/Omarchy: lo instala install_arch vía pacman (no va en pacman-cli.txt).
@@ -384,6 +396,7 @@ install_ubuntu() {
   install_lazygit
   install_lazydocker
   install_dua
+  install_claude_code
   ensure_neovim
   ensure_mise
   ensure_nerd_font

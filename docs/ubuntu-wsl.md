@@ -35,10 +35,12 @@ cd ~/dotfiles
 ./scripts/bootstrap.sh
 ```
 
-This installs the apt packages from [`packages/apt-cli.txt`](../packages/apt-cli.txt),
-installs tools that aren't in apt (e.g. lazygit from its GitHub release),
-stows the config packages, sets zsh as the default shell, and—on WSL—copies
-`.wslconfig` to your Windows user profile.
+This installs the apt packages from [`packages/apt-cli.txt`](../packages/apt-cli.txt)
+(which includes `gh`, skipped automatically on older Ubuntu releases where it has
+no apt candidate), installs tools that aren't in apt (e.g. lazygit from its GitHub
+release and Claude Code via its official installer), stows the config packages,
+sets zsh as the default shell, and—on WSL—copies `.wslconfig` to your Windows user
+profile.
 
 Open a new terminal (or `source ~/.zshrc`) to load everything.
 
