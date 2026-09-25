@@ -50,25 +50,26 @@ Open a new terminal (or `source ~/.zshrc`) to load everything.
 The bootstrap runs `chsh` to make zsh your login shell (Omarchy defaults to
 bash). This updates `/etc/passwd`, but **reopening a terminal is not enough**:
 the running Hyprland/uwsm session captured `SHELL=/usr/bin/bash` at login, and
-Omarchy launches the terminal via `xdg-terminal-exec` → Alacritty, which reads
-the shell from that inherited `$SHELL` rather than from `/etc/passwd`. So new
-terminals keep opening bash until the session's `$SHELL` is refreshed.
+Omarchy launches the terminal via `xdg-terminal-exec` → foot (the default
+terminal), which reads the shell from that inherited `$SHELL` rather than from
+`/etc/passwd`. So new terminals keep opening bash until the session's `$SHELL`
+is refreshed.
 
 Two ways to get zsh:
 
 - **Reboot / re-login Hyprland** — the clean, terminal-agnostic fix. PAM
   re-exports `SHELL=/usr/bin/zsh` into the fresh session and every terminal
   opens zsh. Verify with `echo $SHELL`.
-- **Pin the shell in Alacritty** — works immediately, no reboot, but is
-  Alacritty-specific. The bootstrap does this automatically on Omarchy; it adds
-  to `~/.config/alacritty/alacritty.toml`:
+- **Pin the shell in foot** — works immediately, no reboot, but is
+  foot-specific. The bootstrap does this automatically on Omarchy; it adds
+  to `~/.config/foot/foot.ini`:
 
-  ```toml
-  [terminal]
-  shell = { program = "/usr/bin/zsh" }
+  ```ini
+  [main]
+  shell=/usr/bin/zsh
   ```
 
-  New Alacritty windows (`SUPER`+`RETURN`) then open zsh right away.
+  New foot windows (`SUPER`+`RETURN`) then open zsh right away.
 
 Coexistence with Omarchy: the `omarchy-*` commands and `mise` shims live on
 `PATH` via `~/.config/uwsm/env`, so they keep working under zsh. Omarchy's bash
@@ -291,6 +292,10 @@ hyprctl devices -j | jq -r '.keyboards[] | "\(.name)\t\(.layout)\t\(.active_keym
   los sensores del sistema, opcionalmente: `sudo sensors-detect --auto`.
   `coolercontrold` posee por USB tanto el Kraken como el hub NZXT: OpenRGB lista el
   hub pero no puede escribirle, así que su iluminación va por `liquidctl`.
+  El Nuvoton NCT6687D-R de la placa (fan headers/sensores) no tiene driver en
+  `linux-omarchy`; sin él, `coolercontrold` loguea `Failed to load module nct6687`
+  al arrancar. Lo provee `nct6687d-dkms-git` (AUR, en `arch-apps.txt`); el bootstrap
+  lo carga y persiste con `ensure_nct6687` en `install-packages.sh`.
 
 - **Perfiles de temperatura y modo Rendimiento automático** (paquete stow
   `coolercontrol/`): recién instalado, `coolercontrold` detecta todo el

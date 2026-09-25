@@ -384,25 +384,26 @@ install_fedora() {
   ensure_zsh
 }
 
-# En Omarchy la sesión Hyprland/uwsm arranca con SHELL "congelado" y Alacritty
-# (vía xdg-terminal-exec) toma el shell de $SHELL, no de /etc/passwd. Fijar el
-# shell en el alacritty.toml del usuario hace que las ventanas nuevas abran zsh
-# sin depender de un reboot. Idempotente: no duplica la clave si ya existe.
+# En Omarchy la sesión Hyprland/uwsm arranca con SHELL "congelado" y foot (la
+# terminal por defecto, vía xdg-terminal-exec) toma el shell de $SHELL, no de
+# /etc/passwd. Fijar el shell en el foot.ini del usuario hace que las ventanas
+# nuevas abran zsh sin depender de un reboot. Idempotente: no duplica la clave
+# si ya existe.
 ensure_omarchy_zsh() {
-  local cfg="${HOME}/.config/alacritty/alacritty.toml"
-  [[ -f "${cfg}" ]] || { log "alacritty.toml no encontrado; se omite el pin de shell."; return 0; }
+  local cfg="${HOME}/.config/foot/foot.ini"
+  [[ -f "${cfg}" ]] || { log "foot.ini no encontrado; se omite el pin de shell."; return 0; }
   if grep -qE '^\s*shell\s*=' "${cfg}"; then
-    log "Pin de shell ya presente en alacritty.toml; se omite."
-  elif grep -qE '^\s*\[terminal\]' "${cfg}"; then
-    # Insertar la clave justo debajo del encabezado [terminal] existente.
-    sed -i '/^\s*\[terminal\]/a shell = { program = "/usr/bin/zsh" }' "${cfg}"
-    log "Pin de shell (zsh) añadido bajo [terminal] en alacritty.toml."
+    log "Pin de shell ya presente en foot.ini; se omite."
+  elif grep -qE '^\s*\[main\]' "${cfg}"; then
+    # Insertar la clave justo debajo del encabezado [main] existente.
+    sed -i '/^\s*\[main\]/a shell=/usr/bin/zsh' "${cfg}"
+    log "Pin de shell (zsh) añadido bajo [main] en foot.ini."
   else
-    printf '\n[terminal]\nshell = { program = "/usr/bin/zsh" }\n' >> "${cfg}"
-    log "Sección [terminal] con pin de shell (zsh) añadida a alacritty.toml."
+    printf '\n[main]\nshell=/usr/bin/zsh\n' >> "${cfg}"
+    log "Sección [main] con pin de shell (zsh) añadida a foot.ini."
   fi
   log "Reinicia o cierra sesión de Hyprland y vuelve a entrar para que \$SHELL se"
-  log "actualice en toda la sesión; mientras tanto, las ventanas NUEVAS de Alacritty"
+  log "actualice en toda la sesión; mientras tanto, las ventanas NUEVAS de foot"
   log "ya abren zsh gracias al pin de arriba."
 }
 
@@ -504,6 +505,32 @@ ensure_i2c_dev() {
   lsmod | grep -q '^i2c_dev' || sudo modprobe i2c-dev || true
 }
 
+# El Nuvoton NCT6687D-R de la placa (fan headers/sensores) no tiene driver en
+# linux-omarchy; coolercontrold lo detecta pero falla el modprobe ("Module
+# nct6687 not found"). nct6687d-dkms-git (arch-apps.txt) lo provee. Se persiste
+# en modules-load.d y, si coolercontrold ya estaba corriendo, se reinicia para
+# que lo detecte (si no, lo detecta solo en su próximo arranque).
+ensure_nct6687() {
+  exists modinfo || return 0
+  modinfo nct6687 >/dev/null 2>&1 || { log "nct6687 no disponible (¿falló el DKMS?); se omite."; return 0; }
+  local conf=/etc/modules-load.d/nct6687.conf just_loaded=0
+  if [[ -f "${conf}" ]]; then
+    log "nct6687 ya persistido (${conf}); se omite."
+  else
+    log "Persistiendo el módulo nct6687 (sensores/fan headers de la placa)…"
+    echo nct6687 | sudo tee "${conf}" >/dev/null || true
+  fi
+  if lsmod | grep -q '^nct6687'; then
+    return 0
+  fi
+  sudo modprobe nct6687 || return 0
+  just_loaded=1
+  if ((just_loaded)) && systemctl is-active --quiet coolercontrold.service 2>/dev/null; then
+    log "Reiniciando coolercontrold para que detecte el NCT6687D-R…"
+    sudo systemctl restart coolercontrold.service || true
+  fi
+}
+
 # Arch/Omarchy: repos oficiales traen lazygit y neovim actuales, así que no
 # hacen falta los fallbacks de GitHub. Omarchy ya trae casi todo (--needed salta).
 install_arch() {
@@ -540,12 +567,13 @@ install_arch() {
   ensure_zsh
 
   if [[ "${OS}" == "omarchy" ]]; then
-    # Fijar el shell en Alacritty por el SHELL "congelado" de uwsm.
+    # Fijar el shell en foot por el SHELL "congelado" de uwsm.
     ensure_omarchy_zsh
     ensure_omarchy_webapps
     ensure_omarchy_initramfs
     ensure_nvidia_gsp_disabled
     ensure_i2c_dev
+    ensure_nct6687
     ensure_coolercontrol
   fi
 }

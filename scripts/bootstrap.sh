@@ -245,8 +245,8 @@ final_shell_hint() {
   case "${OS}" in
     omarchy)
       log "Cierra sesión de Hyprland y vuelve a entrar (o reinicia) para que \$SHELL se"
-      log "actualice en toda la sesión; las ventanas NUEVAS de Alacritty ya abren zsh"
-      log "gracias al pin en alacritty.toml. Para probar aquí mismo: exec zsh"
+      log "actualice en toda la sesión; las ventanas NUEVAS de foot ya abren zsh"
+      log "gracias al pin en foot.ini. Para probar aquí mismo: exec zsh"
       ;;
     *)
       log "Abre una terminal nueva para entrar a zsh, o cámbiate ya con: exec zsh"

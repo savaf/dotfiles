@@ -20,6 +20,10 @@ openrgb
 # refrigeración + NZXT Kraken (bomba/ventiladores) y su pantalla LCD; daemon coolercontrold
 # lo habilita el bootstrap. Deps opcionales liquidctl/lm_sensors en pacman-cli.txt
 coolercontrol
+# driver del Nuvoton NCT6687D-R (Super-I/O de la placa MSI Z690 FORCE WIFI) que
+# coolercontrold necesita para leer sus sensores/fan headers; no está en linux-omarchy.
+# ensure_nct6687 en install-packages.sh lo carga y persiste.
+nct6687d-dkms-git
 # claude-code viene en el repo omarchy (o AUR en Arch puro); claude-desktop es el AUR
 # que reempaqueta la app oficial de Anthropic
 claude-code
