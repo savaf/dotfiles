@@ -1,0 +1,24 @@
+# ============================================================================
+# READLINE CONFIG (bash, y cualquier otro programa que use readline)
+# ============================================================================
+# $include primero: sin esto, este archivo REEMPLAZA por completo los binds
+# por defecto de readline (Tab, movimiento básico, etc.) en vez de sumarse.
+$include /etc/inputrc
+
+# Comportamiento
+set completion-ignore-case on
+set show-all-if-ambiguous on
+set colored-stats on
+set colored-completion-prefix on
+set menu-complete-display-prefix on
+set mark-symlinked-directories on
+
+# Búsqueda en historial con flechas + kill-region (puerto de
+# zsh/.config/zsh/keybindings.zsh)
+"\e[A": history-search-backward
+"\e[B": history-search-forward
+"\ew": kill-region
+
+# Esc Esc: antepone "sudo " a la línea actual (puerto del plugin sudo de
+# Oh-My-Zsh)
+"\e\e": "\C-asudo \C-e"

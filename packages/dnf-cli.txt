@@ -2,6 +2,8 @@
 git
 stow
 zsh
+bash
+bash-completion
 # fastfetch reemplaza a neofetch (retirado de los repos de Fedora)
 fastfetch
 curl

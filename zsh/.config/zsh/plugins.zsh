@@ -15,10 +15,19 @@ fi
 source "${ZINIT_HOME}/zinit.zsh"
 
 # ============================================================================
-# PROMPT THEME (Powerlevel10k)
+# PROMPT THEME (Starship)
 # ============================================================================
+# Unificado con bash (ver bash/.config/bash/integrations.sh): mismo prompt en
+# ambos shells, configurado en starship/.config/starship.toml. Powerlevel10k
+# queda como backup sin borrar — ver p10k/.p10k.zsh y el rollback comentado.
 
-zinit ice depth=1; zinit light romkatv/powerlevel10k
+if ! command -v starship >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
+  curl -sS https://starship.rs/install.sh 2>/dev/null | sh -s -- --yes --bin-dir "$HOME/.local/bin" >/dev/null 2>&1
+fi
+command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
+
+# Rollback a Powerlevel10k:
+# zinit ice depth=1; zinit light romkatv/powerlevel10k
 
 # ============================================================================
 # ZSH PLUGINS

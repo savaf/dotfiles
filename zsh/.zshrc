@@ -1,15 +1,14 @@
 # ============================================================================
-# POWERLEVEL10K INSTANT PROMPT
+# POWERLEVEL10K INSTANT PROMPT (backup, desactivado)
 # ============================================================================
-# Must stay near the top of ~/.zshrc. Code that may require console input
-# (password prompts, [y/n] confirmations, etc.) must go ABOVE this block.
+# El prompt activo ahora es Starship (ver plugins.zsh → PROMPT THEME),
+# unificado con bash. Este mecanismo es específico de Powerlevel10k y queda
+# comentado como rollback — ver docs/shell-and-dotfiles.md.
 
-# Suppress instant prompt warnings for cleaner startup
-typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
-
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
+# typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
+# if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+#   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+# fi
 
 # ============================================================================
 # MODULE LOADER
@@ -37,7 +36,9 @@ done
 unset _mod zsh_modules
 
 # ============================================================================
-# POWERLEVEL10K PROMPT CONFIG
+# POWERLEVEL10K PROMPT CONFIG (backup, sin usar)
 # ============================================================================
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+# El prompt activo es Starship (ver plugins.zsh). Para volver a Powerlevel10k:
+# descomenta esta línea y el bloque de zinit en plugins.zsh, y descomenta el
+# instant prompt de arriba.
+# [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh

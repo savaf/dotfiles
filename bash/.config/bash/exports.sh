@@ -1,0 +1,67 @@
+# ============================================================================
+# LOCALE
+# ============================================================================
+# Puerto directo de zsh/.config/zsh/exports.zsh — este bloque es POSIX/bash
+# puro, sin ajustes.
+
+setup_locale() {
+  # locale -a spells UTF-8 locales as "c.utf8"/"en_us.utf8"; normalize both
+  # sides (lowercase, drop dashes) so our candidates actually match.
+  local loc want available
+  available=$(locale -a 2>/dev/null | tr 'A-Z' 'a-z' | tr -d '-')
+  for loc in "C.UTF-8" "en_US.UTF-8"; do
+    want=$(echo "$loc" | tr 'A-Z' 'a-z' | tr -d '-')
+    if echo "$available" | grep -qx "$want"; then
+      export LANG="$loc"
+      export LC_ALL="$loc"
+      return 0
+    fi
+  done
+  unset LC_ALL
+  export LANG=C
+}
+setup_locale 2>/dev/null
+
+# ============================================================================
+# ENVIRONMENT VARIABLES
+# ============================================================================
+
+# Default editor
+export EDITOR='nvim'
+export VISUAL='nvim'
+
+# Colors for ls and completion
+export CLICOLOR=1
+export LSCOLORS=ExFxBxDxCxegedabagacad  # macOS/BSD
+# Linux: LS_COLORS (lo usa también bash-completion)
+if command -v dircolors >/dev/null 2>&1; then
+  eval "$(dircolors -b)"
+fi
+
+# mise de un gestor de paquetes (/usr/bin/mise, p.ej. mise-bin en Omarchy) no
+# puede hacer self-update: se actualiza con pacman/omarchy-update, así que el
+# aviso "version X available" solo es ruido. Con mise.run (~/.local/bin) se deja.
+[[ -x /usr/bin/mise ]] && export MISE_DISABLE_UPDATE_WARNING=1
+
+# History timestamp format
+export HISTTIMEFORMAT="[%F %T] "
+
+# FZF default options — fd se llama fdfind en Ubuntu/Debian; sin ninguno de los
+# dos, fzf usa su walker interno (mejor que un comando roto).
+if command -v fd >/dev/null 2>&1; then
+  export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+elif command -v fdfind >/dev/null 2>&1; then
+  export FZF_DEFAULT_COMMAND='fdfind --type f --hidden --follow --exclude .git'
+fi
+[[ -n "$FZF_DEFAULT_COMMAND" ]] && export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+
+# ============================================================================
+# MAN PAGES CON COLOR (puerto del snippet colored-man-pages de Oh-My-Zsh)
+# ============================================================================
+export LESS_TERMCAP_mb=$'\e[1;32m'
+export LESS_TERMCAP_md=$'\e[1;32m'
+export LESS_TERMCAP_me=$'\e[0m'
+export LESS_TERMCAP_se=$'\e[0m'
+export LESS_TERMCAP_so=$'\e[01;33m'
+export LESS_TERMCAP_ue=$'\e[0m'
+export LESS_TERMCAP_us=$'\e[1;4;31m'

@@ -73,6 +73,51 @@ ensure_zsh() {
   fi
 }
 
+# Instala bash (en macOS, la versión moderna de Homebrew — el /bin/bash 3.2 del
+# sistema está congelado por licencia desde 2007) y lo registra en /etc/shells.
+# A diferencia de ensure_zsh(), a propósito NO cambia el login shell: ese paso
+# es manual y explícito vía scripts/switch-shell.sh (ver
+# docs/shell-and-dotfiles.md), para poder validar el setup de bash antes de
+# comprometerte y para no pelear con el chsh automático de ensure_zsh() en
+# cada re-ejecución del bootstrap.
+ensure_bash_installed() {
+  if [[ "${OS}" == "macos" ]]; then
+    if ! exists brew; then
+      log "Homebrew no disponible; se omite bash moderno en macOS."
+      return 0
+    fi
+    brew list bash >/dev/null 2>&1 || { log "Instalando bash (Homebrew)…"; brew install bash; }
+  elif ! exists bash; then
+    log "bash no encontrado; instalándolo…"
+    case "${OS}" in
+      ubuntu|debian) sudo apt install -y bash ;;
+      fedora)        sudo dnf install -y bash ;;
+      bazzite)       sudo rpm-ostree install --idempotent --apply-live bash \
+                       || { sudo rpm-ostree install --idempotent bash; \
+                            log "bash capeado; reinicia y re-ejecuta el bootstrap."; } ;;
+      arch|omarchy)  sudo pacman -S --needed --noconfirm bash ;;
+      *)             log "No sé instalar bash en '${OS}'; hazlo manual."; return 0 ;;
+    esac
+  fi
+
+  local bash_bin
+  if [[ "${OS}" == "macos" ]]; then
+    bash_bin="$( [[ -x /opt/homebrew/bin/bash ]] && echo /opt/homebrew/bin/bash || echo /usr/local/bin/bash )"
+  else
+    bash_bin="$(command -v bash || true)"
+  fi
+  if [[ ! -x "${bash_bin}" ]]; then
+    log "bash sigue sin estar disponible; se omite el registro en /etc/shells."
+    return 0
+  fi
+
+  if [[ -r /etc/shells ]] && ! grep -qxF "${bash_bin}" /etc/shells; then
+    log "Añadiendo ${bash_bin} a /etc/shells…"
+    echo "${bash_bin}" | sudo tee -a /etc/shells >/dev/null || true
+  fi
+  log "bash listo (${bash_bin}). Para usarlo como login shell: ./scripts/switch-shell.sh bash"
+}
+
 # El compilador C de treesitter viene de las Xcode Command Line Tools. El
 # instalador de Homebrew ya las instala en un Mac limpio; esto es el guard por si
 # brew preexistía sin ellas.
@@ -118,6 +163,7 @@ install_macos() {
   fi
 
   ensure_zsh
+  ensure_bash_installed
 }
 
 # lazygit is not reliably packaged in apt; try apt first, then fall back to the
@@ -402,6 +448,7 @@ install_ubuntu() {
   ensure_nerd_font
 
   ensure_zsh
+  ensure_bash_installed
 }
 
 # Fedora clásica usa dnf. Bazzite (Fedora Atomic) es inmutable: no hay dnf en
@@ -437,6 +484,7 @@ install_fedora() {
   ensure_nerd_font
 
   ensure_zsh
+  ensure_bash_installed
 }
 
 # En Omarchy la sesión Hyprland/uwsm arranca con SHELL "congelado" y foot (la
@@ -620,6 +668,7 @@ install_arch() {
   ensure_nerd_font
 
   ensure_zsh
+  ensure_bash_installed
 
   if [[ "${OS}" == "omarchy" ]]; then
     # Fijar el shell en foot por el SHELL "congelado" de uwsm.

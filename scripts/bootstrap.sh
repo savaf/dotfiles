@@ -47,6 +47,8 @@ final_shell_hint() {
       ;;
   esac
   log "No ejecutes 'source ~/.zshrc' desde bash: es config de zsh y dará errores."
+  log "¿Quieres probar bash? Ya está instalado y configurado; cambia el login shell"
+  log "cuando quieras con: ./scripts/switch-shell.sh bash (ver docs/shell-and-dotfiles.md)."
 }
 
 main() {

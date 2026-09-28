@@ -1,0 +1,117 @@
+# ============================================================================
+# ALIASES
+# ============================================================================
+# Puerto de zsh/.config/zsh/aliases.zsh. Sin los suffix aliases (`alias -s`,
+# feature zsh-only sin equivalente en bash) ni los atajos rzsh/ezsh (ver
+# rbash/ebash abajo).
+
+# Basic utilities
+alias vim='nvim'
+alias vi='nvim'
+alias v='nvim'
+alias sudo='sudo '
+alias c='clear'
+
+# Bash shortcuts
+alias rbash='source ~/.bashrc'
+alias ebash='nvim ~/.bashrc'
+
+# Navigation shortcuts
+alias ..='cd ..'
+alias ...='cd ../..'
+alias .3='cd ../../..'
+alias .4='cd ../../../..'
+alias .5='cd ../../../../..'
+
+# Process management
+alias psa="ps auxf"
+alias psgrep="ps aux | grep -v grep | grep -i -e VSZ -e"
+alias psmem='ps auxf | sort -nr -k 4'
+alias pscpu='ps auxf | sort -nr -k 3'
+
+# Enhanced grep with colors
+alias grep='grep --color=auto'
+alias egrep='egrep --color=auto'
+alias fgrep='fgrep --color=auto'
+
+# Safe file operations
+alias cp="cp -i"
+alias mv='mv -i'
+alias rm='rm -i'
+
+# EZA (better ls)
+alias tree='eza --tree'
+alias l='eza -F --grid --color=always --group-directories-first'
+alias ls='eza -alF --color=always --group-directories-first' # my preferred listing
+alias la='eza -a --color=always --group-directories-first'  # all files and dirs
+alias ll='eza -l --color=always --group-directories-first'  # long format
+alias lt='eza -aT --color=always --group-directories-first' # tree listing
+alias l.='eza -al --color=always --group-directories-first ../' # ls on the PARENT directory
+alias l..='eza -al --color=always --group-directories-first ../../' # ls on directory 2 levels up
+alias l...='eza -al --color=always --group-directories-first ../../../' # ls on directory 3 levels up
+
+# BAT (better cat) — usa el binario que exista (bat en macOS/Fedora/Arch, batcat en Ubuntu)
+if command -v bat >/dev/null 2>&1; then
+  alias cat='bat -p'
+elif command -v batcat >/dev/null 2>&1; then
+  alias cat='batcat -p'
+  alias bat='batcat'
+fi
+
+# Zoxide (better cd)
+alias cd="z"
+
+# Git shortcuts
+alias addup='git add -u'
+alias addall='git add .'
+alias branch='git branch'
+alias checkout='git checkout'
+alias clone='git clone'
+alias cloneshallow='git clone --depth 1'
+alias clonebranch='git clone --depth 1 -b'
+alias gfoall='git remote set-branches origin "*" && git fetch origin'
+alias commit='git commit -m'
+alias fetch='git fetch'
+alias pull='git pull origin'
+alias push='git push origin'
+alias gst='git status'
+alias tag='git tag'
+alias newtag='git tag -a'
+alias gclean='git branch | grep -v "main" | xargs git branch -D'
+
+# lazygit (terminal UI for git)
+alias lzg='lazygit'
+
+# Docker shortcuts (if docker is installed)
+if command -v docker >/dev/null 2>&1; then
+  alias dps='docker ps'
+  alias dpsa='docker ps -a'
+  alias di='docker images'
+  alias dex='docker exec -it'
+  alias dlog='docker logs'
+  alias dstop='docker stop $(docker ps -q)'
+  alias drm='docker rm $(docker ps -aq)'
+  alias drmi='docker rmi $(docker images -q)'
+fi
+
+# System info
+alias myip='curl -s ifconfig.me'
+alias ports='netstat -tulanp'
+alias meminfo='free -m -l -t'
+alias cpuinfo='lscpu'
+alias diskusage='df -h'
+
+# Network
+alias ping='ping -c 5'
+alias wget='wget -c'
+
+# tree
+alias ptree="eza --tree -L 2 -I 'node_modules|.git|dist'"
+
+# Claude Code: `claude` a secas = perfil personal (~/.claude); estos usan la
+# cuenta de trabajo en ~/.claude-work (ver claude-profile en functions.sh).
+alias ccw='claude-profile work'
+alias claude-work='claude-profile work'
+# settings.json arranca en sonnet; `cco` sube a Opus ya desde el arranque, para
+# arquitectura o debugging difícil (ver docs/claude-code.md).
+alias cco='claude --model opus'
