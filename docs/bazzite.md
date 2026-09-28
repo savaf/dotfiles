@@ -36,7 +36,7 @@ cd ~/dotfiles
 
 This installs the packages from [`packages/dnf-cli.txt`](../packages/dnf-cli.txt),
 installs tools that aren't in the repos (lazygit and Neovim ≥ 0.11 from their
-GitHub releases), stows the config packages, and sets zsh as the default shell.
+GitHub releases), stows the config packages, and sets bash as the default shell (zsh stays available: `./scripts/switch-shell.sh zsh`).
 
 - **Classic Fedora**: packages install with `dnf`.
 - **Bazzite**: there is no `dnf` on the host; the bootstrap layers the missing
@@ -44,7 +44,7 @@ GitHub releases), stows the config packages, and sets zsh as the default shell.
   needed). If `--apply-live` isn't supported, the layer is queued instead —
   reboot and re-run the bootstrap, as the script tells you.
 
-Open a new terminal (or `source ~/.zshrc`) to load everything.
+Open a new terminal (or `exec bash`) to load everything.
 
 ## 4. Fonts
 
@@ -61,4 +61,4 @@ Select it in your terminal (Konsole/Ptyxis → profile → Appearance → Font).
 - Caps Lock → Escape is applied automatically only on GNOME (`gsettings`). On
   Bazzite's default KDE, set it in System Settings → Keyboard → Advanced →
   "Caps Lock behavior".
-- To re-apply config after pulling changes: `cd ~/dotfiles && stow -R zsh git p10k nvim tmux shell lazygit`.
+- To re-apply config after pulling changes: `cd ~/dotfiles && stow -R bash zsh git p10k starship nvim tmux shell lazygit`.

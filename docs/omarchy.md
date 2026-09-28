@@ -36,47 +36,38 @@ cd ~/dotfiles
 
 This installs the packages from [`packages/pacman-cli.txt`](../packages/pacman-cli.txt)
 with `pacman -S --needed` (already-installed packages are skipped), stows the
-config packages, and sets zsh as the default shell (Omarchy defaults to bash).
+config packages, and sets bash as the default shell (zsh stays available: `./scripts/switch-shell.sh zsh`).
 
 Omarchy already ships neovim (LazyVim), lazygit, fzf, ripgrep and zoxide, and
 keeps its own configs in `~/.config` — any that collide with a stow package
 (e.g. `~/.config/nvim`) are backed up to `~/.dotfiles-backup/<timestamp>/`
 before linking, so nothing is lost.
 
-Open a new terminal (or `source ~/.zshrc`) to load everything.
+Open a new terminal (or `exec bash`) to load everything.
 
-## 4. Switching the shell to zsh
+## 4. The default shell (bash)
 
-The bootstrap runs `chsh` to make zsh your login shell (Omarchy defaults to
-bash). This updates `/etc/passwd`, but **reopening a terminal is not enough**:
-the running Hyprland/uwsm session captured `SHELL=/usr/bin/bash` at login, and
-Omarchy launches the terminal via `xdg-terminal-exec` → foot (the default
-terminal), which reads the shell from that inherited `$SHELL` rather than from
-`/etc/passwd`. So new terminals keep opening bash until the session's `$SHELL`
-is refreshed.
+Omarchy already defaults to bash, and so do these dotfiles: the bootstrap runs
+`chsh` to bash (a no-op if it's already your login shell) and installs the
+ported bash config (`~/.bashrc` + `~/.config/bash/`, with ble.sh and Starship).
+zsh stays installed and configured as an alternative.
 
-Two ways to get zsh:
+The running Hyprland/uwsm session captures `$SHELL` at login and foot reads the
+shell from it rather than from `/etc/passwd`, so after switching shells
+(`./scripts/switch-shell.sh zsh|bash`) either reboot/re-login Hyprland, or rely
+on the pin the bootstrap/switch script writes to `~/.config/foot/foot.ini`:
 
-- **Reboot / re-login Hyprland** — the clean, terminal-agnostic fix. PAM
-  re-exports `SHELL=/usr/bin/zsh` into the fresh session and every terminal
-  opens zsh. Verify with `echo $SHELL`.
-- **Pin the shell in foot** — works immediately, no reboot, but is
-  foot-specific. The bootstrap does this automatically on Omarchy; it adds
-  to `~/.config/foot/foot.ini`:
+```ini
+[main]
+shell=/usr/bin/bash
+```
 
-  ```ini
-  [main]
-  shell=/usr/bin/zsh
-  ```
-
-  New foot windows (`SUPER`+`RETURN`) then open zsh right away.
+New foot windows (`SUPER`+`RETURN`) then open that shell right away.
 
 Coexistence with Omarchy: the `omarchy-*` commands and `mise` shims live on
-`PATH` via `~/.config/uwsm/env`, so they keep working under zsh. Omarchy's bash
-aliases/functions are **not** loaded in zsh (by design) — your own
-`~/.config/zsh/*` config replaces them. `~/.bashrc` is left untouched (these
-dotfiles don't stow it), so bash still works in TTYs and scripts, and
-`omarchy update` won't conflict.
+`PATH` via `~/.config/uwsm/env`, so they keep working in bash and zsh. Omarchy's own bash
+aliases/functions are **not** loaded: `~/.bashrc` is now this repo's (stowed
+from `bash/`), and your `~/.config/bash/*` config replaces them.
 
 mise on Omarchy is the preinstalled `mise-bin` (from the `omarchy` repo), so it
 is **not** listed in `packages/pacman-cli.txt` (`extra/mise` conflicts with it);
@@ -381,4 +372,4 @@ hyprctl devices -j | jq -r '.keyboards[] | "\(.name)\t\(.layout)\t\(.active_keym
   habilitar y avisa en el log del bootstrap; una vez creado el token,
   re-ejecuta `scripts/bootstrap.sh` (o a mano:
   `coolercontrol-provision && systemctl --user enable --now coolercontrol-mode-watcher`).
-- To re-apply config after pulling changes: `cd ~/dotfiles && stow -R zsh git p10k nvim tmux shell lazygit`.
+- To re-apply config after pulling changes: `cd ~/dotfiles && stow -R bash zsh git p10k starship nvim tmux shell lazygit`.

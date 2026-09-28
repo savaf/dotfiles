@@ -22,6 +22,8 @@ utility/reference dirs, not linked by Stow.
 
 ```
 dotfiles/
+├── bash/           # .bashrc + .inputrc + .config/bash/*.sh modules (default shell)
+├── starship/       # .config/starship.toml (prompt shared by bash and zsh)
 ├── zsh/            # .zshrc (slim loader) + .config/zsh/*.zsh modules
 ├── git/            # .gitconfig + .config/git/ignore
 ├── p10k/           # .p10k.zsh (Powerlevel10k prompt)
@@ -79,10 +81,10 @@ To link (or unlink) individual packages yourself:
 
 ```sh
 cd ~/dotfiles
-stow zsh git p10k nvim tmux shell lazygit claude   # link everything
+stow bash zsh git p10k starship nvim tmux shell lazygit claude   # link everything
 stow nvim                                    # link just one package
 stow -D nvim                                 # unlink (remove symlinks)
-stow -R zsh                                   # restow (refresh) after changes
+stow -R bash                                  # restow (refresh) after changes
 ```
 
 ## Package lists
@@ -119,7 +121,7 @@ Step-by-step guides for a fresh machine live in [`docs/`](docs):
 | [shell-and-dotfiles.md](docs/shell-and-dotfiles.md) | zsh modules, prompt, and applying the dotfiles with Stow |
 | [ubuntu-wsl.md](docs/ubuntu-wsl.md) | Ubuntu & WSL2 setup from scratch (incl. `.wslconfig`, fonts) |
 | [bazzite.md](docs/bazzite.md) | Fedora & Bazzite (immutable) setup — dnf / rpm-ostree |
-| [omarchy.md](docs/omarchy.md) | Arch & Omarchy (Hyprland) setup — pacman, switching to zsh |
+| [omarchy.md](docs/omarchy.md) | Arch & Omarchy (Hyprland) setup — pacman, default shell (bash), zsh alternative |
 | [macos-setup.md](docs/macos-setup.md) | macOS system preferences, apps, Homebrew, iTerm2 |
 | [git-and-ssh.md](docs/git-and-ssh.md) | Git defaults and GitHub SSH key setup |
 | [nodejs.md](docs/nodejs.md) | Node.js via nvm and global modules |

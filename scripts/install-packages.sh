@@ -27,10 +27,9 @@ current_login_shell() {
   fi
 }
 
-# Garantiza que zsh esté instalado, registrado en /etc/shells y fijado como login
-# shell del usuario. Consolida lo que antes vivía duplicado (y con `|| true` mudo)
-# en install_macos/ubuntu/fedora/arch. Idempotente: no reinstala ni re-chsh si ya
-# está todo en su sitio, y nunca hace `chsh -s ""` cuando zsh falta.
+# Garantiza que zsh (shell alternativa) esté instalado y registrado en /etc/shells.
+# NO cambia el login shell: el defecto es bash (ver ensure_bash_installed); para
+# volver a zsh usa ./scripts/switch-shell.sh zsh. Idempotente.
 ensure_zsh() {
   # 1) Instalar el binario si no vino en la lista de paquetes (o distro rara).
   if ! exists zsh; then
@@ -60,26 +59,12 @@ ensure_zsh() {
     log "Añadiendo ${zsh_bin} a /etc/shells…"
     echo "${zsh_bin}" | sudo tee -a /etc/shells >/dev/null || true
   fi
-
-  # 4) Fijar como login shell solo si aún no lo es.
-  local cur
-  cur="$(current_login_shell)"
-  if [[ "${cur}" == "${zsh_bin}" ]]; then
-    log "zsh ya es tu login shell (${zsh_bin}); se omite chsh."
-  elif sudo chsh -s "${zsh_bin}" "$(id -un)"; then
-    log "Login shell cambiado a ${zsh_bin}."
-  else
-    log "No se pudo cambiar el login shell a zsh (chsh falló); cámbialo manual: chsh -s ${zsh_bin}"
-  fi
 }
 
 # Instala bash (en macOS, la versión moderna de Homebrew — el /bin/bash 3.2 del
-# sistema está congelado por licencia desde 2007) y lo registra en /etc/shells.
-# A diferencia de ensure_zsh(), a propósito NO cambia el login shell: ese paso
-# es manual y explícito vía scripts/switch-shell.sh (ver
-# docs/shell-and-dotfiles.md), para poder validar el setup de bash antes de
-# comprometerte y para no pelear con el chsh automático de ensure_zsh() en
-# cada re-ejecución del bootstrap.
+# sistema está congelado por licencia desde 2007), lo registra en /etc/shells y
+# lo fija como login shell (es el defecto de estos dotfiles; zsh queda como
+# alternativa: ./scripts/switch-shell.sh zsh). Idempotente.
 ensure_bash_installed() {
   if [[ "${OS}" == "macos" ]]; then
     if ! exists brew; then
@@ -115,7 +100,15 @@ ensure_bash_installed() {
     log "Añadiendo ${bash_bin} a /etc/shells…"
     echo "${bash_bin}" | sudo tee -a /etc/shells >/dev/null || true
   fi
-  log "bash listo (${bash_bin}). Para usarlo como login shell: ./scripts/switch-shell.sh bash"
+  local cur
+  cur="$(current_login_shell)"
+  if [[ "${cur}" == "${bash_bin}" ]]; then
+    log "bash ya es tu login shell (${bash_bin}); se omite chsh."
+  elif sudo chsh -s "${bash_bin}" "$(id -un)"; then
+    log "Login shell cambiado a ${bash_bin}."
+  else
+    log "No se pudo cambiar el login shell a bash (chsh falló); cámbialo manual: chsh -s ${bash_bin}"
+  fi
 }
 
 # El compilador C de treesitter viene de las Xcode Command Line Tools. El
@@ -490,24 +483,23 @@ install_fedora() {
 # En Omarchy la sesión Hyprland/uwsm arranca con SHELL "congelado" y foot (la
 # terminal por defecto, vía xdg-terminal-exec) toma el shell de $SHELL, no de
 # /etc/passwd. Fijar el shell en el foot.ini del usuario hace que las ventanas
-# nuevas abran zsh sin depender de un reboot. Idempotente: no duplica la clave
-# si ya existe.
-ensure_omarchy_zsh() {
-  local cfg="${HOME}/.config/foot/foot.ini"
+# nuevas abran bash sin depender de un reboot. Idempotente: reemplaza la clave
+# si ya existe (p.ej. un pin previo a zsh).
+ensure_omarchy_shell() {
+  local cfg="${HOME}/.config/foot/foot.ini" bin
+  bin="$(command -v bash)"
   [[ -f "${cfg}" ]] || { log "foot.ini no encontrado; se omite el pin de shell."; return 0; }
   if grep -qE '^\s*shell\s*=' "${cfg}"; then
-    log "Pin de shell ya presente en foot.ini; se omite."
+    sed -i "s|^\s*shell\s*=.*|shell=${bin}|" "${cfg}"
   elif grep -qE '^\s*\[main\]' "${cfg}"; then
-    # Insertar la clave justo debajo del encabezado [main] existente.
-    sed -i '/^\s*\[main\]/a shell=/usr/bin/zsh' "${cfg}"
-    log "Pin de shell (zsh) añadido bajo [main] en foot.ini."
+    sed -i "/^\s*\[main\]/a shell=${bin}" "${cfg}"
   else
-    printf '\n[main]\nshell=/usr/bin/zsh\n' >> "${cfg}"
-    log "Sección [main] con pin de shell (zsh) añadida a foot.ini."
+    printf '\n[main]\nshell=%s\n' "${bin}" >> "${cfg}"
   fi
+  log "Pin de shell (bash) fijado en foot.ini."
   log "Reinicia o cierra sesión de Hyprland y vuelve a entrar para que \$SHELL se"
   log "actualice en toda la sesión; mientras tanto, las ventanas NUEVAS de foot"
-  log "ya abren zsh gracias al pin de arriba."
+  log "ya abren bash gracias al pin de arriba."
 }
 
 # Con NVIDIA + LUKS, el prompt de contraseña queda en negro si los módulos
@@ -672,7 +664,7 @@ install_arch() {
 
   if [[ "${OS}" == "omarchy" ]]; then
     # Fijar el shell en foot por el SHELL "congelado" de uwsm.
-    ensure_omarchy_zsh
+    ensure_omarchy_shell
     ensure_omarchy_webapps
     ensure_omarchy_initramfs
     ensure_nvidia_gsp_disabled
@@ -684,7 +676,8 @@ install_arch() {
 
 post_checks() {
   echo "[versions]"
-  exists zsh && zsh --version || echo "zsh: not found"
+  bash --version | head -1
+  exists zsh && zsh --version || echo "zsh: not found (opcional)"
   exists brew && brew --version || true
   exists fzf && fzf --version || echo "fzf: not found"
   exists zoxide && zoxide --version || echo "zoxide: not found"
@@ -706,7 +699,7 @@ main() {
     *) echo "[setup] Unsupported or unknown OS: ${OS}"; exit 1 ;;
   esac
   post_checks
-  log "Done. Restart your terminal or run: source ~/.zshrc"
+  log "Done. Open a new terminal or run: exec bash"
 }
 
 main "$@"

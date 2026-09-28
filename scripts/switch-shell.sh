@@ -1,12 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Cambia el login shell del usuario entre zsh y bash, a demanda. A propósito
-# NO es parte del flujo automático de bootstrap.sh/install-packages.sh: la
-# migración a bash (ver docs/shell-and-dotfiles.md) deja este paso manual y
-# explícito para poder validar el setup nuevo antes de comprometerte, y para
-# no pelear con el chsh automático de ensure_zsh() en cada re-ejecución del
-# bootstrap.
+# Cambia el login shell del usuario entre bash (defecto) y zsh, a demanda.
+# El bootstrap (ensure_bash_installed) ya fija bash; este script es para
+# alternar manualmente.
 #
 # uso: ./scripts/switch-shell.sh zsh|bash
 
@@ -63,7 +60,7 @@ fi
 # Omarchy: foot toma el shell de $SHELL (congelado por uwsm), no de
 # /etc/passwd — pin en foot.ini para que las ventanas NUEVAS abran el shell
 # correcto sin esperar a un reinicio de sesión (mismo mecanismo que
-# ensure_omarchy_zsh() en install-packages.sh, generalizado a ambos shells).
+# ensure_omarchy_shell() en install-packages.sh).
 if [[ "${OS}" == "omarchy" ]]; then
   cfg="${HOME}/.config/foot/foot.ini"
   if [[ -f "${cfg}" ]]; then

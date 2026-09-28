@@ -4,13 +4,9 @@ How the shell is set up and how these dotfiles are applied.
 
 ## zsh
 
-The default shell is **zsh**. Install it if needed and make it the login shell:
-
-```sh
-brew install zsh          # macOS
-sudo apt install zsh      # Ubuntu/WSL
-chsh -s "$(which zsh)"
-```
+zsh is the **alternative** shell (the default is [bash](#bash)). It stays fully
+configured and installed by the bootstrap; switch to it with
+`./scripts/switch-shell.sh zsh` (see [Switching your login shell](#switching-your-login-shell)).
 
 The configuration is **modular**: `~/.zshrc` is a slim loader that sources
 focused files from `~/.config/zsh/`:
@@ -36,11 +32,11 @@ p10k instant-prompt block in `.zshrc`.
 
 ## bash
 
-zsh remains the default login shell; bash is a **fully ported, opt-in
-migration** — installed and configured everywhere, but switching your login
-shell to it is a manual step (see [Switching your login shell](#switching-your-login-shell)
-below). zsh is never touched by that switch and stays available as a
-one-keystroke fallback (`exec zsh`).
+bash is the **default login shell**: `bootstrap.sh`/`install-packages.sh`
+install it (Homebrew's modern bash on macOS) and `chsh` to it. zsh is never
+touched and stays available as a one-keystroke fallback (`exec zsh`) or a
+permanent switch (see [Switching your login shell](#switching-your-login-shell)
+below).
 
 Same modular pattern as zsh: `~/.bashrc` is a slim loader that sources focused
 files from `~/.config/bash/`:
@@ -52,6 +48,7 @@ files from `~/.config/bash/`:
 | `path.sh` | Homebrew + `PATH` |
 | `completion.sh` | bash-completion + related `shopt` |
 | `history.sh` | history options (`shopt`/`HISTCONTROL`, live-shared history) |
+| `git.sh` | puerto del plugin git de OMZ (`gco`, `gfo`, `ggp`…; generado desde `OMZP::git`) |
 | `aliases.sh` | aliases (same set as zsh, minus the zsh-only suffix aliases) |
 | `functions.sh` | utility functions (same as zsh's `functions.zsh`, portable as-is) |
 | `integrations.sh` | fzf, zoxide, nvm, phpbrew, Starship init |
@@ -99,22 +96,21 @@ theme.
 
 ## Switching your login shell
 
-Installing/configuring bash (via `bootstrap.sh`/`install-packages.sh`) never
-changes your login shell — that's deliberately a separate, manual step so you
-can validate the new setup before committing to it, and so it doesn't fight
-with the automatic zsh `chsh` that `bootstrap.sh` still runs on every
-re-execution:
+The bootstrap (`ensure_bash_installed()` in `install-packages.sh`) sets bash as
+your login shell on every run; `ensure_zsh()` only installs zsh and registers
+it in `/etc/shells`. So if you switch to zsh permanently, re-running the
+bootstrap will `chsh` back to bash — run `switch-shell.sh zsh` again after it.
+To alternate by hand:
 
 ```sh
-./scripts/switch-shell.sh bash   # or: zsh, to go back
+./scripts/switch-shell.sh zsh    # or: bash, to go back to the default
 ```
 
 This registers the target shell in `/etc/shells` if needed, runs `chsh`, and
 on Omarchy also re-pins `shell=` in `~/.config/foot/foot.ini` (foot inherits
 the frozen `$SHELL` from the uwsm/Hyprland session, not `/etc/passwd` — see
-`ensure_omarchy_zsh()` in `install-packages.sh` for the zsh-side of the same
-mechanism). tmux's `default-command` follows whichever shell you migrate to
-(currently `bash`, see `tmux.conf`) independently of your login shell.
+`ensure_omarchy_shell()` in `install-packages.sh`). tmux's `default-command`
+is `bash` (see `tmux.conf`) independently of your login shell.
 
 ## Applying the dotfiles
 

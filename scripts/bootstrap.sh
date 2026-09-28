@@ -22,10 +22,9 @@ for module in "${ROOT_DIR}"/scripts/modules/*.sh; do
   source "${module}"
 done
 
-# Mensaje final sobre cómo entrar a zsh. Clave: NO sugerir `source ~/.zshrc`,
-# porque ~/.zshrc es sintaxis zsh y falla línea por línea si tu sesión actual es
-# bash (bad substitution, `command not found: zinit`, etc.). Lo correcto es
-# arrancar zsh en una sesión nueva o con `exec zsh`.
+# Mensaje final sobre cómo entrar a bash (shell por defecto). NO sugerir
+# `source ~/.zshrc` desde bash: es sintaxis zsh y falla línea por línea. zsh
+# sigue disponible como alternativa (./scripts/switch-shell.sh zsh).
 final_shell_hint() {
   local login_shell
   login_shell="$(getent passwd "$(id -un)" 2>/dev/null | cut -d: -f7 || true)"
@@ -33,22 +32,20 @@ final_shell_hint() {
 
   log "Bootstrap completo."
   case "${login_shell##*/}" in
-    zsh) log "zsh ya es tu login shell." ;;
-    *)   log "Aviso: zsh aún no es tu login shell; revisa el paso chsh de install-packages.sh." ;;
+    bash) log "bash ya es tu login shell." ;;
+    *)    log "Aviso: bash aún no es tu login shell; revisa el paso chsh de install-packages.sh." ;;
   esac
   case "${OS}" in
     omarchy)
       log "Cierra sesión de Hyprland y vuelve a entrar (o reinicia) para que \$SHELL se"
-      log "actualice en toda la sesión; las ventanas NUEVAS de foot ya abren zsh"
-      log "gracias al pin en foot.ini. Para probar aquí mismo: exec zsh"
+      log "actualice en toda la sesión; las ventanas NUEVAS de foot ya abren bash"
+      log "gracias al pin en foot.ini. Para probar aquí mismo: exec bash"
       ;;
     *)
-      log "Abre una terminal nueva para entrar a zsh, o cámbiate ya con: exec zsh"
+      log "Abre una terminal nueva para entrar a bash, o cámbiate ya con: exec bash"
       ;;
   esac
-  log "No ejecutes 'source ~/.zshrc' desde bash: es config de zsh y dará errores."
-  log "¿Quieres probar bash? Ya está instalado y configurado; cambia el login shell"
-  log "cuando quieras con: ./scripts/switch-shell.sh bash (ver docs/shell-and-dotfiles.md)."
+  log "¿Prefieres zsh? Sigue configurado; cambia con: ./scripts/switch-shell.sh zsh"
 }
 
 main() {
