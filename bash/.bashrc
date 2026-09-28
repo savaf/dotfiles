@@ -34,6 +34,7 @@ bash_modules=(
   path          # Homebrew + PATH
   completion    # bash-completion + shopt varios
   history       # history options (shopt/HISTCONTROL)
+  git           # aliases y funciones del plugin git de OMZ (gco, gst, ggp...)
   aliases       # aliases
   functions     # utility functions
   integrations  # fzf, zoxide, nvm, phpbrew, starship...
