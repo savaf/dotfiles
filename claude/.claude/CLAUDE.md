@@ -21,3 +21,12 @@ cost less than many thin ones.
 - Before merging: `code-review`; over-engineering only: `ponytail-review`.
 - Delegate: Explore finds, Plan designs, reviewers read the diff, contrarian then
   feedback-resolver weigh options.
+
+## Effort
+
+Each agent's `effort:` frontmatter is the default. Pass `effort` on spawn only to override it.
+
+- Search, summaries: `low`.
+- Standard implementation: `medium`.
+- Design, review: `high`.
+- Security, critical architecture: `xhigh`.
