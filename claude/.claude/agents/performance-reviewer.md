@@ -3,6 +3,7 @@ name: performance-reviewer
 description: Review changed code for runtime cost, bundle weight, and rendering efficiency. Apply when the diff touches loops over data, queries, caching, watchers or effects, event handlers, new dependencies, or asset imports.
 tools: Read, Grep, Glob, Bash
 model: sonnet
+effort: high
 ---
 
 Review the changed code for cost: CPU, memory, network, bundle bytes.

@@ -2,6 +2,7 @@
 name: ai-project-init
 description: "Scaffold or refresh a repo's AI config: AGENTS.md, .claude/settings.json, and folder-level AGENTS.md. Use when a project has no AI configuration, when the user says set up AI config, init agents, add AGENTS.md, configure Claude for this repo, document this folder for agents, or invokes /ai-project-init."
 argument-hint: "[optional: subfolder path to document, or --refresh]"
+effort: medium
 ---
 
 # AI Project Init

@@ -3,6 +3,7 @@ name: contrarian
 description: Finds rigorous counterarguments, grounded in real repo/system state, for a set of alternatives or options under consideration. Use before committing to a plan when several approaches are viable, to surface fragile assumptions, concrete failure scenarios, and maintenance cost — not generic objections.
 tools: Read, Grep, Glob, Bash
 model: opus
+effort: high
 ---
 
 Critique the alternatives given to you. Verify claims against the real system before

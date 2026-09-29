@@ -125,15 +125,17 @@ default branch is normal (this one) needs no config. A shared repo with a PR wor
 `claude/.claude/agents/`. The first three route models per subagent type; the rest are review
 lenses and a compressor, dispatchable by name.
 
-| Agent | Model | Why |
-|---|---|---|
-| `Explore` | haiku | mechanical searching; cheapest model does it fine |
-| `Plan` | opus | deep reasoning is worth it for architecture |
-| `general-purpose` | sonnet | implementation workhorse; haiku falls short on non-trivial code |
-| `architecture-reviewer` | opus | boundaries, contracts, state, error paths, test gaps |
-| `security-reviewer` | opus | injection, secrets, auth, data leakage |
-| `performance-reviewer` | sonnet | algorithmic cost, N+1 queries, bundle weight |
-| `summarizer` | haiku | compresses logs and command output out of the main thread |
+| Agent | Model | Effort | Why |
+|---|---|---|---|
+| `Explore` | haiku | low | mechanical searching; cheapest model does it fine |
+| `Plan` | opus | high | deep reasoning is worth it for architecture |
+| `general-purpose` | sonnet | medium | implementation workhorse; haiku falls short on non-trivial code |
+| `architecture-reviewer` | opus | high | boundaries, contracts, state, error paths, test gaps |
+| `security-reviewer` | opus | xhigh | injection, secrets, auth, data leakage |
+| `performance-reviewer` | sonnet | high | algorithmic cost, N+1 queries, bundle weight |
+| `contrarian` | opus | high | counterarguments only pay off with depth |
+| `feedback-resolver` | sonnet | medium | turns critiques into fixes; no deep reasoning needed |
+| `summarizer` | haiku | low | compresses logs and command output out of the main thread |
 
 The three reviewers share an output contract in `claude/.claude/docs/review-output.md`: gates a
 finding must pass, the findings table, and the severity scale. A project that defines its own
@@ -172,6 +174,52 @@ transcript parsing needed):
 - 5-hour rate-limit usage, on plans that expose it
 
 Relies on `jq`, which every platform manifest in `packages/*.txt` installs as a base package.
+
+### Effort
+
+Effort is independent of the model. Each agent and skill sets `effort:` in its frontmatter.
+
+Scale: `low` → `medium` → `high` → `xhigh` → `max`. `max` is not used here.
+
+| Level | Use |
+|---|---|
+| `low` | search, summaries, mechanical skills |
+| `medium` | standard implementation, drafting |
+| `high` | design, review, analysis |
+| `xhigh` | security, critical architecture |
+
+Skills (`claude/.claude/skills/`, all inline):
+
+| Skill | Effort |
+|---|---|
+| `git-commit` | low |
+| `create-pr` | low |
+| `doc-write` | medium |
+| `ai-project-init` | medium |
+| `session-retro` | high |
+
+Rules:
+- An inline skill's `effort:` replaces the session's for that turn only.
+- The `Skill` tool takes no effort parameter; only the skill's frontmatter sets it.
+- The `Agent` tool takes `effort` per spawn; it beats the agent's frontmatter for that spawn.
+- Main-thread dispatch rule lives in `claude/.claude/CLAUDE.md`.
+- `Explore` and `summarizer` run on haiku, which ignores `effort` without an error; `low` is
+  documentation only.
+
+Precedence, highest first:
+1. `CLAUDE_CODE_EFFORT_LEVEL`
+2. `--effort`
+3. `effort:` in agent or skill frontmatter
+4. Session level (`effortLevel` or `/effort`)
+5. Model default
+
+`maxEffortLevel` caps every source, frontmatter included.
+
+Do NOT set `CLAUDE_CODE_EFFORT_LEVEL`: it beats every `effort:` frontmatter and would force one
+level on all agents and skills, like `CLAUDE_CODE_SUBAGENT_MODEL` does for models.
+
+`/effort` saves its level per model in `modelSettings`, which beats top-level `effortLevel`.
+After one `/effort` call, the `settings.json` default stops applying to that model.
 
 ### Skills
 
