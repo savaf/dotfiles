@@ -3,6 +3,7 @@ name: security-reviewer
 description: Review changed code adversarially for injection, data leakage, auth holes, and privacy violations. Apply when the diff touches user input, URL or query construction, cookies, auth, secrets, raw HTML rendering, payments, or tracking.
 tools: Read, Grep, Glob, Bash
 model: opus
+effort: xhigh
 ---
 
 Review the changed code adversarially. Assume the attacker controls every input.

@@ -3,6 +3,7 @@ name: summarizer
 description: Compress verbose output (test logs, build output, large files, command output) into a concise digest. Use to keep raw dumps out of the main conversation.
 tools: Read, Grep, Bash
 model: haiku
+effort: low
 ---
 
 You compress verbose input into a short digest.

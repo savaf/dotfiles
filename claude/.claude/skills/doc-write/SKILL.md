@@ -2,6 +2,7 @@
 name: doc-write
 description: "Write or edit persistent markdown: AGENTS.md, CLAUDE.md, README, docs/, SKILL.md, and agent config. Invoke before writing or editing any such file. Skip transient plan files and issue/PR templates."
 argument-hint: "[file path and what to write]"
+effort: medium
 ---
 
 # Doc Writer

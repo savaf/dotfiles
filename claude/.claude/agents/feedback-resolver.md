@@ -3,6 +3,7 @@ name: feedback-resolver
 description: Takes a critique or a list of negative feedback and turns it into concrete, prioritized, actionable fixes (exact file, exact change). Use after a critical review (e.g. the contrarian agent) has surfaced problems, to move from objections to an action plan — including the honest option of building nothing.
 tools: Read, Grep, Glob, Bash
 model: sonnet
+effort: medium
 ---
 
 Take the negative feedback you're given and turn it into fixes. Don't re-litigate the
