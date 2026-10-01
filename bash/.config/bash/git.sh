@@ -123,6 +123,15 @@ ggpnp() {
 
 gtl() { git tag --sort=-v:refname -n --list "${1}*"; }
 
+# ---- Atajos "snapshot-safe" (funciones, no aliases) ----
+# El snapshot de shell de Claude Code hace `unalias -a` en cada sesión de
+# comandos (ver docs/claude-code.md), así que estos tres quedan como
+# funciones en vez de aliases para seguir disponibles ahí.
+gco() { git checkout "$@"; }
+gp() { git push "$@"; }
+gst() { git status "$@"; }
+push() { git push origin "$@"; }
+
 alias gfa='git fetch --all --tags --prune --jobs=10'
 alias gpf='git push --force-with-lease --force-if-includes'
 alias gpsupf='git push --set-upstream origin $(git_current_branch) --force-with-lease --force-if-includes'
@@ -163,7 +172,6 @@ alias gbnm='git branch --no-merged'
 alias gbr='git branch --remotes'
 alias ggsup='git branch --set-upstream-to=origin/$(git_current_branch)'
 alias gbg='LANG=C git branch -vv | grep ": gone\]"'
-alias gco='git checkout'
 alias gcor='git checkout --recurse-submodules'
 alias gcb='git checkout -b'
 alias gcB='git checkout -B'
@@ -246,7 +254,6 @@ alias gprumi='git pull --rebase=interactive upstream $(git_main_branch)'
 alias ggpull='git pull origin "$(git_current_branch)"'
 alias gluc='git pull upstream $(git_current_branch)'
 alias glum='git pull upstream $(git_main_branch)'
-alias gp='git push'
 alias gpd='git push --dry-run'
 alias gpf!='git push --force'
 alias gpsup='git push --set-upstream origin $(git_current_branch)'
@@ -302,7 +309,6 @@ alias gstd='git stash drop'
 alias gstl='git stash list'
 alias gstp='git stash pop'
 alias gsts='git stash show --patch'
-alias gst='git status'
 alias gss='git status --short'
 alias gsb='git status --short --branch'
 alias gsnut='git status --untracked-files=no'

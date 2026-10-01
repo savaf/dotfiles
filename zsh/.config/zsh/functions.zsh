@@ -2,6 +2,20 @@
 # UTILITY FUNCTIONS
 # ============================================================================
 
+### SNAPSHOT-SAFE GIT SHORTCUTS
+# gco/gp/gst vienen como aliases del plugin git de OMZ (plugins.zsh, cargado
+# antes que este archivo); push es nuestro (ver aliases.zsh). Los cuatro se
+# redefinen aquí como funciones porque el snapshot de shell de Claude Code
+# hace `unalias -a` en cada sesión de comandos (ver docs/claude-code.md), y
+# un alias no sobrevive eso aunque exista una función con el mismo nombre.
+# zsh además exige el unalias previo: si el nombre sigue siendo alias al
+# parsear `nombre() { ... }`, falla con "defining function based on alias".
+unalias gco gp gst 2>/dev/null
+gco() { git checkout "$@"; }
+gp() { git push "$@"; }
+gst() { git status "$@"; }  # 'status' es palabra reservada de zsh
+push() { git push origin "$@"; }
+
 ### ARCHIVE EXTRACTION
 # usage: ex <file>
 function ex() {

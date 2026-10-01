@@ -74,8 +74,8 @@ alias gfoall='git remote set-branches origin "*" && git fetch origin'
 alias commit='git commit -m'
 alias fetch='git fetch'
 alias pull='git pull origin'
-alias push='git push origin'
-alias gst='git status'  # 'status' es palabra reservada de zsh y 'stat' taparía /usr/bin/stat
+# push y gst son funciones (functions.zsh) en vez de aliases: sobreviven al
+# `unalias -a` del snapshot de shell de Claude Code.
 alias tag='git tag'
 alias newtag='git tag -a'
 alias gclean='git branch | grep -v "main" | xargs git branch -D'
