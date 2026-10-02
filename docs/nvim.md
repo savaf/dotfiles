@@ -101,7 +101,15 @@ its own "show hidden" option that the other doesn't inherit — this has silentl
 regressed after a LazyVim update at least once already. If hidden files stop
 showing after `:Lazy update` (or an Omarchy update that bumps LazyVim), check with `:Lazy`
 which plugin is now behind `<leader>e`/`<leader>ff` and mirror the hidden-files
-option there, same pattern as the existing two files. And remember this only
+option there, same pattern as the existing two files.
+
+Gitignored files: `.env.local` and `.env.build.local` are always visible. In the snacks
+explorer via `include` (it beats hidden/ignored); in `files`/`grep` via `ignored = true`
+minus a `noise` exclude list (`node_modules`, `dist`, `build`, …) in `snacks.lua`, since
+`fd`/`rg` can't whitelist single ignored files. neo-tree (`neo-tree.lua`) already shows
+everything (`hide_gitignored = false`), which is why this worked on Omarchy before it did
+on Ubuntu: Omarchy's explorer is neo-tree, Ubuntu's is snacks. Add a name to `include`
+(explorer) or a dir to `noise` (picker) to tune it. And remember this only
 takes effect once the machine is up to date: `git pull` alone doesn't touch
 `~/.config/nvim` — re-run `stow -R nvim` (or the full re-stow in
 [omarchy.md](omarchy.md)) after pulling.
