@@ -6,10 +6,12 @@ DietrichGebert/ponytail
 # engineering workflow: tdd, diagnosing-bugs, grilling, domain-modeling, code-review, ...
 # Per repo, run /setup-matt-pocock-skills once (issue tracker + docs layout).
 mattpocock/skills
-# anti-slop UI fundamentals (layout, typography, motion, spacing)
-Leonxlnx/taste-skill
-# reusable CSS transitions catalog + agent skill
-Jakubantalik/transitions.dev
+# Leonxlnx/taste-skill — DESACTIVADO (13 skills de diseño UI que se pisan entre sí). Solo para
+# trabajo de frontend; directorios en ~/.claude/skills-disabled/. Para recuperar: descomenta la
+# línea y corre scripts/install-claude-skills.sh, o `mv` uno solo.
+# Jakubantalik/transitions.dev — DESACTIVADO (2 skills, descripciones largas en cada request).
+# Solo se usa en trabajo de UI con animaciones. Los directorios están en ~/.claude/skills-disabled/;
+# para usarlos: `mv ~/.claude/skills-disabled/transitions-{dev,polish} ~/.claude/skills/`.
 # coreyhaines31/marketingskills — DESACTIVADO. Aportaba 47 skills (~8.000 tokens de
 # descripciones) al prompt de CADA request, medido como ~4% del consumo total, y no se
 # usaban en trabajo de APIs/frontend. Los directorios están en ~/.claude/skills-disabled/;

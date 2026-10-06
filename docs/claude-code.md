@@ -299,9 +299,10 @@ symlinked directories alone unless a repo ships a skill with the same name.
 
 Token note: every installed skill puts its `name` + `description` in the system prompt of
 **every** request (the body loads on demand, so size on disk is irrelevant). Currently 53 skills
-= ~4,020 tokens per request, up from 27 skills = ~2,860 after adding `mattpocock/skills`.
+= ~2,690 tokens per request (27 skills = ~2,860 before adding `mattpocock/skills`; the UI skills below are off).
 `marketingskills` was 47 skills (~8,000 tokens) and is commented out of the manifest — its
-directories sit in `~/.claude/skills-disabled/`.
+directories sit in `~/.claude/skills-disabled/`, as do `transitions-dev`, `transitions-polish` and
+the 13 skills from `Leonxlnx/taste-skill` (UI-only, off by default here).
 
 `mattpocock/skills` is installed through the manifest, **not** as the
 `mattpocock-skills@claude-plugins-official` plugin: enabling both lists every skill twice
