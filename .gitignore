@@ -20,3 +20,6 @@
 
 # nvim: lock de plugins (estado por máquina; omarchy añade sus plugins de temas)
 nvim/.config/nvim/lazy-lock.json
+
+# Issues locales de los skills (estado de trabajo, no se versiona)
+/.scratch/

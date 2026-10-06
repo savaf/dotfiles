@@ -50,3 +50,17 @@ repo entero.
 
 - `.claude/` está en `.gitignore` (estado local de sesión; no se versiona).
 - Mantén este archivo corto: es un índice, no un espejo de la documentación.
+
+## Agent skills
+
+### Issue tracker
+
+Markdown local: los issues y specs viven en `.scratch/<feature>/` (ignorado por git). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Vocabulario por defecto (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`), guardado como línea `Status:`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `GLOSSARY.md` y `docs/adr/` en la raíz. See `docs/agents/domain.md`.
