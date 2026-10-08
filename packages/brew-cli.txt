@@ -21,7 +21,6 @@ neovim
 nginx
 openssl@3
 pcre2
-powerlevel10k
 ripgrep
 screenresolution
 stow

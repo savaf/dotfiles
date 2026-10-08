@@ -1,56 +1,128 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 
-# Prompt unificado entre zsh y bash (ver docs/shell-and-dotfiles.md). Punto de
-# partida basado en los segmentos de p10k/.p10k.zsh (backup, sin borrar); se
-# afina editando este archivo, sin tocar ningún shell.
+# Prompt unificado entre zsh y bash (ver docs/shell-and-dotfiles.md). Estilo
+# minimal con glifos Nerd Font: una línea de contexto, ● de estado y versiones
+# de lenguajes a la derecha. Se afina editando este archivo, sin tocar ningún
+# shell.
 #
-# Colores como índices ANSI 0-15 a propósito (igual que p10k/.p10k.zsh): así
-# el prompt hereda la paleta que defina la terminal y sigue el tema activo en
-# vez de fijar colores hex/256.
+# Colores como índices ANSI 0-15 a propósito: así el prompt hereda la paleta
+# que defina la terminal y sigue el tema activo en vez de fijar colores hex/256.
 
 format = """
-$os$directory$git_branch$git_status$docker_context$nodejs$php$python$rust$golang$cmd_duration
+$sudo$username$hostname$directory$git_branch$git_state$git_status$container$cmd_duration
 $character"""
 
-right_format = """$status$jobs$time"""
+right_format = """$status$jobs$docker_context$nodejs$bun$python$golang$rust$php$time"""
 
 add_newline = true
 
-[os]
-disabled = false
-style = "bold fg:6"
-
-[os.symbols]
-Macos = "󰀵"
-Ubuntu = ""
-Fedora = ""
-Arch = ""
+# ---- Contexto ----------------------------------------------------------------
 
 [directory]
 style = "bold fg:4"
 truncation_length = 3
 truncate_to_repo = true
 truncation_symbol = "…/"
+home_symbol = "󰋜 ~"
 read_only = " 󰌾"
+read_only_style = "fg:1"
+format = "[$path]($style)[$read_only]($read_only_style) "
+
+[directory.substitutions]
+"Documents" = "󰈙 Documents"
+"Downloads" = " Downloads"
+"Music" = "󰝚 Music"
+"Pictures" = " Pictures"
+"Videos" = " Videos"
+"Desktop" = "󰇄 Desktop"
+"Projects" = "󰲋 Projects"
+"dotfiles" = "󰣇 dotfiles"
+".config" = " .config"
 
 [git_branch]
 symbol = " "
-style = "fg:6"
-format = "[on](fg:7) [$symbol$branch]($style) "
+style = "fg:5"
+format = "[on](fg:8) [$symbol$branch]($style) "
 
 [git_status]
 style = "fg:3"
-format = "([$all_status$ahead_behind]($style)) "
-conflicted = "="
-ahead = "⇡${count}"
-behind = "⇣${count}"
-diverged = "⇕⇡${ahead_count}⇣${behind_count}"
-untracked = "?${count}"
-stashed = "*${count}"
-modified = "!${count}"
-staged = "+${count}"
-renamed = "»${count}"
-deleted = "✘${count}"
+format = "([$all_status$ahead_behind]($style) )"
+conflicted = "󰞇${count} "
+ahead = "⇡${count} "
+behind = "⇣${count} "
+diverged = "⇕⇡${ahead_count}⇣${behind_count} "
+untracked = "…${count} "
+stashed = "󰆼${count} "
+modified = "~${count} "
+staged = "[✚${count} ](fg:2)"
+renamed = "»${count} "
+deleted = "✘${count} "
+
+# Rebase/merge/cherry-pick en curso: "(REBASING 2/5)"
+[git_state]
+style = "bold fg:3"
+format = '[\($state( $progress_current/$progress_total)\)]($style) '
+
+[cmd_duration]
+min_time = 2000
+format = "[took ](fg:8)[$duration](fg:3) "
+
+# ---- Estado ------------------------------------------------------------------
+
+[character]
+success_symbol = "[●](bold fg:2)"
+error_symbol = "[●](bold fg:1)"
+vimcmd_symbol = "[◆](bold fg:2)"
+vimcmd_replace_symbol = "[◆](bold fg:5)"
+vimcmd_visual_symbol = "[◆](bold fg:3)"
+
+[status]
+disabled = false
+map_symbol = true
+format = "[$symbol$common_meaning$signal_name$maybe_int]($style) "
+symbol = "✘ "
+not_found_symbol = "󰍉 "
+not_executable_symbol = "󰜺 "
+sigint_symbol = "󰜺 "
+signal_symbol = "󱐋 "
+style = "fg:1"
+
+[jobs]
+symbol = "✦"
+style = "fg:6"
+format = "[$symbol$number]($style) "
+
+[time]
+disabled = false
+format = "[ $time](fg:8)"
+time_format = "%H:%M"
+
+# Credenciales de sudo activas
+[sudo]
+disabled = false
+symbol = "󰞀 "
+style = "bold fg:1"
+format = "[$symbol]($style)"
+
+# Solo aparecen por SSH
+[hostname]
+ssh_only = true
+ssh_symbol = "󰢩 "
+style = "bold fg:5"
+format = "[$ssh_symbol$hostname]($style) "
+
+[username]
+show_always = false
+style_user = "fg:5"
+format = "[$user]($style)@"
+
+# Dentro de distrobox/toolbox/podman
+[container]
+symbol = "󰆧 "
+style = "fg:5"
+format = "[$symbol$name]($style) "
+
+# ---- Entornos (a la derecha, solo si el proyecto los usa) ----------------------
 
 [docker_context]
 symbol = " "
@@ -63,47 +135,27 @@ symbol = " "
 style = "fg:2"
 format = "[$symbol($version )]($style)"
 
-[php]
-symbol = " "
-style = "fg:5"
-format = "[$symbol($version )]($style)"
-
-[python]
-symbol = " "
+[bun]
+symbol = "󰳓 "
 style = "fg:3"
 format = "[$symbol($version )]($style)"
 
+[python]
+symbol = "󰌠 "
+style = "fg:3"
+format = "[$symbol($version )(\\($virtualenv\\) )]($style)"
+
 [rust]
-symbol = " "
+symbol = "󱘗 "
 style = "fg:1"
 format = "[$symbol($version )]($style)"
 
 [golang]
-symbol = " "
+symbol = "󰟓 "
 style = "fg:6"
 format = "[$symbol($version )]($style)"
 
-[cmd_duration]
-min_time = 2000
-format = " took [$duration](fg:3)"
-
-[character]
-success_symbol = "[❯](bold fg:2)"
-error_symbol = "[❯](bold fg:9)"
-vimcmd_symbol = "[❮](bold fg:2)"
-
-[status]
-disabled = false
-format = "[$symbol$status]($style) "
-symbol = "✘ "
-style = "fg:9"
-
-[jobs]
-symbol = "✦"
-style = "fg:6"
-format = "[$symbol$number]($style) "
-
-[time]
-disabled = false
-format = "[$time](fg:6)"
-time_format = "%H:%M"
+[php]
+symbol = " "
+style = "fg:5"
+format = "[$symbol($version )]($style)"
