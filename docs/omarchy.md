@@ -36,21 +36,21 @@ cd ~/dotfiles
 
 This installs the packages from [`packages/pacman-cli.txt`](../packages/pacman-cli.txt)
 with `pacman -S --needed` (already-installed packages are skipped), stows the
-config packages, and sets bash as the default shell (zsh stays available: `./scripts/switch-shell.sh zsh`).
+config packages, and sets zsh as the default shell (bash stays available: `./scripts/switch-shell.sh bash`).
 
 Omarchy already ships neovim (LazyVim), lazygit, fzf, ripgrep and zoxide, and
 keeps its own configs in `~/.config` — any that collide with a stow package
 (e.g. `~/.config/nvim`) are backed up to `~/.dotfiles-backup/<timestamp>/`
 before linking, so nothing is lost.
 
-Open a new terminal (or `exec bash`) to load everything.
+Open a new terminal (or `exec zsh`) to load everything.
 
-## 4. The default shell (bash)
+## 4. The default shell (zsh)
 
-Omarchy already defaults to bash, and so do these dotfiles: the bootstrap runs
-`chsh` to bash (a no-op if it's already your login shell) and installs the
-ported bash config (`~/.bashrc` + `~/.config/bash/`, with ble.sh and Starship).
-zsh stays installed and configured as an alternative.
+Omarchy defaults to bash, but these dotfiles use zsh: the bootstrap runs
+`chsh` to zsh (a no-op if it's already your login shell). The ported bash
+config (`~/.bashrc` + `~/.config/bash/`, with ble.sh and Starship) stays
+installed as an alternative.
 
 The running Hyprland/uwsm session captures `$SHELL` at login and foot reads the
 shell from it rather than from `/etc/passwd`, so after switching shells
@@ -59,7 +59,7 @@ on the pin the bootstrap/switch script writes to `~/.config/foot/foot.ini`:
 
 ```ini
 [main]
-shell=/usr/bin/bash
+shell=/usr/bin/zsh
 ```
 
 New foot windows (`SUPER`+`RETURN`) then open that shell right away.
@@ -251,7 +251,7 @@ hyprctl devices -j | jq -r '.keyboards[] | "\(.name)\t\(.layout)\t\(.active_keym
   | App | Mecanismo | Choca con stow? |
   |---|---|---|
   | Terminal | `alacritty.toml`/`ghostty.conf`/`kitty.conf` generados + `omarchy-theme-osc`, que reenvía secuencias OSC a los terminales ya abiertos | no |
-  | Prompt zsh | ninguno: omarchy no trae plantilla para shells. `p10k/.p10k.zsh` usa índices ANSI 0-15 para heredar la paleta del terminal (ver `docs/shell-and-dotfiles.md`) | no |
+  | Prompt zsh | ninguno: omarchy no trae plantilla para shells. `starship/.config/starship.toml` usa índices ANSI 0-15 para heredar la paleta del terminal (ver `docs/shell-and-dotfiles.md`) | no |
   | Neovim | `~/.config/nvim/lua/plugins/theme.lua` → symlink al `neovim.lua` generado (aether.nvim), con hot-reload. Archivo local, no versionado | no |
   | VS Code | `omarchy-theme-set-vscode` reescribe `workbench.colorTheme` con `sed --follow-symlinks` | **sí**: escribe dentro del repo (aceptado, ver `docs/vscode.md`) |
   | Claude Code | `omarchy-theme-set-claude` genera `~/.claude/themes/omarchy.json`; la activación está versionada en el repo (ver `docs/claude-code.md`) | evitado |
@@ -372,4 +372,4 @@ hyprctl devices -j | jq -r '.keyboards[] | "\(.name)\t\(.layout)\t\(.active_keym
   habilitar y avisa en el log del bootstrap; una vez creado el token,
   re-ejecuta `scripts/bootstrap.sh` (o a mano:
   `coolercontrol-provision && systemctl --user enable --now coolercontrol-mode-watcher`).
-- To re-apply config after pulling changes: `cd ~/dotfiles && stow -R bash zsh git p10k starship nvim tmux shell lazygit`.
+- To re-apply config after pulling changes: `cd ~/dotfiles && stow -R bash zsh git starship nvim tmux shell lazygit`.

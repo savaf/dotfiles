@@ -4,9 +4,9 @@ How the shell is set up and how these dotfiles are applied.
 
 ## zsh
 
-zsh is the **alternative** shell (the default is [bash](#bash)). It stays fully
-configured and installed by the bootstrap; switch to it with
-`./scripts/switch-shell.sh zsh` (see [Switching your login shell](#switching-your-login-shell)).
+zsh is the **default** shell (the alternative is [bash](#bash)). It stays fully
+configured and installed by the bootstrap, which also `chsh`es to it. Go back to it
+any time with `./scripts/switch-shell.sh zsh` (see [Switching your login shell](#switching-your-login-shell)).
 
 The configuration is **modular**: `~/.zshrc` is a slim loader that sources
 focused files from `~/.config/zsh/`:
@@ -16,8 +16,9 @@ focused files from `~/.config/zsh/`:
 | `exports.zsh` | locale + environment variables |
 | `path.zsh` | Homebrew + `PATH` |
 | `plugins.zsh` | zinit, plugins, Oh-My-Zsh snippets, prompt theme |
-| `completion.zsh` | `compinit` + completion styling |
-| `history.zsh` | history options |
+| `completion.zsh` | completion styling + fzf-tab previews + compinit |
+| `history.zsh` | history options (50k, timestamps, shared) |
+| `options.zsh` | `setopt`: autocd, auto_pushd, extended_glob… |
 | `keybindings.zsh` | key bindings |
 | `aliases.zsh` | aliases (git, eza, bat, docker, `lzg`, …) |
 | `functions.zsh` | utility functions (`ex`, `mkcd`, `glog`, …) |
@@ -25,17 +26,13 @@ focused files from `~/.config/zsh/`:
 
 Plugins are managed by [zinit](https://github.com/zdharma-continuum/zinit) and
 auto-install on first launch. **The prompt is [Starship](https://starship.rs)**
-(see below) — Powerlevel10k stays installed as an untouched rollback path:
-`p10k/.p10k.zsh` and the `zinit light romkatv/powerlevel10k` line in
-`plugins.zsh` are kept, just commented out. To go back, uncomment both and the
-p10k instant-prompt block in `.zshrc`.
+(see below).
 
 ## bash
 
-bash is the **default login shell**: `bootstrap.sh`/`install-packages.sh`
-install it (Homebrew's modern bash on macOS) and `chsh` to it. zsh is never
-touched and stays available as a one-keystroke fallback (`exec zsh`) or a
-permanent switch (see [Switching your login shell](#switching-your-login-shell)
+bash is the **alternative shell**: `bootstrap.sh`/`install-packages.sh`
+install it (Homebrew's modern bash on macOS) but never `chsh` to it. It stays
+available as a one-keystroke fallback (`exec bash`) or a permanent switch (see [Switching your login shell](#switching-your-login-shell)
 below).
 
 Same modular pattern as zsh: `~/.bashrc` is a slim loader that sources focused
@@ -86,30 +83,30 @@ same pattern already used for Homebrew itself in `path.sh`.
 
 [Starship](https://starship.rs) is the single prompt config for **both** zsh
 and bash, configured in `starship/.config/starship.toml` (its own Stow
-package, same idea as `p10k/`). It self-installs the same way ble.sh does —
+package). It self-installs the same way ble.sh does —
 no manual step needed.
 
-**Prompt colors:** like `p10k/.p10k.zsh`, `starship.toml` uses ANSI indices
+**Prompt colors:** `starship.toml` uses ANSI indices
 **0-15** (`fg:4`, `fg:2`, …) on purpose, not hex/256-color values, so the
 prompt follows whatever palette the terminal defines instead of hardcoding a
 theme.
 
 ## Switching your login shell
 
-The bootstrap (`ensure_bash_installed()` in `install-packages.sh`) sets bash as
-your login shell on every run; `ensure_zsh()` only installs zsh and registers
-it in `/etc/shells`. So if you switch to zsh permanently, re-running the
-bootstrap will `chsh` back to bash — run `switch-shell.sh zsh` again after it.
+The bootstrap (`ensure_zsh()` in `install-packages.sh`) sets zsh as your login
+shell on every run; `ensure_bash_installed()` only installs bash and registers
+it in `/etc/shells`. So if you switch to bash permanently, re-running the
+bootstrap will `chsh` back to zsh — run `switch-shell.sh bash` again after it.
 To alternate by hand:
 
 ```sh
-./scripts/switch-shell.sh zsh    # or: bash, to go back to the default
+./scripts/switch-shell.sh zsh    # or: bash
 ```
 
 This registers the target shell in `/etc/shells` if needed, runs `chsh`, and
 on Omarchy also re-pins `shell=` in `~/.config/foot/foot.ini` (foot inherits
 the frozen `$SHELL` from the uwsm/Hyprland session, not `/etc/passwd` — see
-`ensure_omarchy_shell()` in `install-packages.sh`). tmux's `default-command`
+`ensure_omarchy_zsh()` in `install-packages.sh`). tmux's `default-command`
 is `bash` (see `tmux.conf`) independently of your login shell.
 
 ## Applying the dotfiles
@@ -131,7 +128,7 @@ Or link packages manually:
 
 ```sh
 cd ~/dotfiles
-stow --no-folding zsh bash git p10k starship nvim tmux herdr shell lazygit claude   # link everything
+stow --no-folding zsh bash git starship nvim tmux herdr shell lazygit claude   # link everything
 stow --no-folding omarchy                                             # Omarchy only
 stow --no-folding nvim                                                # just one package
 stow -D nvim                                                          # unlink
@@ -156,7 +153,7 @@ Find every package file that is no longer a link to the repo:
 
 ```sh
 cd ~/dotfiles
-for pkg in zsh bash git p10k starship nvim tmux herdr shell lazygit claude omarchy; do
+for pkg in zsh bash git starship nvim tmux herdr shell lazygit claude omarchy; do
   [ -d "$pkg" ] || continue
   find "$pkg" -type f | while read -r f; do
     t="$HOME/${f#$pkg/}"
