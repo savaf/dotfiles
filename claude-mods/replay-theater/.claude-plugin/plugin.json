@@ -1,0 +1,1 @@
+{ "name": "replay-theater", "version": "0.1.0", "description": "/replay: step through the file edits Claude made in the last turn, one diff at a time" }

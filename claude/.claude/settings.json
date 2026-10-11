@@ -111,13 +111,21 @@
     "command": "bash \"$HOME/.claude/hooks/statusline.sh\""
   },
   "enabledPlugins": {
-    "cloudflare@cloudflare": true
+    "cloudflare@cloudflare": true,
+    "teamclaude-status@dotfiles-mods": true,
+    "replay-theater@dotfiles-mods": true
   },
   "extraKnownMarketplaces": {
     "cloudflare": {
       "source": {
         "source": "github",
         "repo": "cloudflare/skills"
+      }
+    },
+    "dotfiles-mods": {
+      "source": {
+        "source": "directory",
+        "path": "~/dotfiles/claude-mods"
       }
     }
   },

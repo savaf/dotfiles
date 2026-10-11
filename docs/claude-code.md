@@ -170,8 +170,10 @@ transcript parsing needed):
 - context window usage as a color-coded bar, so `/context` is rarely needed mid-session
 - git branch, dirty file count, and ahead/behind vs. upstream
 - session cost and lines added/removed
-- output style, when it isn't `default`
-- 5-hour rate-limit usage, on plans that expose it
+- output style, when it isn't `default`, and the effort level
+- plan limits, on plans that expose them: 5-hour usage with its reset time, and weekly usage
+- failover proxy: active account (`⇄ personal` / `⇄ ccw`) with its 5h/7d quota read from the proxy, `directo` when the session doesn't go through it, `proxy off` if it's down
+- context color: yellow from 50% (where the model degrades), red from 75%
 
 Relies on `jq`, which every platform manifest in `packages/*.txt` installs as a base package.
 
@@ -362,3 +364,69 @@ So the levers that matter, in order:
 
 `CLAUDE.md` is *not* on this list: at ~100 tokens it's 0.04% of consumption. Keep it short for
 signal-to-noise, not for savings.
+
+## Failover personal → ccw (teamclaude)
+
+`cfo` (= `teamclaude run`) lanza Claude Code a través de un proxy local
+([`@karpeleslab/teamclaude`](https://www.npmjs.com/package/@karpeleslab/teamclaude), fijado a
+**1.1.24**) que usa la cuenta personal y salta a ccw cuando recibe el 429 de cuota. `claude` y
+`ccw` siguen yendo directos. Auditoría y pruebas: `.scratch/claude-failover-proxy/research/`.
+
+Reglas de seguridad (de la auditoría):
+
+- Instalar solo el paquete con scope, sin scripts: `npm i -g --ignore-scripts @karpeleslab/teamclaude@1.1.24`.
+  `teamclaude` sin scope es otro proyecto.
+- `TEAMCLAUDE_DISABLE_AUTOUPDATE=1` (en `exports.zsh`) y `"autoUpdate": false` en la config.
+- Nunca `teamclaude callback login` (sube todos los tokens) ni `teamclaude alias --install`
+  (reescribe `~/.zshrc` y rompe el symlink de Stow).
+- `~/.config/teamclaude.json` guarda los tokens: **no se versiona** ni se enlaza con Stow.
+- Login con `teamclaude login --name <cuenta>` por cuenta (no `import`: compartiría el refresh
+  token con Claude Code y se invalidarían entre sí).
+- Config: `priority` 0 la personal, 1 ccw, y `switchThreshold: 1` para cambiar solo al agotarse.
+
+### Replicar en otra máquina
+
+1. `scripts/bootstrap.sh`: `packages/global-node-packages.txt` instala `@karpeleslab/teamclaude@1.1.24`,
+   stow enlaza la función `claude` y el alias `cfo`, y `settings.json` (compartido) declara el
+   marketplace local `claude-mods/` (`~/dotfiles/claude-mods`, el plugin `teamclaude-status` de la
+   barra de estado) y lo activa en todos los perfiles.
+2. `scripts/setup-teamclaude.sh` (a mano, es interactivo): logins de `personal` y `ccw`, cada uno en una
+   sesión de navegador **distinta** (`scripts/teamclaude-browser.sh` hace de `xdg-open`/`open` solo durante el
+   login) para que la segunda cuenta no herede la sesión de claude.ai de la primera. Prefiere **Brave**, un
+   perfil por cuenta con sus extensiones (Bitwarden/passkeys): `personal` usa el perfil `Default` y `ccw`
+   el `Profile 1` (Brave lo crea vacío la primera vez: instala Bitwarden ahí una vez; cámbialos con
+   `TC_BRAVE_PROFILE_PERSONAL` / `TC_BRAVE_PROFILE_CCW`). Sin Brave, Chrome/Edge con un perfil limpio. Cierra
+   cada ventana al terminar. Luego fija prioridades, `switchThreshold: 1`, modo `base-url`, sin auto-update e instalación del servicio
+   de usuario. Para que siga vivo sin sesión abierta: `loginctl enable-linger $USER` (Linux).
+3. Abre una terminal nueva: `claude` pasa por el proxy `:3456` si está arriba, o va directo.
+
+La función `claude` usa `curl`, y el servicio `systemd --user` (o launchd en macOS) lo registra
+`teamclaude service install`. La segunda instancia inversa para `ccw` (`:3457`) aún no está
+scriptada.
+
+### Failover inverso para `ccw` (segunda instancia)
+
+`claude` va por el proxy `:3456` (personal → ccw). `ccw` / `claude-profile work` va por un
+segundo proxy en `:3457` con prioridades invertidas (ccw → personal), si está arriba; si no,
+directo. Un solo proxy no basta: `TC_ACCT` fija una cuenta pero nunca hace failover.
+
+- Config propia: `TEAMCLAUDE_CONFIG=~/.config/teamclaude-work.json`, con **logins propios**
+  (no copiar tokens del otro config: dos procesos refrescando el mismo refresh token se
+  invalidan). Mismas reglas de seguridad que arriba.
+- Contrapartida: cuando ccw se agota, el código y prompts de trabajo van a la cuenta personal,
+  con otras condiciones de retención.
+
+## Mods (`claude-mods/`)
+
+Marketplace local `dotfiles-mods` (declarado en `settings.json`, ruta `~/dotfiles/claude-mods`), activo en todos los perfiles. Se leen desde la carpeta: edita y `/reload-plugins`.
+
+| Mod | Qué hace |
+|---|---|
+| `teamclaude-status` | Toast cuando el proxy cambia de cuenta (los prompts pasan a otra org). La barra de estado con cuenta y cuota la dibuja `statusline.sh`; un mod no puede lanzar avisos desde ahí |
+| `replay-theater` | `/replay`: recorre uno a uno los diffs de los archivos que Claude editó en el último turno. Vendorizado del mod de ejemplo de [anthropics/claude-code-playground](https://github.com/anthropics/claude-code-playground) (commit `569c528`); solo lee archivos |
+
+Regla para mods ajenos: se **copian** al repo y se revisan (qué `$.*` llaman; `claude plugin
+validate` lo lista), nunca se instalan desde el repo upstream, para que una actualización no
+cambie lo que corre.
+
+Descartados: `blast-radius` (ya cubierto por `git-guardrails.mjs`, `guard-protected-branch.mjs` y el bloqueo de `rm -rf`), `token-weather` (el contexto ya está en `statusline.sh`) y `am-context-bar` (casi todo cabe en `statusline.sh`; solo aportaba el desglose por categoría y el contador de compactaciones, y `/context` los cubre).
