@@ -8,6 +8,7 @@ set -euo pipefail
 log() { echo "[teamclaude] $*"; }
 exists() { command -v "$1" >/dev/null 2>&1; }
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG="${TEAMCLAUDE_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/teamclaude.json}"
 
 if ! exists teamclaude; then
@@ -26,10 +27,31 @@ count_accounts() { # $1 = work | personal
     console.log((c.accounts||[]).filter(a=>(process.argv[2]==="work")===w(a)).length)' "${CONFIG}" "$1"
 }
 
+# Cada login abre el navegador en un PERFIL AISLADO (cookies propias): si no, la segunda
+# cuenta se abriría con la sesión de claude.ai de la primera. scripts/teamclaude-browser.sh
+# hace de `xdg-open`/`open` solo durante el login. Cierra esa ventana al terminar.
+login_isolated() { # $1 = nombre de la cuenta
+  local acct="$1" shim_dir profile
+  if grep -qi microsoft /proc/version 2>/dev/null; then
+    profile="$(wslpath "$(cmd.exe /c 'echo %TEMP%' 2>/dev/null | tr -d '\r')")/teamclaude-login-${acct}"
+  else
+    profile="${XDG_CACHE_HOME:-${HOME}/.cache}/teamclaude-login/${acct}"
+  fi
+  mkdir -p "${profile}"
+  find "${profile}" -mindepth 1 -delete 2>/dev/null || true # perfil limpio en cada login
+  shim_dir="$(mktemp -d)"
+  ln -s "${SCRIPT_DIR}/teamclaude-browser.sh" "${shim_dir}/xdg-open"
+  ln -s "${SCRIPT_DIR}/teamclaude-browser.sh" "${shim_dir}/open"
+  log "Login de '${acct}' en una ventana de navegador aislada (perfil limpio)…"
+  PATH="${shim_dir}:${PATH}" TC_BROWSER_PROFILE="${profile}" teamclaude login --name "${acct}" || true
+  rm -f "${shim_dir}/xdg-open" "${shim_dir}/open"
+  rmdir "${shim_dir}"
+}
+
 # Logins nuevos por máquina (no copiar tokens: dos procesos que refrescan el mismo
 # refresh token se invalidan). Nunca `callback login` ni `alias --install`.
-[[ "$(count_accounts personal)" -gt 0 ]] || { log "Login de la cuenta personal (se abre el navegador)…"; teamclaude login --name personal; }
-[[ "$(count_accounts work)" -gt 0 ]] || { log "Login de ccw, la cuenta de empresa (se abre el navegador)…"; teamclaude login --name ccw; }
+[[ "$(count_accounts personal)" -gt 0 ]] || login_isolated personal
+[[ "$(count_accounts work)" -gt 0 ]] || login_isolated ccw
 
 # Prioridad: personal 0, ccw 1.
 node -e 'const c=require(process.argv[1]);for(const a of c.accounts)
