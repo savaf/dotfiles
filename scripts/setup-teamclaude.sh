@@ -27,9 +27,10 @@ count_accounts() { # $1 = work | personal
     console.log((c.accounts||[]).filter(a=>(process.argv[2]==="work")===w(a)).length)' "${CONFIG}" "$1"
 }
 
-# Cada login abre el navegador en un PERFIL AISLADO (cookies propias): si no, la segunda
-# cuenta se abriría con la sesión de claude.ai de la primera. scripts/teamclaude-browser.sh
-# hace de `xdg-open`/`open` solo durante el login. Cierra esa ventana al terminar.
+# Cada login abre el navegador en una sesión DISTINTA (Brave: un perfil por cuenta, con sus
+# extensiones y passkeys; si no, un perfil limpio de Chrome/Edge): si no, la segunda cuenta se
+# abriría con la sesión de claude.ai de la primera. scripts/teamclaude-browser.sh hace de
+# `xdg-open`/`open` solo durante el login. Cierra esa ventana al terminar.
 login_isolated() { # $1 = nombre de la cuenta
   local acct="$1" shim_dir profile
   if grep -qi microsoft /proc/version 2>/dev/null; then
@@ -43,7 +44,7 @@ login_isolated() { # $1 = nombre de la cuenta
   ln -s "${SCRIPT_DIR}/teamclaude-browser.sh" "${shim_dir}/xdg-open"
   ln -s "${SCRIPT_DIR}/teamclaude-browser.sh" "${shim_dir}/open"
   log "Login de '${acct}' en una ventana de navegador aislada (perfil limpio)…"
-  PATH="${shim_dir}:${PATH}" TC_BROWSER_PROFILE="${profile}" teamclaude login --name "${acct}" || true
+  PATH="${shim_dir}:${PATH}" TC_BROWSER_ACCOUNT="${acct}" TC_BROWSER_PROFILE="${profile}" teamclaude login --name "${acct}" || true
   rm -f "${shim_dir}/xdg-open" "${shim_dir}/open"
   rmdir "${shim_dir}"
 }

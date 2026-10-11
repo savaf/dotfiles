@@ -391,10 +391,12 @@ Reglas de seguridad (de la auditoría):
    marketplace local `claude-mods/` (`~/dotfiles/claude-mods`, el plugin `teamclaude-status` de la
    barra de estado) y lo activa en todos los perfiles.
 2. `scripts/setup-teamclaude.sh` (a mano, es interactivo): logins de `personal` y `ccw`, cada uno en una
-   ventana de navegador con **perfil aislado** (`scripts/teamclaude-browser.sh` hace de `xdg-open`/`open`
-   solo durante el login; Chrome/Edge/Brave, y en WSL el de Windows), para que la segunda cuenta no
-   herede la sesión de claude.ai de la primera (cierra cada ventana al terminar),
-   prioridades, `switchThreshold: 1`, modo `base-url`, sin auto-update e instalación del servicio
+   sesión de navegador **distinta** (`scripts/teamclaude-browser.sh` hace de `xdg-open`/`open` solo durante el
+   login) para que la segunda cuenta no herede la sesión de claude.ai de la primera. Prefiere **Brave**, un
+   perfil por cuenta con sus extensiones (Bitwarden/passkeys): `personal` usa el perfil `Default` y `ccw`
+   el `Profile 1` (Brave lo crea vacío la primera vez: instala Bitwarden ahí una vez; cámbialos con
+   `TC_BRAVE_PROFILE_PERSONAL` / `TC_BRAVE_PROFILE_CCW`). Sin Brave, Chrome/Edge con un perfil limpio. Cierra
+   cada ventana al terminar. Luego fija prioridades, `switchThreshold: 1`, modo `base-url`, sin auto-update e instalación del servicio
    de usuario. Para que siga vivo sin sesión abierta: `loginctl enable-linger $USER` (Linux).
 3. Abre una terminal nueva: `claude` pasa por el proxy `:3456` si está arriba, o va directo.
 
