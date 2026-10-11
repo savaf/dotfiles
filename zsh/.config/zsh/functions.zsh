@@ -83,6 +83,16 @@ function backup() {
   cp "$1" "$1.backup.$(date +%Y%m%d_%H%M%S)"
 }
 
+# `claude` a secas pasa por el proxy de failover (teamclaude, ver docs/claude-code.md)
+# si está arriba; si no, va directo. claude-profile usa `command claude` y no pasa por aquí.
+function claude() {
+  if curl -fs -m 1 -o /dev/null http://127.0.0.1:3456/teamclaude/status; then
+    ANTHROPIC_BASE_URL=http://localhost:3456 command claude "$@"
+  else
+    command claude "$@"
+  fi
+}
+
 # Claude Code con un config dir aislado: credenciales, sesiones, historial y MCP
 # propios por perfil. Sin perfil (`claude` a secas) se usa ~/.claude.
 #   uso: claude-profile <perfil> [args de claude...]
@@ -92,6 +102,11 @@ function claude-profile() {
     return 1
   fi
   local profile="$1"; shift
+  # Perfil work: proxy inverso (ccw primero, personal de respaldo) en :3457, si está arriba.
+  if [[ "$profile" == work ]] && curl -fs -m 1 -o /dev/null http://127.0.0.1:3457/teamclaude/status; then
+    ANTHROPIC_BASE_URL=http://localhost:3457 CLAUDE_CONFIG_DIR="$HOME/.claude-$profile" command claude "$@"
+    return
+  fi
   CLAUDE_CONFIG_DIR="$HOME/.claude-$profile" command claude "$@"
 }
 

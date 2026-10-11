@@ -53,3 +53,7 @@ elif command -v fdfind >/dev/null 2>&1; then
   export FZF_DEFAULT_COMMAND='fdfind --type f --hidden --follow --exclude .git'
 fi
 [[ -n "$FZF_DEFAULT_COMMAND" ]] && export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+
+# teamclaude (proxy de failover de cuentas de Claude): sin self-update en segundo
+# plano, porque una versión nueva correría con acceso a los tokens (ver docs/claude-code.md).
+export TEAMCLAUDE_DISABLE_AUTOUPDATE=1

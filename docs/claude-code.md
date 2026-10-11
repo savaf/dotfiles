@@ -362,3 +362,49 @@ So the levers that matter, in order:
 
 `CLAUDE.md` is *not* on this list: at ~100 tokens it's 0.04% of consumption. Keep it short for
 signal-to-noise, not for savings.
+
+## Failover personal → ccw (teamclaude)
+
+`cfo` (= `teamclaude run`) lanza Claude Code a través de un proxy local
+([`@karpeleslab/teamclaude`](https://www.npmjs.com/package/@karpeleslab/teamclaude), fijado a
+**1.1.24**) que usa la cuenta personal y salta a ccw cuando recibe el 429 de cuota. `claude` y
+`ccw` siguen yendo directos. Auditoría y pruebas: `.scratch/claude-failover-proxy/research/`.
+
+Reglas de seguridad (de la auditoría):
+
+- Instalar solo el paquete con scope, sin scripts: `npm i -g --ignore-scripts @karpeleslab/teamclaude@1.1.24`.
+  `teamclaude` sin scope es otro proyecto.
+- `TEAMCLAUDE_DISABLE_AUTOUPDATE=1` (en `exports.zsh`) y `"autoUpdate": false` en la config.
+- Nunca `teamclaude callback login` (sube todos los tokens) ni `teamclaude alias --install`
+  (reescribe `~/.zshrc` y rompe el symlink de Stow).
+- `~/.config/teamclaude.json` guarda los tokens: **no se versiona** ni se enlaza con Stow.
+- Login con `teamclaude login --name <cuenta>` por cuenta (no `import`: compartiría el refresh
+  token con Claude Code y se invalidarían entre sí).
+- Config: `priority` 0 la personal, 1 ccw, y `switchThreshold: 1` para cambiar solo al agotarse.
+
+### Replicar en otra máquina
+
+1. `scripts/bootstrap.sh`: `packages/global-node-packages.txt` instala `@karpeleslab/teamclaude@1.1.24`,
+   stow enlaza la función `claude` y el alias `cfo`, y `settings.json` (compartido) declara el
+   marketplace local `claude-mods/` (`~/dotfiles/claude-mods`, el plugin `teamclaude-status` de la
+   barra de estado) y lo activa en todos los perfiles.
+2. `scripts/setup-teamclaude.sh` (a mano, es interactivo): logins de `personal` y `ccw`,
+   prioridades, `switchThreshold: 1`, modo `base-url`, sin auto-update e instalación del servicio
+   de usuario. Para que siga vivo sin sesión abierta: `loginctl enable-linger $USER` (Linux).
+3. Abre una terminal nueva: `claude` pasa por el proxy `:3456` si está arriba, o va directo.
+
+La función `claude` usa `curl`, y el servicio `systemd --user` (o launchd en macOS) lo registra
+`teamclaude service install`. La segunda instancia inversa para `ccw` (`:3457`) aún no está
+scriptada.
+
+### Failover inverso para `ccw` (segunda instancia)
+
+`claude` va por el proxy `:3456` (personal → ccw). `ccw` / `claude-profile work` va por un
+segundo proxy en `:3457` con prioridades invertidas (ccw → personal), si está arriba; si no,
+directo. Un solo proxy no basta: `TC_ACCT` fija una cuenta pero nunca hace failover.
+
+- Config propia: `TEAMCLAUDE_CONFIG=~/.config/teamclaude-work.json`, con **logins propios**
+  (no copiar tokens del otro config: dos procesos refrescando el mismo refresh token se
+  invalidan). Mismas reglas de seguridad que arriba.
+- Contrapartida: cuando ccw se agota, el código y prompts de trabajo van a la cuenta personal,
+  con otras condiciones de retención.

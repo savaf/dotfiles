@@ -3,3 +3,4 @@ http-server
 license
 doctoc
 gitconfig
+@karpeleslab/teamclaude@1.1.24
