@@ -170,8 +170,10 @@ transcript parsing needed):
 - context window usage as a color-coded bar, so `/context` is rarely needed mid-session
 - git branch, dirty file count, and ahead/behind vs. upstream
 - session cost and lines added/removed
-- output style, when it isn't `default`
-- 5-hour rate-limit usage, on plans that expose it
+- output style, when it isn't `default`, and the effort level
+- plan limits, on plans that expose them: 5-hour usage with its reset time, and weekly usage
+- failover proxy: active account (`⇄ personal` / `⇄ ccw`) with its 5h/7d quota read from the proxy, `directo` when the session doesn't go through it, `proxy off` if it's down
+- context color: yellow from 50% (where the model degrades), red from 75%
 
 Relies on `jq`, which every platform manifest in `packages/*.txt` installs as a base package.
 
@@ -408,3 +410,18 @@ directo. Un solo proxy no basta: `TC_ACCT` fija una cuenta pero nunca hace failo
   invalidan). Mismas reglas de seguridad que arriba.
 - Contrapartida: cuando ccw se agota, el código y prompts de trabajo van a la cuenta personal,
   con otras condiciones de retención.
+
+## Mods (`claude-mods/`)
+
+Marketplace local `dotfiles-mods` (declarado en `settings.json`, ruta `~/dotfiles/claude-mods`), activo en todos los perfiles. Se leen desde la carpeta: edita y `/reload-plugins`.
+
+| Mod | Qué hace |
+|---|---|
+| `teamclaude-status` | Toast cuando el proxy cambia de cuenta (los prompts pasan a otra org). La barra de estado con cuenta y cuota la dibuja `statusline.sh`; un mod no puede lanzar avisos desde ahí |
+| `replay-theater` | `/replay`: recorre uno a uno los diffs de los archivos que Claude editó en el último turno. Vendorizado del mod de ejemplo de [anthropics/claude-code-playground](https://github.com/anthropics/claude-code-playground) (commit `569c528`); solo lee archivos |
+
+Regla para mods ajenos: se **copian** al repo y se revisan (qué `$.*` llaman; `claude plugin
+validate` lo lista), nunca se instalan desde el repo upstream, para que una actualización no
+cambie lo que corre.
+
+Descartados: `blast-radius` (ya cubierto por `git-guardrails.mjs`, `guard-protected-branch.mjs` y el bloqueo de `rm -rf`), `token-weather` (el contexto ya está en `statusline.sh`) y `am-context-bar` (casi todo cabe en `statusline.sh`; solo aportaba el desglose por categoría y el contador de compactaciones, y `/context` los cubre).

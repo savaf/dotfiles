@@ -1,5 +1,16 @@
 {
   "name": "dotfiles-mods",
-  "owner": { "name": "Sinver Aguilo" },
-  "plugins": [{ "name": "teamclaude-status", "source": "./teamclaude-status" }]
+  "owner": {
+    "name": "Sinver Aguilo"
+  },
+  "plugins": [
+    {
+      "name": "teamclaude-status",
+      "source": "./teamclaude-status"
+    },
+    {
+      "name": "replay-theater",
+      "source": "./replay-theater"
+    }
+  ]
 }

@@ -112,7 +112,8 @@
   },
   "enabledPlugins": {
     "cloudflare@cloudflare": true,
-    "teamclaude-status@dotfiles-mods": true
+    "teamclaude-status@dotfiles-mods": true,
+    "replay-theater@dotfiles-mods": true
   },
   "extraKnownMarketplaces": {
     "cloudflare": {

@@ -1,1 +1,1 @@
-{ "name": "teamclaude-status", "version": "0.1.0", "description": "Shows the active teamclaude account and its 5h/7d quota in the status line" }
+{ "name": "teamclaude-status", "version": "0.3.0", "description": "Toast when the teamclaude proxy switches account (the status line itself is claude/.claude/hooks/statusline.sh)" }
