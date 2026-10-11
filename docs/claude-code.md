@@ -417,7 +417,10 @@ Marketplace local `dotfiles-mods` (declarado en `settings.json`, ruta `~/dotfile
 |---|---|
 | `teamclaude-status` | Barra de estado: cuenta activa del proxy y cuota 5h/7d, `directo` si la sesión no usa el proxy; toast cuando el proxy cambia de cuenta |
 | `am-context-bar` | Tarjeta sobre el prompt: contexto por zona/categoría, límites, modelo y compactaciones. Vendorizado de [romnycristopher/claude-am-mods](https://github.com/romnycristopher/claude-am-mods) en el commit `43d1375` (MIT); ver `VENDORED.md`. Empieza oculto: `/am-context-bar` |
+| `replay-theater` | `/replay`: recorre uno a uno los diffs de los archivos que Claude editó en el último turno. Vendorizado del mod de ejemplo de [anthropics/claude-code-playground](https://github.com/anthropics/claude-code-playground) (commit `569c528`); solo lee archivos |
 
 Regla para mods ajenos: se **copian** al repo y se revisan (qué `$.*` llaman; `claude plugin
 validate` lo lista), nunca se instalan desde el repo upstream, para que una actualización no
 cambie lo que corre.
+
+Descartados de los mods oficiales de ejemplo: `blast-radius` (ya cubierto por `git-guardrails.mjs`, `guard-protected-branch.mjs` y el bloqueo de `rm -rf`) y `token-weather` (duplica `am-context-bar`).

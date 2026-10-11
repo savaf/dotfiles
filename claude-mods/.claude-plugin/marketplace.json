@@ -11,6 +11,10 @@
     {
       "name": "am-context-bar",
       "source": "./am-context-bar"
+    },
+    {
+      "name": "replay-theater",
+      "source": "./replay-theater"
     }
   ]
 }
