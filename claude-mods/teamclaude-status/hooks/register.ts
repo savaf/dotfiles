@@ -18,11 +18,15 @@ export const register: Register = on => {
     if (!base || !/:345[67]\/?$/.test(base)) {
       $.ui.status('directo')
     } else {
+      let last: string | undefined
       const poll = async () => {
         try {
           const res = await $.http.fetch(`${base.replace(/\/$/, '')}/teamclaude/status`)
           const s = JSON.parse(res.text) as Status
           const a = s.accounts?.find(x => x.name === s.currentAccount)
+          // Failover: avisa cuando el proxy cambia de cuenta (el tráfico pasa a otra org).
+          if (a && last && last !== a.name) $.ui.toast(`Proxy: ahora usando ${label(a.name)}`)
+          last = a?.name
           $.ui.status(a ? `${label(a.name)} · 5h ${pct(a.quota?.unified5h)} · 7d ${pct(a.quota?.unified7d)}` : 'proxy: sin cuenta')
         } catch {
           $.ui.status('proxy off')

@@ -408,3 +408,16 @@ directo. Un solo proxy no basta: `TC_ACCT` fija una cuenta pero nunca hace failo
   invalidan). Mismas reglas de seguridad que arriba.
 - Contrapartida: cuando ccw se agota, el código y prompts de trabajo van a la cuenta personal,
   con otras condiciones de retención.
+
+## Mods (`claude-mods/`)
+
+Marketplace local `dotfiles-mods` (declarado en `settings.json`, ruta `~/dotfiles/claude-mods`), activo en todos los perfiles. Se leen desde la carpeta: edita y `/reload-plugins`.
+
+| Mod | Qué hace |
+|---|---|
+| `teamclaude-status` | Barra de estado: cuenta activa del proxy y cuota 5h/7d, `directo` si la sesión no usa el proxy; toast cuando el proxy cambia de cuenta |
+| `am-context-bar` | Tarjeta sobre el prompt: contexto por zona/categoría, límites, modelo y compactaciones. Vendorizado de [romnycristopher/claude-am-mods](https://github.com/romnycristopher/claude-am-mods) en el commit `43d1375` (MIT); ver `VENDORED.md`. Empieza oculto: `/am-context-bar` |
+
+Regla para mods ajenos: se **copian** al repo y se revisan (qué `$.*` llaman; `claude plugin
+validate` lo lista), nunca se instalan desde el repo upstream, para que una actualización no
+cambie lo que corre.
