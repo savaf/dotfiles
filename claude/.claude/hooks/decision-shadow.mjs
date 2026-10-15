@@ -60,8 +60,7 @@ export function haikuArgs(q, text, respaldo) {
     };
     return ['-p', prompt, '--model', respaldo.model, '--output-format', 'json',
         '--json-schema', JSON.stringify(schema), '--setting-sources', 'project',
-        '--no-session-persistence', '--disallowed-tools',
-        'Bash,Edit,Write,Read,Glob,Grep,WebFetch,WebSearch,Agent,Skill'];
+        '--no-session-persistence', '--strict-mcp-config', '--tools', ''];
 }
 
 export function parseHaiku(stdout) {
@@ -99,13 +98,27 @@ async function askMotor(cfg, q, text) {
     return { choice, confidence };
 }
 
+// Variables de la sesión padre: el `claude -p` del Respaldo no debe heredarlas.
+const PARENT_ENV = /^(CLAUDECODE|CLAUDE_PID|CLAUDE_JOB_DIR|CLAUDE_CODE_(SESSION_|MESSAGING_|CHILD_SESSION|ENTRYPOINT))/;
+
+export const respaldoEnv = (env) => ({
+    ...Object.fromEntries(Object.entries(env).filter(([k]) => !PARENT_ENV.test(k))),
+    DECISIONES_WORKER: '1',
+});
+
+// Sin el prompt: el mensaje de error de execFile trae la línea de comandos entera.
+export const respaldoError = (e) => (e.killed ? `timeout ${e.signal}` : e.code !== undefined ? `exit ${e.code}` : e.message);
+
 function askRespaldo(cfg, q, text) {
     const cwd = path.join(expand(cfg.logDir), 'respaldo');
-    mkdirSync(cwd, { recursive: true });
+    mkdirSync(cwd, { recursive: true, mode: 0o700 });
     return new Promise((resolve, reject) => {
         execFile('claude', haikuArgs(q, text, cfg.respaldo),
-            { cwd, timeout: cfg.respaldo.timeoutMs, env: { ...process.env, DECISIONES_WORKER: '1' } },
-            (err, stdout) => (err ? reject(err) : resolve(parseHaiku(stdout))));
+            { cwd, timeout: cfg.respaldo.timeoutMs, env: respaldoEnv(process.env) },
+            (err, stdout) => {
+                if (err) return reject(err);
+                try { resolve(parseHaiku(stdout)); } catch (e) { reject(e); }
+            });
     });
 }
 
@@ -122,12 +135,13 @@ async function decide(cfg, event, d) {
         try {
             r.respaldo = await timed(() => askRespaldo(cfg, q, d.text));
         } catch (e) {
-            r.error = [r.error, `respaldo: ${e.message}`].filter(Boolean).join('; ');
+            r.error = [r.error, `respaldo: ${respaldoError(e)}`].filter(Boolean).join('; ');
         }
     }
     const dir = expand(cfg.logDir);
-    mkdirSync(dir, { recursive: true });
-    appendFileSync(path.join(dir, `${r.ts.slice(0, 7)}.jsonl`), logLine(r) + '\n');
+    // El registro guarda texto de prompts: solo legible por el usuario.
+    mkdirSync(dir, { recursive: true, mode: 0o700 });
+    appendFileSync(path.join(dir, `${r.ts.slice(0, 7)}.jsonl`), logLine(r) + '\n', { mode: 0o600 });
     return r.respaldo || r.motor;
 }
 

@@ -4,6 +4,8 @@ import {
     logLine,
     needsRespaldo,
     parseHaiku,
+    respaldoEnv,
+    respaldoError,
     systemoneBody,
 } from './decision-shadow.mjs';
 
@@ -56,6 +58,12 @@ check('el enum del schema son las opciones',
     JSON.parse(args[args.indexOf('--json-schema') + 1]).properties.choice.enum, ['tdd', 'ninguna']);
 check('parsea structured_output y normaliza la confianza',
     parseHaiku('{"structured_output":{"choice":"tdd","confidence":4}}'), { choice: 'tdd', confidence: 0.8 });
+
+check('Haiku sin tools ni MCP', args.slice(-3), ['--strict-mcp-config', '--tools', '']);
+const env = respaldoEnv({ PATH: '/bin', CLAUDE_CONFIG_DIR: '/c', CLAUDECODE: '1', CLAUDE_CODE_SESSION_ID: 's', CLAUDE_CODE_MESSAGING_TOKEN: 't' });
+check('no hereda la sesión padre, conserva el perfil', env, { PATH: '/bin', CLAUDE_CONFIG_DIR: '/c', DECISIONES_WORKER: '1' });
+check('el error del Respaldo no incluye el prompt', respaldoError({ code: 1, message: 'Command failed: claude -p secreto' }), 'exit 1');
+check('timeout del Respaldo', respaldoError({ killed: true, signal: 'SIGTERM', message: 'claude -p secreto' }), 'timeout SIGTERM');
 
 console.log('\n--- registro ---');
 const line = JSON.parse(logLine({

@@ -60,7 +60,8 @@ El modelo va aparte por su tamaño:
 scripts/download-clef-model.sh   # reanuda si se corta; HF_TOKEN acelera
 ```
 
-- Para subir llama.cpp: cambia `LLAMA_CPP_VERSION` en `scripts/modules/llama.sh` y re-ejecuta el bootstrap.
+- Para subir llama.cpp: cambia `LLAMA_CPP_VERSION` y los dos `LLAMA_CPP_SHA256` en `scripts/modules/llama.sh` y re-ejecuta el bootstrap.
+- Los tarballs y el GGUF (revisión de HF fijada) se verifican por sha256; si no coinciden, no se instalan.
 - Clef necesita llama.cpp ≥ b11622 (PR ggml-org/llama.cpp#29831).
 - Sin las libs del tarball `cudart` en `LD_LIBRARY_PATH`, `llama-server` corre en CPU sin avisar.
 
@@ -80,7 +81,8 @@ scripts/download-clef-model.sh   # reanuda si se corta; HF_TOKEN acelera
 - El hook nunca imprime nada ni bloquea: Claude Code sigue como si el Motor no existiera.
 - Sin `~/.config/clef/api-key` (Motor no instalado), el trabajador sale sin registrar.
 - Si el Motor falla o tarda más de 15 s: se registra `error` y **no** se llama al Respaldo.
-- Si el Motor responde con confianza < `0.6`: decide Haiku 5.5 (`--setting-sources project`, sin sesión persistida).
+- Si el Motor responde con confianza < `0.6`: decide Haiku 5.5 sin tools, MCP, settings de usuario ni sesión persistida.
+- El registro es `0600` (contiene texto de prompts); los errores del Respaldo no incluyen el prompt.
 - `DECISIONES_OFF=1` apaga el hook; `DECISIONES_WORKER=1` marca al trabajador para no decidir en bucle.
 
 ## Registro
