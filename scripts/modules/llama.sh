@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# Motor de decisiones local: llama.cpp + Clef-Flash bajo demanda (ver docs/decision-engine.md).
+# Local decision engine: llama.cpp + Clef-Flash on demand (see docs/decision-engine.md).
 #
-# Solo donde hay GPU NVIDIA: en CPU Clef-Flash tarda ~9 s por Decisión, así que
-# en macOS o sin NVIDIA no se instala nada y el hook aplica Fallo abierto.
-# Un solo camino en Linux (Arch, Ubuntu/WSL2, Bazzite): el tarball CUDA de la
-# release fijada, en $HOME, sin root. El GGUF (6,5 GB) va aparte:
+# Only where there is an NVIDIA GPU: on CPU Clef-Flash takes ~9 s per Decision,
+# so on macOS or without NVIDIA nothing is installed and the hook fails open.
+# One path on Linux (Arch, Ubuntu/WSL2, Bazzite): the pinned release's CUDA
+# tarball, in $HOME, no root. The GGUF (6.5 GB) is separate:
 # scripts/download-clef-model.sh.
 
-# Soporte de Clef desde b11622 (PR ggml-org/llama.cpp#29831). Subir a mano,
-# junto con los sha256 de los dos tarballs (los assets de una release pueden cambiar).
+# Clef support since b11622 (PR ggml-org/llama.cpp#29831). Bump by hand, together
+# with the sha256 of both tarballs (a release's assets can change).
 LLAMA_CPP_VERSION="b11622"
 declare -A LLAMA_CPP_SHA256=(
   [llama]=9791b0d14779a2fc1d12c5db1da494338a9861f4fd592f13ec35ee7042fe24b5
@@ -26,8 +26,8 @@ ensure_clef() {
   local base="https://github.com/ggml-org/llama.cpp/releases/download/${LLAMA_CPP_VERSION}"
   if [[ ! -x "${dir}/llama-server" ]]; then
     log "Instalando llama.cpp ${LLAMA_CPP_VERSION} (CUDA) en ${dir}…"
-    # El binario y las libs CUDA vienen en dos tarballs; se verifican y se
-    # extraen juntos a un temporal, y solo se mueve si ambos salieron bien.
+    # The binary and the CUDA libs come in two tarballs; both are checked and
+    # extracted into a temp dir, which is moved only if both succeeded.
     local tmp t f
     tmp="$(mktemp -d)"
     mkdir -p "${tmp}/x"
@@ -49,9 +49,9 @@ ensure_clef() {
     return 0
   fi
 
-  # La API key es también la señal de "Motor instalado" para el hook: se crea
-  # antes de arrancar el socket (clef-server la lee) y se borra si no arranca,
-  # para no mandar prompts a un puerto que no es nuestro.
+  # The API key is also the hook's "engine installed" signal: it is created
+  # before starting the socket (clef-server reads it) and deleted if that fails,
+  # so prompts are never sent to a port we do not own.
   local key="${XDG_CONFIG_HOME:-$HOME/.config}/clef/api-key"
   if [[ ! -s "${key}" ]]; then
     mkdir -p "$(dirname "${key}")"

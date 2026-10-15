@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// Resume el registro del Modo sombra (~/.local/state/decisiones/*.jsonl):
-// por Decisión, cuántas hubo, quién decidió y qué opciones salieron.
-// Sirve para saber cuándo hay volumen para etiquetar la muestra (docs/decision-engine.md).
+// Summarises the shadow-mode log (~/.local/state/decisiones/*.jsonl):
+// per Decision, how many there were, who decided, and which options came out.
+// Tells you when there is enough volume to label the sample (docs/decision-engine.md).
 import { readdirSync, readFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';

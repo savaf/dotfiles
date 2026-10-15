@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 
-// Motor de decisiones en Modo sombra (ver docs/decision-engine.md).
+// Decision engine in shadow mode (see docs/decision-engine.md).
 //
-// Hook de UserPromptSubmit y de PreToolUse(Agent): sale al instante sin
-// imprimir nada (Claude Code sigue igual) y deja a un trabajador en segundo
-// plano que pregunta a Clef-Flash y, si su confianza no llega al umbral, al
-// Respaldo (Haiku 5.5). Cada Decisión queda en un JSONL; ninguna se aplica.
+// UserPromptSubmit and PreToolUse(Agent) hook: exits immediately without
+// printing anything (Claude Code carries on unchanged) and leaves a background
+// worker that asks Clef-Flash and, when its confidence is below the threshold,
+// the fallback (Haiku 5.5). Every Decision goes to a JSONL; none is applied.
 //
-// Fallo abierto: sin Motor instalado (no hay API key) no hace nada; si el Motor
-// falla, se registra el error y no se llama al Respaldo (no gastar Haiku a ciegas).
-// DECISIONES_OFF=1 lo apaga; DECISIONES_WORKER=1 marca al trabajador y a la
-// llamada al Respaldo para no decidir en bucle.
+// Fail open: with no engine installed (no API key) it does nothing; if the
+// engine fails, the error is logged and the fallback is not called (no blind
+// Haiku spend). DECISIONES_OFF=1 turns it off; DECISIONES_WORKER=1 marks the
+// worker and the fallback call so they never decide in a loop.
 
 import { spawn, execFile } from 'node:child_process';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, realpathSync } from 'node:fs';
@@ -98,7 +98,7 @@ async function askMotor(cfg, q, text) {
     return { choice, confidence };
 }
 
-// Variables de la sesión padre: el `claude -p` del Respaldo no debe heredarlas.
+// Parent-session variables: the fallback's `claude -p` must not inherit them.
 const PARENT_ENV = /^(CLAUDECODE|CLAUDE_PID|CLAUDE_JOB_DIR|CLAUDE_CODE_(SESSION_|MESSAGING_|CHILD_SESSION|ENTRYPOINT))/;
 
 export const respaldoEnv = (env) => ({
@@ -106,7 +106,7 @@ export const respaldoEnv = (env) => ({
     DECISIONES_WORKER: '1',
 });
 
-// Sin el prompt: el mensaje de error de execFile trae la línea de comandos entera.
+// Without the prompt: execFile's error message carries the whole command line.
 export const respaldoError = (e) => (e.killed ? `timeout ${e.signal}` : e.code !== undefined ? `exit ${e.code}` : e.message);
 
 function askRespaldo(cfg, q, text) {
@@ -139,7 +139,7 @@ async function decide(cfg, event, d) {
         }
     }
     const dir = expand(cfg.logDir);
-    // El registro guarda texto de prompts: solo legible por el usuario.
+    // The log holds prompt text: readable by the user only.
     mkdirSync(dir, { recursive: true, mode: 0o700 });
     appendFileSync(path.join(dir, `${r.ts.slice(0, 7)}.jsonl`), logLine(r) + '\n', { mode: 0o600 });
     return r.respaldo || r.motor;
@@ -150,7 +150,7 @@ async function worker(event) {
     if (!existsSync(expand(cfg.apiKeyFile))) return;
     for (const d of decisionsFor(event, cfg)) {
         const answer = await decide(cfg, event, d);
-        // La skill elegida se decide con qué modelo correría: segunda Decisión seguida.
+        // For the chosen skill, decide which model it would run with: a second Decision.
         if (d.decision === 'skill' && answer && answer.choice !== 'ninguna') {
             await decide(cfg, event, { ...d, decision: 'modelo-skill', question: 'modelo',
                 text: `[skill ${answer.choice}] ${d.text}` });

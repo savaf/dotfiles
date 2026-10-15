@@ -1,7 +1,7 @@
-# Proxy del socket: arrastra a clef-server y se cierra tras 5 min sin conexiones,
-# lo que para también a clef-server (StopWhenUnneeded).
+# Socket proxy: pulls in clef-server and exits after 5 min without connections,
+# which also stops clef-server (StopWhenUnneeded).
 [Unit]
-Description=Clef-Flash (Motor de decisiones) — proxy
+Description=Clef-Flash (decision engine) — proxy
 Requires=clef-server.service
 After=clef-server.service
 
