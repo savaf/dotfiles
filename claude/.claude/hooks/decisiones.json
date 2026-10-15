@@ -1,0 +1,39 @@
+{
+  "endpoint": "http://127.0.0.1:8770/v1/systemone",
+  "apiKeyFile": "~/.config/clef/api-key",
+  "timeoutMs": 15000,
+  "threshold": 0.6,
+  "respaldo": { "model": "claude-haiku-5-5", "timeoutMs": 60000 },
+  "logDir": "~/.local/state/decisiones",
+  "maxInput": 6000,
+  "questions": {
+    "modelo": {
+      "instructions": "¿Qué modelo debería ejecutar esta tarea?",
+      "criteria": {
+        "haiku": "Tarea mecánica y acotada: buscar, listar, leer, resumir, renombrar, ejecutar comandos simples, consultas de un dato.",
+        "sonnet": "Implementación estándar: escribir, arreglar o documentar código o config con requisitos claros y alcance de uno o pocos archivos.",
+        "opus": "Diseño, arquitectura, revisión de seguridad, depuración difícil o decisiones con trade-offs que exigen razonar a fondo.",
+        "ninguna": "No es una tarea (saludo, agradecimiento, confirmación, charla) o no hay información suficiente para decidir."
+      }
+    },
+    "skill": {
+      "instructions": "¿Qué skill de Claude Code encaja con esta petición?",
+      "criteria": {
+        "tdd": "Construir una feature o arreglar un bug escribiendo los tests primero; red-green-refactor.",
+        "diagnosing-bugs": "Diagnosticar un bug difícil o una regresión de rendimiento: algo roto, que lanza errores, falla o va lento.",
+        "grilling": "Interrogar al usuario para poner a prueba un plan, una decisión o una idea.",
+        "research": "Investigar una pregunta en fuentes primarias (docs, APIs) y dejar los hallazgos en un Markdown.",
+        "code-review": "Revisar los cambios desde un commit, rama o PR contra los estándares del repo y la spec.",
+        "git-commit": "Hacer commit del trabajo con la convención del repo.",
+        "create-pr": "Abrir un pull request con las convenciones del repo.",
+        "doc-write": "Escribir o editar Markdown persistente: README, docs/, CLAUDE.md, AGENTS.md, SKILL.md.",
+        "prototype": "Construir un prototipo desechable para responder una pregunta de diseño o ver cómo se vería una UI.",
+        "domain-modeling": "Afinar la terminología del dominio: GLOSSARY.md, ADRs.",
+        "horde": "Implementar en paralelo los tickets abiertos del repo con varios agentes en worktrees.",
+        "session-retro": "Revisar la conversación actual para ver dónde se atascó el agente y proponer cambios de config.",
+        "resolving-merge-conflicts": "Resolver un conflicto de merge o rebase en curso.",
+        "ninguna": "Ninguna skill encaja: pregunta directa, charla, o tarea que se hace sin skill."
+      }
+    }
+  }
+}

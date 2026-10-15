@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Arranca llama-server con Clef-Flash (Motor de decisiones, ver docs/decisiones.md).
+# Lo lanza clef-server.service; no se usa a mano salvo para depurar.
+set -euo pipefail
+
+LLAMA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/llama.cpp/current"
+MODEL="${XDG_DATA_HOME:-$HOME/.local/share}/clef/Clef-Flash-Q4_K_M.gguf"
+KEY="${XDG_CONFIG_HOME:-$HOME/.config}/clef/api-key"
+
+# Las libs CUDA vienen en el tarball (cudart) y libcuda en WSL vive en
+# /usr/lib/wsl/lib: sin ellas llama-server corre en CPU sin avisar.
+export LD_LIBRARY_PATH="${LLAMA_DIR}:/usr/lib/wsl/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
+# -ub/-b 2048: con el batch por defecto (512) los prompts largos dan HTTP 500.
+exec "${LLAMA_DIR}/llama-server" -m "${MODEL}" --offline \
+  --host 127.0.0.1 --port 8771 --api-key-file "${KEY}" \
+  -ngl 99 -c 4096 -ub 2048 -b 2048 --sleep-idle-seconds 120

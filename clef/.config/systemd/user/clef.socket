@@ -1,0 +1,9 @@
+# Motor de decisiones bajo demanda: la primera conexión levanta clef.service.
+[Unit]
+Description=Clef-Flash (Motor de decisiones) — socket
+
+[Socket]
+ListenStream=127.0.0.1:8770
+
+[Install]
+WantedBy=sockets.target

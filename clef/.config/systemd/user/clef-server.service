@@ -1,0 +1,11 @@
+# llama-server con Clef-Flash; duerme (descarga el modelo) a los 2 min sin uso.
+[Unit]
+Description=Clef-Flash (Motor de decisiones) — llama-server
+StopWhenUnneeded=yes
+
+[Service]
+ExecStart=%h/.local/bin/clef-server
+# llama-server abre el puerto antes de cargar el modelo y no avisa a systemd:
+# esperar a /health 200 para que el proxy no le pase la petición antes de tiempo.
+ExecStartPost=/bin/sh -c 'until curl -sf -o /dev/null http://127.0.0.1:8771/health; do sleep 0.2; done'
+TimeoutStartSec=60

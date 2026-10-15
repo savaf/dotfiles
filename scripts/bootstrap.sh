@@ -59,6 +59,8 @@ main() {
   # coolercontrol: perfiles/modos de temperatura + watcher que cambia de modo
   # según las ventanas abiertas (ver docs/omarchy.md).
   [[ "${OS}" == "omarchy" ]] && STOW_PACKAGES+=(omarchy coolercontrol)
+  # Unidades systemd --user del Motor de decisiones (ver docs/decisiones.md).
+  [[ "${OS}" != "macos" ]] && STOW_PACKAGES+=(clef)
 
   # Un solo prompt de sudo para todo el bootstrap; el keep-alive del padre cubre
   # install-packages.sh, ensure_locale y ensure_stow.
@@ -84,6 +86,7 @@ main() {
   ensure_herdr
   stow_packages
   link_claude_profiles
+  ensure_clef
   ensure_coolercontrol_mode_watcher
   ensure_storage_mounts
 
