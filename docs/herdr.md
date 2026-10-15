@@ -107,9 +107,21 @@ newer hook version, diff `herdr --skill`'s output (or the installer's target
 file) against the tracked hook manually and update the file in the repo
 instead.
 
-`herdr integration status` may still show `claude` as outdated — that's
-expected and harmless; the hook only needs to be present, executable, and
-correctly wired in `settings.json`, none of which the version number affects.
+The tracked hook is at integration v10. It only reports the session id on
+`SessionStart`; herdr reads `idle`/`working`/`blocked`/`done` from the
+terminal itself.
+
+To update it without touching the real `settings.json`, install into a
+throwaway home and copy the result:
+
+```sh
+tmp=$(mktemp -d) && mkdir "$tmp/.claude" && echo '{}' >"$tmp/.claude/settings.json"
+HOME="$tmp" CLAUDE_CONFIG_DIR="$tmp/.claude" herdr integration install claude
+cp -f "$tmp/.claude/hooks/herdr-agent-state.sh" claude/.claude/hooks/
+cat "$tmp/.claude/settings.json"   # copy its SessionStart matcher if it changed
+```
+
+`herdr integration status` should then show `claude: current`.
 
 **Decision: no LazyVim/Claude shortcut for now.** A quick-open/jump-to-nvim
 command from inside Claude Code was considered and rejected — a keybinding
