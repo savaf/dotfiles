@@ -1,31 +1,32 @@
-# Motor de decisiones local
+# Local decision engine
 
-Delegar decisiones cerradas y baratas de Claude Code a un modelo "Sistema 1" local (Clef-Flash), en vez de
-gastarlas en el modelo grande.
+Hand cheap, closed-ended decisions from Claude Code to a local "System 1" model (Clef-Flash)
+instead of spending them on the big model.
 
 ## Language
 
-**Decisión**:
-Una pregunta con respuesta cerrada (elegir de una lista fija, sí/no o escala) que se resuelve sin
-generar texto libre.
-_Avoid_: clasificación, routing (como sustantivo genérico)
+**Decision**:
+A question with a closed answer (pick from a fixed list, yes/no, or a scale) resolved without
+generating free text.
+_Avoid_: classification, routing (as a generic noun)
 
-**Motor de decisiones**:
-El servicio local que resuelve Decisiones; hoy, Clef-Flash.
-_Avoid_: router, clasificador, Jev, Laya
+**Decision engine**:
+The local service that resolves Decisions; today, Clef-Flash.
+_Avoid_: router, classifier, Jev, Laya
 
-**Fallo abierto**:
-Cuando el Motor no responde a tiempo o no está disponible, Claude Code sigue con su comportamiento
-por defecto como si el Motor no existiera.
-_Avoid_: fallback
+**Fail open**:
+When the engine does not answer in time or is unavailable, Claude Code keeps its default behaviour
+as if the engine did not exist.
+_Avoid_: fallback (that is a different term)
 
-**Respaldo**:
-El motor secundario (Haiku 5.5) que decide cuando la confianza del Motor de decisiones no llega al umbral.
-_Avoid_: Maestro, fallback
+**Fallback**:
+The secondary model (Haiku 5.5) that decides when the engine's confidence is below the threshold.
+Written `respaldo` in code and logs.
+_Avoid_: teacher, backup
 
-**Caso en reserva**:
-Un caso de uso del Motor que se documenta como mejora posible pero no se construye en este esfuerzo.
-_Avoid_: caso en sombra (choca con Modo sombra)
+**Reserve case**:
+A use case for the engine that is documented as a possible improvement but not built in this effort.
+_Avoid_: shadow case (clashes with Shadow mode)
 
-**Modo sombra**:
-El Motor decide y se registra su respuesta, pero Claude Code no la aplica.
+**Shadow mode**:
+The engine decides and its answer is logged, but Claude Code does not apply it.

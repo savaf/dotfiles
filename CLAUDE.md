@@ -25,7 +25,7 @@ repo entero.
 | lazygit | `docs/lazygit.md` |
 | VS Code | `docs/vscode.md` |
 | Claude Code (settings, agentes, skills, hooks) | `docs/claude-code.md` |
-| Motor de decisiones (Clef-Flash, llama.cpp, Modo sombra) | `docs/decisiones.md` + `GLOSSARY.md` |
+| Motor de decisiones (Clef-Flash, llama.cpp, Modo sombra) | `docs/decision-engine.md` (inglés) + `GLOSSARY.md` |
 | Node.js | `docs/nodejs.md` |
 | Discos `Games` / `LIBRARY`, fstab o montajes | `docs/storage.md` |
 | CoolerControl (perfiles de temperatura, API, modo Rendimiento con Steam) | `docs/coolercontrol-api.md` (inglés) |

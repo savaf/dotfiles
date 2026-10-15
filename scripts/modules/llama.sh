@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Motor de decisiones local: llama.cpp + Clef-Flash bajo demanda (ver docs/decisiones.md).
+# Motor de decisiones local: llama.cpp + Clef-Flash bajo demanda (ver docs/decision-engine.md).
 #
 # Solo donde hay GPU NVIDIA: en CPU Clef-Flash tarda ~9 s por Decisión, así que
 # en macOS o sin NVIDIA no se instala nada y el hook aplica Fallo abierto.

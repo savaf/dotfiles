@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Arranca llama-server con Clef-Flash (Motor de decisiones, ver docs/decisiones.md).
+# Arranca llama-server con Clef-Flash (Motor de decisiones, ver docs/decision-engine.md).
 # Lo lanza clef-server.service; no se usa a mano salvo para depurar.
 set -euo pipefail
 
