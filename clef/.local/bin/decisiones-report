@@ -1,0 +1,19 @@
+#!/usr/bin/env node
+// Summarises the shadow-mode log (~/.local/state/decisiones/*.jsonl):
+// per Decision, how many there were, who decided, and which options came out.
+// Tells you when there is enough volume to label the sample (docs/decision-engine.md).
+import { readdirSync, readFileSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
+const dir = path.join(os.homedir(), '.local/state/decisiones');
+const rows = readdirSync(dir).filter((f) => f.endsWith('.jsonl'))
+    .flatMap((f) => readFileSync(path.join(dir, f), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)));
+const by = Object.groupBy(rows, (r) => r.decision);
+for (const [d, rs] of Object.entries(by)) {
+    const count = (fn) => rs.filter(fn).length;
+    const opts = Object.entries(Object.groupBy(rs.filter((r) => r.final), (r) => r.final))
+        .map(([k, v]) => `${k} ${v.length}`).join(', ');
+    console.log(`${d}: ${rs.length} | motor ${count((r) => r.motor && !r.respaldo)}`
+        + ` · respaldo ${count((r) => r.respaldo)} · error ${count((r) => r.error)} | ${opts}`);
+}

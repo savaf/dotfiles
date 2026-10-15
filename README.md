@@ -31,6 +31,7 @@ dotfiles/
 ├── lazygit/        # .config/lazygit/config.yml (terminal UI for git)
 ├── shell/          # .profile
 ├── claude/         # .claude/ (Claude Code settings, agents, global CLAUDE.md; shared across profiles)
+├── clef/           # systemd --user units + clef-server for the local decision engine (Linux; docs/decision-engine.md)
 ├── vscode/         # settings.json (symlinked per-OS by a script)
 ├── wsl/            # .wslconfig (copied to the Windows profile on WSL)
 ├── packages/       # package lists (brew/apt/dnf/node/vscode extensions)

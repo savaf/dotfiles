@@ -82,6 +82,7 @@ Three pieces, all versioned in `claude/.claude/` and linked by stow.
 | `git-guardrails.mjs` | `PreToolUse` on `Bash` | Denies irreversible commands before they run |
 | `guard-protected-branch.mjs` | `PreToolUse` on `Write`/`Edit` | Blocks edits to repo files on a protected branch |
 | `load-agents-md.sh` | `SessionStart` | Injects the project's `AGENTS.md` when Claude Code would not load it |
+| `decision-shadow.mjs` | `UserPromptSubmit`, `PreToolUse` on `Agent` | Logs Decisions from the local engine in shadow mode; applies nothing (see `docs/decision-engine.md`) |
 
 `git-guardrails.mjs` splits its rules in two:
 

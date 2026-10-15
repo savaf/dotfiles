@@ -1,0 +1,9 @@
+# Socket proxy: pulls in clef-server and exits after 5 min without connections,
+# which also stops clef-server (StopWhenUnneeded).
+[Unit]
+Description=Clef-Flash (decision engine) — proxy
+Requires=clef-server.service
+After=clef-server.service
+
+[Service]
+ExecStart=/usr/lib/systemd/systemd-socket-proxyd --exit-idle-time=300s 127.0.0.1:8771

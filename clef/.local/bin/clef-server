@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Starts llama-server with Clef-Flash (decision engine, see docs/decision-engine.md).
+# Launched by clef-server.service; run by hand only to debug.
+set -euo pipefail
+
+LLAMA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/llama.cpp/current"
+MODEL="${XDG_DATA_HOME:-$HOME/.local/share}/clef/Clef-Flash-Q4_K_M.gguf"
+KEY="${XDG_CONFIG_HOME:-$HOME/.config}/clef/api-key"
+
+# The CUDA libs come in the tarball (cudart) and WSL's libcuda lives in
+# /usr/lib/wsl/lib: without them llama-server silently runs on CPU.
+export LD_LIBRARY_PATH="${LLAMA_DIR}:/usr/lib/wsl/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
+# -ub/-b 2048: with the default batch (512), long prompts return HTTP 500.
+exec "${LLAMA_DIR}/llama-server" -m "${MODEL}" --offline \
+  --host 127.0.0.1 --port 8771 --api-key-file "${KEY}" \
+  -ngl 99 -c 4096 -ub 2048 -b 2048 --sleep-idle-seconds 120

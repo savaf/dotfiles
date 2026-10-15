@@ -103,6 +103,27 @@
             "command": "node \"$HOME/.claude/hooks/guard-protected-branch.mjs\""
           }
         ]
+      },
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$HOME/.claude/hooks/decision-shadow.mjs\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$HOME/.claude/hooks/decision-shadow.mjs\"",
+            "timeout": 5
+          }
+        ]
       }
     ]
   },
