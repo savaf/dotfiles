@@ -238,7 +238,7 @@ coexist. Unprefixed on purpose: a project skill of the same name shadows the glo
 | `doc-write` | House style for persistent markdown: rules first, one idea per line, no filler |
 | `git-commit` | Commit using the convention inferred from `git log`, not an imposed one |
 | `create-pr` | Open a PR with title, template, labels and base inferred from recent merged PRs; draft approved before creating. Its `pr-template.md` is only a fallback: the repo's template wins |
-| `horde` | Implement open tickets with parallel builder agents: one worktree per ticket via herdr, `tdd` builders, reviewer gate (0 blocker/issue, max 3 rounds). Never merges |
+| `horde` | Implement open tickets with builder agents: one worktree per ticket via herdr, frozen checks approved before the build, background `herdr agent wait` per builder, parallel reviewer gate (0 blocker/issue, max 3 rounds), fresh builder on a repeated failure, every round in `.scratch/horde/results.tsv`. Never pushes |
 
 ### Workflow and agents
 
