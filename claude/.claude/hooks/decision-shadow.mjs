@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// Motor de decisiones en Modo sombra (ver docs/decisiones.md).
+// Motor de decisiones en Modo sombra (ver docs/decision-engine.md).
 //
 // Hook de UserPromptSubmit y de PreToolUse(Agent): sale al instante sin
 // imprimir nada (Claude Code sigue igual) y deja a un trabajador en segundo
