@@ -94,7 +94,7 @@ herdr worktree create --branch feat/<id>-<slug> --base <base> --label "<id>" --n
 - Write the checks (section 4) in the worktree, then:
 
 ```bash
-herdr agent start b-<id> --kind claude --pane <pane-id> --timeout 60000 -- --model sonnet
+herdr agent start b-<id> --kind claude --pane <pane-id> --timeout 60000 -- --agent builder
 herdr agent prompt b-<id> "$(cat .scratch/horde/<id>/prompt.md)"
 herdr agent wait b-<id> --until working --until blocked --timeout 15000
 ```

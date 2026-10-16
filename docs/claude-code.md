@@ -137,10 +137,24 @@ lenses and a compressor, dispatchable by name.
 | `contrarian` | opus | high | counterarguments only pay off with depth |
 | `feedback-resolver` | sonnet | medium | turns critiques into fixes; no deep reasoning needed |
 | `summarizer` | haiku | low | compresses logs and command output out of the main thread |
+| `researcher` | sonnet | medium | primary-source research into a Markdown note; reads and synthesises, no design calls |
+| `builder` | sonnet | medium | one ticket end to end in its worktree; `/horde` starts builders with `--agent builder` |
+| `test-runner` | sonnet | low | runs the tests, reports only failures and probable cause |
+| `docs-reviewer` | sonnet | medium | mechanical check that README/docs/CLAUDE.md still match the diff |
+| `pr-reviewer` | opus | high | PR review for a team (paste-ready comments) or for another agent (ticket and frozen checks); never posts |
 
-The three reviewers share an output contract in `claude/.claude/docs/review-output.md`: gates a
+The reviewers (`architecture`, `security`, `performance`, `docs`) share an output contract in
+`claude/.claude/docs/review-output.md`: gates a
 finding must pass, the findings table, and the severity scale. A project that defines its own
-review format overrides it.
+review format overrides it. `pr-reviewer` uses it too.
+
+`researcher`, `builder`, `test-runner`, `docs-reviewer` and `pr-reviewer` are project-agnostic: none reads a tracker or depends on a third-party skill.
+`researcher` and `pr-reviewer` draft in `.scratch/` (or outside the repo) and publish to GitHub
+only when the caller says so; `pr-reviewer` never writes into tracked files. Wayfinder is wired by
+one line in the global `CLAUDE.md` ("Research (including `wayfinder:research` tickets): `researcher`"), not by editing the skill.
+
+`model:` in an agent's frontmatter is a suggestion for the decision engine, not a rule: see
+"Agents and the frontmatter suggestion" in `docs/decision-engine.md`.
 
 Do NOT set `CLAUDE_CODE_SUBAGENT_MODEL` in `settings.json`: that env var takes precedence over
 per-agent `model:` frontmatter and would force a single model for every subagent.

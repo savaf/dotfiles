@@ -6,8 +6,12 @@ import {
     parseHaiku,
     respaldoEnv,
     respaldoError,
+    suggestedModel,
     systemoneBody,
 } from './decision-shadow.mjs';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 let fail = 0;
 const check = (label, actual, expected) => {
@@ -27,9 +31,19 @@ const cfg = {
 };
 
 console.log('--- qué se decide ---');
-check('prompt del usuario: hilo y skill',
+check('user prompt: thread, skill and agent',
     decisionsFor({ hook_event_name: 'UserPromptSubmit', prompt: 'arregla x' }, cfg).map((d) => d.decision),
-    ['modelo-hilo', 'skill']);
+    ['modelo-hilo', 'skill', 'agent']);
+const agents = mkdtempSync(path.join(os.tmpdir(), 'agents-'));
+writeFileSync(path.join(agents, 'builder.md'), '---\nname: builder\nmodel: sonnet\n---\nbody');
+writeFileSync(path.join(agents, 'nomodel.md'), '---\nname: Nomodel\ntools: Read\n---\nbody');
+check('suggestion: the model from the agent frontmatter', suggestedModel('builder', agents), 'sonnet');
+check('suggestion: the name is case-insensitive', suggestedModel('BUILDER', agents), 'sonnet');
+check('suggestion: agent without a model', suggestedModel('nomodel', agents), null);
+check('suggestion: unknown agent or missing dir', [suggestedModel('x', agents), suggestedModel('builder', '/no/existe')], [null, null]);
+check('subagent with a suggestion: it goes in the text and in the Decision',
+    decisionsFor({ hook_event_name: 'PreToolUse', tool_name: 'Agent', tool_input: { description: 'a', prompt: 'b', subagent_type: 'builder' } }, { ...cfg, agentsDir: agents }),
+    [{ decision: 'modelo-subagente', question: 'modelo', text: '[agent suggests model: sonnet]\na\n\nb', suggested: 'sonnet' }]);
 check('lanzar un agente: modelo del subagente',
     decisionsFor({ hook_event_name: 'PreToolUse', tool_name: 'Agent', tool_input: { description: 'busca', prompt: 'todo' } }, cfg),
     [{ decision: 'modelo-subagente', question: 'modelo', text: 'busca\n\ntod' }]);

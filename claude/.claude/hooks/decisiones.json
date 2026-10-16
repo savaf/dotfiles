@@ -6,7 +6,19 @@
   "respaldo": { "model": "claude-haiku-5-5", "timeoutMs": 60000 },
   "logDir": "~/.local/state/decisiones",
   "maxInput": 6000,
+  "agentsDir": "~/.claude/agents",
   "questions": {
+    "agent": {
+      "instructions": "Which subagent fits this request?",
+      "criteria": {
+        "researcher": "Investigate a question against primary sources (docs, APIs, specs) and write the findings to a note.",
+        "builder": "Implement one ready ticket end to end in its own worktree and branch.",
+        "test-runner": "Run the project's tests and report only what failed and why.",
+        "docs-reviewer": "Check that README, docs/ and CLAUDE.md still match the code after a change.",
+        "pr-reviewer": "Review a pull request, for a team or for another agent's work, without posting it.",
+        "none": "No subagent fits: a direct question, chat, or a task the main thread does itself."
+      }
+    },
     "modelo": {
       "instructions": "¿Qué modelo debería ejecutar esta tarea?",
       "criteria": {
