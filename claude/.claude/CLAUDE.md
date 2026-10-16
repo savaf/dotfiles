@@ -21,6 +21,8 @@ cost less than many thin ones.
 - Before merging: `code-review`; over-engineering only: `ponytail-review`.
 - Delegate: Explore finds, Plan designs, reviewers read the diff, contrarian then
   feedback-resolver weigh options.
+- Research (including `wayfinder:research` tickets): `researcher`. PR review: `pr-reviewer`.
+  Tests: `test-runner`. Docs drift: `docs-reviewer`. One ticket: `builder`.
 
 ## Effort
 

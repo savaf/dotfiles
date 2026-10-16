@@ -13,13 +13,26 @@
 // worker and the fallback call so they never decide in a loop.
 
 import { spawn, execFile } from 'node:child_process';
-import { appendFileSync, existsSync, mkdirSync, readFileSync, realpathSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const expand = (p) => p.replace(/^~(?=\/)/, os.homedir());
+
+// The `model:` an agent declares in its frontmatter: a suggestion for the engine, not a rule.
+export function suggestedModel(type, dir) {
+    if (!type || !dir) return null;
+    try {
+        for (const f of readdirSync(expand(dir)).filter((n) => n.endsWith('.md'))) {
+            const fm = readFileSync(path.join(expand(dir), f), 'utf8').match(/^---\n([\s\S]*?)\n---/)?.[1] ?? '';
+            const field = (k) => fm.match(new RegExp(`^${k}:\\s*(.+)$`, 'm'))?.[1].trim();
+            if (field('name')?.toLowerCase() === type.toLowerCase()) return field('model') || null;
+        }
+    } catch { /* no agents dir: no suggestion */ }
+    return null;
+}
 
 export function decisionsFor(event, cfg) {
     const cut = (s) => s.slice(0, cfg.maxInput);
@@ -29,11 +42,16 @@ export function decisionsFor(event, cfg) {
         return [
             { decision: 'modelo-hilo', question: 'modelo', text: cut(prompt) },
             { decision: 'skill', question: 'skill', text: cut(prompt) },
+            { decision: 'agent', question: 'agent', text: cut(prompt) },
         ];
     }
     if (event.hook_event_name === 'PreToolUse' && event.tool_name === 'Agent') {
-        const { description = '', prompt = '' } = event.tool_input || {};
-        return [{ decision: 'modelo-subagente', question: 'modelo', text: cut(`${description}\n\n${prompt}`) }];
+        const { description = '', prompt = '', subagent_type } = event.tool_input || {};
+        const text = cut(`${description}\n\n${prompt}`);
+        const suggested = suggestedModel(subagent_type, cfg.agentsDir);
+        const d = { decision: 'modelo-subagente', question: 'modelo', text };
+        if (suggested) Object.assign(d, { text: `[agent suggests model: ${suggested}]\n${text}`, suggested });
+        return [d];
     }
     return [];
 }
@@ -74,6 +92,7 @@ export function logLine(r) {
     return JSON.stringify({
         ts: r.ts, session_id: r.session_id, transcript_path: r.transcript_path,
         decision: r.decision, input: r.text.slice(0, 500),
+        suggested: r.suggested ?? null,
         motor: r.motor, respaldo: r.respaldo, final: answer ? answer.choice : null,
         applied: false, error: r.error || null,
     });

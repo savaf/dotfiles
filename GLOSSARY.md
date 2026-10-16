@@ -24,6 +24,12 @@ The secondary model (Haiku 5.5) that decides when the engine's confidence is bel
 Written `respaldo` in code and logs.
 _Avoid_: teacher, backup
 
+**Suggested model**:
+The `model:` an agent declares in its frontmatter. It is input to the `modelo-subagente`
+Decision and the value that runs when the engine does not act; never a rule over the engine.
+Logged as `suggested`.
+_Avoid_: default model, forced model
+
 **Reserve case**:
 A use case for the engine that is documented as a possible improvement but not built in this effort.
 _Avoid_: shadow case (clashes with Shadow mode)
