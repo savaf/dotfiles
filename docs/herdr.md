@@ -8,8 +8,8 @@ stowed to `~/.config/herdr/config.toml`. Not in any distro package manager —
 installed by `scripts/bootstrap.sh` (`ensure_herdr`) via `herdr.dev/install.sh`,
 same on Ubuntu/WSL, Fedora/Bazzite, Arch/Omarchy, and macOS.
 
-Adopted alongside tmux, not instead of it: `nic` (tmux) keeps working
-untouched, `nih` is the herdr equivalent. See
+Adopted alongside tmux, not instead of it. The `hw` function opens the work
+workspaces; see
 [`zsh/.config/zsh/functions.zsh`](../zsh/.config/zsh/functions.zsh).
 
 ## Concepts
@@ -23,9 +23,12 @@ herdr's hierarchy differs from tmux's:
 | — | Tab — a layout inside a workspace |
 | Pane | Pane — a real terminal |
 
-There is normally **one** herdr session running. `nih` never creates a new
-session; it adds or reuses a **workspace** inside the existing one, keyed by
-project name — the herdr analog of "one tmux session per project".
+There is normally **one** herdr session running. `hw` never creates a new
+session; it adds or reuses **workspaces** inside the existing one, keyed by
+label — the herdr analog of "one tmux session per project". herdr has no
+workspace groups or nesting (workspaces are flat; only git-worktree workspaces
+group under their parent repo), so related repos share one workspace with a tab
+each.
 
 ## The prefix
 
@@ -37,7 +40,7 @@ both can run side by side.
 herdr                # attach the persistent session (starts it if needed)
 herdr status         # client + server status
 herdr workspace list # list workspaces (JSON)
-nih                  # cockpit for the current directory (see below)
+hw                   # open the work workspaces (see below)
 ```
 
 ## Keybindings (this config)
@@ -64,27 +67,27 @@ Quality-of-life already enabled: mouse support, `new_cwd = "follow"` (splits
 and new tabs inherit the current pane's cwd, like tmux's
 `-c "#{pane_current_path}"`), and no confirmation prompts on close.
 
-## `nih`: the coding cockpit, on herdr
+## `hw`: the work workspaces
 
 ```
-usage: nih [-p perfil] [name]   (default: basename of the current directory)
+usage: hw   (no arguments)
 ```
 
-- Looks up a herdr workspace labeled `name`. If found, focuses it.
-- If not found, creates one and arms the cockpit: nvim on the left (60%),
-  Claude Code on the right (40%) — same layout as `nic`.
-- Run from outside a herdr pane: attaches the client afterward so you land on
-  the workspace. Run from inside one (`$HERDR_ENV` set): just focuses/creates
-  the workspace, no nested attach.
-- `-p <perfil>`: the Claude Code pane uses `claude-profile <perfil>` instead
-  of plain `claude` — same profiles as `nic`, see `docs/claude-code.md`.
+Opens, in this order, whichever of these workspaces is missing — one full-screen
+Claude Code pane per repo, no nvim:
 
-```sh
-cd ~/Projects/lab/some-project
-nih          # first run: creates the workspace + cockpit
-nih          # later: reuses the same workspace
-nih -p work  # cockpit using the "work" Claude Code profile
-```
+| Workspace | Repos | Claude |
+|-----------|-------|--------|
+| `dotfiles` | `~/dotfiles` | `claude` |
+| `SlipStream` | `~/Projects/urbn/SlipStream` | `claude-profile work` (`ccw`) |
+| `CNC` | `~/Projects/cnc/{vuf-portal,backoffice-vuf,b0-vuf-apis}`, one tab each | `claude` |
+
+- Idempotent: looks workspaces up by label and only creates the missing ones.
+- Ends focused on `dotfiles`; in `CNC` the active tab is `vuf-portal`.
+- Run from outside a herdr pane: attaches the client afterward. Run from inside
+  one (`$HERDR_ENV` set): no nested attach.
+- To change the set, edit the three `_hw_workspace` calls in `hw`.
+- A repo outside the list: `prefix shift+c` (new workspace).
 
 ## Extending it
 
@@ -128,8 +131,8 @@ command from inside Claude Code was considered and rejected — a keybinding
 can't know *which file* to open (only Claude does), so the useful half of
 that idea can only be triggered by Claude itself, inheriting the fragility of
 piping keystrokes into a pane (`pane send-text` races with insert mode and
-mis-escapes paths). Existing navigation (`ctrl+alt+←/↓/↑/→`, `nic`/`nih`)
-already covers this once a cockpit is open. Revisit only if nvim panes are in
-regular use again; the low-risk design then is a slash command that opens
+mis-escapes paths). Existing navigation (`ctrl+alt+←/↓/↑/→`)
+already covers this once the workspaces are open. Revisit only if nvim panes are in
+regular use again (`hw` no longer opens nvim); the low-risk design then is a slash command that opens
 nvim with `nvim --listen <socket>` and sends files via
 `nvim --server <socket> --remote <file>`, not `pane send-text`.
