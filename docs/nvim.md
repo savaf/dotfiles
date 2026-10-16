@@ -125,8 +125,6 @@ link file by file. Elsewhere, LazyVim's default colorscheme applies.
 ## Tips
 
 - New to vim? `:Tutor`. Discover keymaps live with `<leader>` (which-key popup).
-- IDE cockpit: run `nic [session]` (zsh function) to open a tmux session with
-  LazyVim and Claude Code side by side; re-attaches if it already exists.
 - Clipboard provider: `xclip`/`wl-clipboard` are installed automatically on
   Linux (built-in on macOS). On WSL the system clipboard goes through
   `win32yank`, which you install manually on the Windows side.

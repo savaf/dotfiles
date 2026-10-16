@@ -110,131 +110,39 @@ function claude-profile() {
   CLAUDE_CONFIG_DIR="$HOME/.claude-$profile" command claude "$@"
 }
 
-# Coding cockpit: neovim + claude en tmux
-#
-# Layout: dos paneles a alto completo
-#   +-----------------+------------+
-#   |                 |            |
-#   |      nvim       |   claude   |
-#   |      (60%)      |   (40%)    |
-#   +-----------------+------------+
-#
-# Arma el cockpit en la ventana destino. Captura pane-id en vez de .1/.2
-# para ser robusto en macOS y WSL.
-#   $1 = target tmux (session:window)   $2 = working dir   $3 = perfil (opcional)
-function _nic_cockpit() {
-  local win="$1" dir="$2" profile="${3:-}" cmd p_nvim p_claude
-  cmd='claude'
-  [[ -n "$profile" ]] && cmd="claude-profile $profile"
-  p_nvim=$(tmux display-message -p -t "$win" '#{pane_id}')
-  p_claude=$(tmux split-window -h -t "$win" -c "$dir" -l 40% -P -F '#{pane_id}')
-  tmux send-keys -t "$p_nvim" 'nvim' C-m
-  tmux send-keys -t "$p_claude" "$cmd" C-m
-  tmux select-pane -t "$p_nvim"
-}
-
-# usage: nic [-p perfil] [name]   (default: basename del directorio actual)
-#   - fuera de tmux: crea/attachea una sesión con el cockpit
-#   - dentro de tmux: arma el cockpit en la ventana actual (un proyecto por ventana)
-#   - -p <perfil>: el pane de claude usa ese config dir (ver claude-profile)
-function nic() {
-  local profile=""
-  while [[ "${1:-}" == -* ]]; do
-    case "$1" in
-      -p) profile="${2:-}"; shift 2 ;;
-      *)  echo "nic: opción desconocida '$1' (uso: nic [-p perfil] [nombre])"; return 1 ;;
-    esac
-  done
-  if [[ -n "$profile" && ! -d "$HOME/.claude-$profile" ]]; then
-    echo "nic: perfil '$profile' sin config dir (~/.claude-$profile); corre el bootstrap."
-    return 1
-  fi
-
-  local name="${1:-$(basename "$PWD")}"
-  name="${name//[.:]/_}"        # tmux no permite '.' ni ':' en nombres de sesión
-
-  # Dentro de tmux: cockpit en la ventana ACTUAL
-  if [[ -n "$TMUX" ]]; then
-    local panes; panes=$(tmux display-message -p '#{window_panes}')
-    if (( panes > 1 )); then
-      echo "Esta ventana ya tiene paneles. Abre una vacía (prefix+c) y corre nic ahí."
-      return 1
+# Workspaces de trabajo en herdr: un panel de claude por repo, a pantalla completa.
+#   $1 = label del workspace   $2 = comando del panel   $3.. = directorios (una tab por directorio)
+# Si el workspace ya existe no hace nada. Las tabs llevan el basename del directorio.
+function _hw_workspace() {
+  local label="$1" cmd="$2" dir created ws pane tab first=1
+  shift 2
+  herdr workspace list 2>/dev/null \
+    | jq -e --arg n "$label" '.result.workspaces[]? | select(.label == $n)' >/dev/null && return
+  for dir in "$@"; do
+    if (( first )); then
+      created=$(herdr workspace create --cwd "$dir" --label "$label" --no-focus)
+      ws=$(jq -r '.result.workspace.workspace_id' <<<"$created")
+      tab=$(jq -r '.result.tab.tab_id' <<<"$created")
+      herdr tab rename "$tab" "${dir:t}" >/dev/null
+      first=0
+    else
+      created=$(herdr tab create --workspace "$ws" --cwd "$dir" --label "${dir:t}" --no-focus)
     fi
-    local win; win=$(tmux display-message -p '#{session_name}:#{window_index}')
-    tmux rename-window "$name"
-    _nic_cockpit "$win" "$PWD" "$profile"
-    return
-  fi
-
-  # Fuera de tmux: reusar sesión si existe
-  if tmux has-session -t "$name" 2>/dev/null; then
-    tmux attach-session -t "$name"
-    return
-  fi
-
-  # Fuera de tmux: sesión nueva con cockpit
-  tmux new-session -d -s "$name" -c "$PWD" -x "$(tput cols)" -y "$(tput lines)"
-  _nic_cockpit "$name:1" "$PWD" "$profile"
-  tmux attach-session -t "$name"
-}
-
-# Coding cockpit: neovim + claude en herdr (equivalente a nic, pero sobre herdr
-# en vez de tmux)
-#
-# Layout: dos paneles a alto completo dentro de un workspace de herdr
-#   +-----------------+------------+
-#   |                 |            |
-#   |      nvim       |   claude   |
-#   |      (60%)      |   (40%)    |
-#   +-----------------+------------+
-#
-#   $1 = root pane id   $2 = working dir   $3 = perfil (opcional)
-function _nih_cockpit() {
-  local root_pane="$1" dir="$2" profile="${3:-}" cmd p_claude
-  cmd='claude'
-  [[ -n "$profile" ]] && cmd="claude-profile $profile"
-  p_claude=$(herdr pane split "$root_pane" --direction right --ratio 0.4 \
-    --cwd "$dir" --no-focus | jq -r '.result.pane.pane_id')
-  herdr pane run "$root_pane" 'nvim'
-  herdr pane run "$p_claude" "$cmd"
-}
-
-# usage: nih [-p perfil] [name]   (default: basename del directorio actual)
-#   - herdr solo tiene una sesión persistente ("default"): nih añade/reusa un
-#     workspace dentro de ella en vez de crear sesiones por proyecto
-#   - si el workspace ya existe: lo enfoca
-#   - si no existe: lo crea con el cockpit (nvim + claude)
-#   - dentro de un pane de herdr ($HERDR_ENV): no reattachea el cliente, solo
-#     enfoca/crea el workspace
-#   - -p <perfil>: el pane de claude usa ese config dir (ver claude-profile)
-function nih() {
-  local profile=""
-  while [[ "${1:-}" == -* ]]; do
-    case "$1" in
-      -p) profile="${2:-}"; shift 2 ;;
-      *)  echo "nih: opción desconocida '$1' (uso: nih [-p perfil] [nombre])"; return 1 ;;
-    esac
+    pane=$(jq -r '.result.root_pane.pane_id' <<<"$created")
+    herdr pane run "$pane" "$cmd"
   done
-  if [[ -n "$profile" && ! -d "$HOME/.claude-$profile" ]]; then
-    echo "nih: perfil '$profile' sin config dir (~/.claude-$profile); corre el bootstrap."
-    return 1
-  fi
+}
 
-  local name="${1:-$(basename "$PWD")}"
-  local existing
-  existing=$(herdr workspace list 2>/dev/null \
-    | jq -r --arg n "$name" '.result.workspaces[]? | select(.label == $n) | .workspace_id')
+# usage: hw   (sin argumentos)
+#   Abre en herdr los workspaces de trabajo que falten, en este orden:
+#     dotfiles, SlipStream (urbn, perfil work) y CNC (una tab por repo).
+#   herdr no tiene grupos de workspaces: CNC es un workspace con una tab por repo.
+#   Idempotente; termina enfocando dotfiles. Fuera de herdr attachea el cliente.
+function hw() {
+  _hw_workspace dotfiles    claude                  ~/dotfiles
+  _hw_workspace SlipStream  'claude-profile work'   ~/Projects/urbn/SlipStream
+  _hw_workspace CNC         claude                  ~/Projects/cnc/{vuf-portal,backoffice-vuf,b0-vuf-apis}
 
-  if [[ -n "$existing" ]]; then
-    herdr workspace focus "$existing"
-  else
-    local created root_pane
-    created=$(herdr workspace create --cwd "$PWD" --label "$name" --focus)
-    root_pane=$(echo "$created" | jq -r '.result.root_pane.pane_id')
-    _nih_cockpit "$root_pane" "$PWD" "$profile"
-  fi
-
-  # Si ya estás dentro de un pane de herdr, el focus/create de arriba ya te
-  # movió ahí; solo attacheamos el cliente cuando arrancamos desde fuera.
+  herdr workspace focus "$(herdr workspace list | jq -r '.result.workspaces[] | select(.label == "dotfiles") | .workspace_id')" >/dev/null
   [[ -z "${HERDR_ENV:-}" ]] && herdr
 }

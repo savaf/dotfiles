@@ -9,7 +9,7 @@ run side by side without touching each other.
 | Profile | Config dir | How to launch |
 |---|---|---|
 | personal (default) | `~/.claude` | `claude` |
-| work | `~/.claude-work` | `ccw`, `claude-profile work`, `nic -p work` |
+| work | `~/.claude-work` | `ccw`, `claude-profile work` |
 
 `claude-profile <name>` (in `zsh/.config/zsh/functions.zsh`) just runs `claude` with
 `CLAUDE_CONFIG_DIR=~/.claude-<name>`. `ccw` / `claude-work` are aliases for the work profile;
