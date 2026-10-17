@@ -128,7 +128,7 @@ lenses and a compressor, dispatchable by name.
 
 | Agent | Model | Effort | Why |
 |---|---|---|---|
-| `Explore` | haiku | low | mechanical searching; cheapest model does it fine |
+| `Explore` | haiku | medium | mechanical searching; cheapest model does it fine |
 | `Plan` | opus | high | deep reasoning is worth it for architecture |
 | `general-purpose` | sonnet | medium | implementation workhorse; haiku falls short on non-trivial code |
 | `architecture-reviewer` | opus | high | boundaries, contracts, state, error paths, test gaps |
