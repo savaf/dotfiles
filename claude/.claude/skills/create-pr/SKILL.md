@@ -1,6 +1,6 @@
 ---
 name: create-pr
-description: "Open a pull request using the conventions the repo actually uses: title, template, labels, base branch. Use when the user says create PR, open PR, push and make a PR, or invokes /create-pr."
+description: "Opens a pull request using the conventions the repo actually uses: title, template, labels, base branch. Use when the user asks to open or create a PR."
 argument-hint: "[optional: base branch, or 'draft']"
 effort: low
 ---
@@ -62,7 +62,7 @@ Section names in the fallback are English; use the language of the sampled PRs.
 
 - Fill every section from the diff, then delete sections that do not apply. Remove `<!-- -->` comments and placeholder bullets. Never leave a section blank.
 - **Summary**: 1-3 bullets, what changed and why. The why is not in the diff.
-- **Testing**: only what someone verifies by hand. Classify the change first.
+- **Testing Steps**: only what someone verifies by hand. Classify the change first.
 
 | Change | Testing scope |
 |---|---|

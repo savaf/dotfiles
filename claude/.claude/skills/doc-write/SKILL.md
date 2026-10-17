@@ -1,6 +1,6 @@
 ---
 name: doc-write
-description: "Write or edit persistent markdown: AGENTS.md, CLAUDE.md, README, docs/, SKILL.md, and agent config. Invoke before writing or editing any such file. Skip transient plan files and issue/PR templates."
+description: "Writes or edits persistent markdown prose: README, docs/, and other long-lived files. Use before writing or editing any such file; for SKILL.md, AGENTS.md or CLAUDE.md also read writing-for-agents. Skips transient plan files and issue/PR templates."
 argument-hint: "[file path and what to write]"
 effort: medium
 ---
@@ -38,6 +38,7 @@ format).
 4. **Check before writing**: filler phrases, prose paragraphs, non-structural lines over 100
    chars, claims you did not verify.
 5. **Write**, then re-read what landed.
+6. **SKILL.md only**: run `python3 -I ~/.claude/skills/doc-write/scripts/check-skill.py <skill dir>` and fix every failure. Skill rules: third-person description of at most 1024 chars, body under 500 lines, references one level deep from `SKILL.md`.
 
 ## Scope
 

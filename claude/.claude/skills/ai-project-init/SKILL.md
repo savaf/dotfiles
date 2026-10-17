@@ -1,6 +1,6 @@
 ---
 name: ai-project-init
-description: "Scaffold or refresh a repo's AI config: AGENTS.md, .claude/settings.json, and folder-level AGENTS.md. Use when a project has no AI configuration, when the user says set up AI config, init agents, add AGENTS.md, configure Claude for this repo, document this folder for agents, or invokes /ai-project-init."
+description: "Scaffolds or refreshes a repo's AI config: AGENTS.md, .claude/settings.json, and folder-level AGENTS.md. Use when a project has no AI configuration or its AGENTS.md has drifted."
 argument-hint: "[optional: subfolder path to document, or --refresh]"
 effort: medium
 ---
@@ -114,6 +114,15 @@ For a folder whose rules differ from the root, or that an agent gets wrong repea
 - Not a trigger: the folder is merely large, or merely important.
 - Keep it to what is not visible from reading two files in that folder.
 - Do not restate the root `AGENTS.md`. Point at it.
+
+## Refresh (`--refresh`)
+
+Runs steps 1 and 5 against an existing `AGENTS.md`. Rewrite nothing the code does not contradict.
+
+- Re-run the survey (step 1) and diff it against the file: commands, paths, branch, commit
+  convention.
+- List each drift as `line: claim -> what the repo shows`, then fix only those lines.
+- Report lines you could not verify instead of deleting them.
 
 ## 5. Verify
 

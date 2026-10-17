@@ -128,7 +128,7 @@ lenses and a compressor, dispatchable by name.
 
 | Agent | Model | Effort | Why |
 |---|---|---|---|
-| `Explore` | haiku | low | mechanical searching; cheapest model does it fine |
+| `Explore` | haiku | medium | mechanical searching; cheapest model does it fine |
 | `Plan` | opus | high | deep reasoning is worth it for architecture |
 | `general-purpose` | sonnet | medium | implementation workhorse; haiku falls short on non-trivial code |
 | `architecture-reviewer` | opus | high | boundaries, contracts, state, error paths, test gaps |
@@ -200,8 +200,8 @@ Scale: `low` → `medium` → `high` → `xhigh` → `max`. `max` is not used he
 
 | Level | Use |
 |---|---|
-| `low` | search, summaries, mechanical skills |
-| `medium` | standard implementation, drafting |
+| `low` | summaries, mechanical skills |
+| `medium` | search (`Explore` on Haiku 5.5, whose default it is), standard implementation, drafting |
 | `high` | design, review, analysis |
 | `xhigh` | security, critical architecture |
 
@@ -221,8 +221,8 @@ Rules:
 - The `Skill` tool takes no effort parameter; only the skill's frontmatter sets it.
 - The `Agent` tool takes `effort` per spawn; it beats the agent's frontmatter for that spawn.
 - Main-thread dispatch rule lives in `claude/.claude/CLAUDE.md`.
-- `Explore` and `summarizer` run on haiku, which ignores `effort` without an error; `low` is
-  documentation only.
+- `Explore` and `summarizer` run on haiku. Haiku 5.5 honors `effort`; older Haiku models ignore it
+  without an error, so `low` is documentation only there.
 
 Precedence, highest first:
 1. `CLAUDE_CODE_EFFORT_LEVEL`
@@ -242,17 +242,17 @@ After one `/effort` call, the `settings.json` default stops applying to that mod
 ### Skills
 
 `claude/.claude/skills/`, versioned here rather than installed by `npx skills add`. Stow links
-each `SKILL.md` into `~/.claude/skills/<name>/`, alongside the third-party ones, so both kinds
+each file (`SKILL.md`, `pr-template.md`, `references/`, `scripts/`) into `~/.claude/skills/<name>/`, alongside the third-party ones, so both kinds
 coexist. Unprefixed on purpose: a project skill of the same name shadows the global one.
 
 | Skill | What it is for |
 |---|---|
 | `ai-project-init` | Scaffold `AGENTS.md` + `.claude/settings.json` in a repo that has none, or refresh one that drifted |
 | `session-retro` | Turn friction in a chat into a fix in the narrowest config that would have prevented it |
-| `doc-write` | House style for persistent markdown: rules first, one idea per line, no filler |
+| `doc-write` | House style for persistent markdown: rules first, one idea per line, no filler. Bundles `scripts/check-skill.py`, which validates a `SKILL.md` against the best-practices limits |
 | `git-commit` | Commit using the convention inferred from `git log`, not an imposed one |
 | `create-pr` | Open a PR with title, template, labels and base inferred from recent merged PRs; draft approved before creating. Its `pr-template.md` is only a fallback: the repo's template wins |
-| `horde` | Implement open tickets with builder agents: one worktree per ticket via herdr, frozen checks approved before the build, background `herdr agent wait` per builder, parallel reviewer gate (0 blocker/issue, max 3 rounds), fresh builder on a repeated failure, every round in `.scratch/horde/results.tsv`. Never pushes |
+| `horde` | Implement open tickets with builder agents: one worktree per ticket via herdr, frozen checks approved before the build, background `herdr agent wait` per builder, parallel reviewer gate (0 blocker/issue, max 3 rounds), fresh builder on a repeated failure, every round in `.scratch/horde/results.tsv`. Never pushes. Herdr launch details live in `references/batch.md`, loaded only in batch mode |
 
 ### Workflow and agents
 
@@ -293,9 +293,9 @@ Skill and agent descriptions land in the system prompt of every request. Measure
 
 | Addition | Tokens per request |
 |---|---:|
-| 4 skills | ~250 |
+| 6 own skills | ~310 |
 | 4 agents | ~215 |
-| **total** | **~465** |
+| **total** | **~525** |
 
 The hooks cost nothing in tokens: they are shell, not prompt. `guard-protected-branch.mjs` exits
 before spawning git when no branch is protected, and `git-guardrails.mjs` only shells out to git
@@ -305,20 +305,24 @@ for a commit in a repo that set `AI_GUARD_PROTECT_BRANCHES`.
 
 `packages/claude-skills.txt` lists GitHub repos installed user-level
 (`~/.claude/skills/`) by `scripts/install-claude-skills.sh` (run by the bootstrap) via
-`npx skills add <repo> -g -a claude-code -s '*' -y`. The same script registers the
+`npx skills@<pinned version> add <repo> -g -a claude-code -s <names> -y`; a manifest line may add a comma-separated skill list, the default is every skill in the repo. The CLI version is pinned in the script. The same script registers the
 `context7` MCP server (library docs) at user scope with `claude mcp add`, once per profile; that
 lands in each profile's `.claude.json`, which is runtime state and can't be stowed.
 
-Security note: third-party skills are instructions injected into the agent — review a
-repo before adding it to the manifest.
+Security note: third-party skills are instructions injected into the agent. Before adding a
+repo to the manifest:
+
+1. Read every file in it, scripts and `references/` included.
+2. Run `python3 -I ~/.claude/skills/doc-write/scripts/check-skill.py --audit` after installing and
+   read each warning (network calls, scripts, secrets, manipulation phrases).
+3. Pin what you accepted; a later update is a new review, not a free upgrade.
 
 `~/.claude/skills/` now holds two kinds: the ones this script installs, and the ones versioned
 in `claude/.claude/skills/` and linked by stow. They sit side by side; `npx skills add` leaves the
 symlinked directories alone unless a repo ships a skill with the same name.
 
 Token note: every installed skill puts its `name` + `description` in the system prompt of
-**every** request (the body loads on demand, so size on disk is irrelevant). Currently 53 skills
-= ~2,690 tokens per request (27 skills = ~2,860 before adding `mattpocock/skills`; the UI skills below are off).
+**every** request (the body loads on demand, so size on disk is irrelevant). Count and cost: `check-skill.py --all` (below).
 `marketingskills` was 47 skills (~8,000 tokens) and is commented out of the manifest — its
 directories sit in `~/.claude/skills-disabled/`, as do `transitions-dev`, `transitions-polish` and
 the 13 skills from `Leonxlnx/taste-skill` (UI-only, off by default here).
@@ -329,18 +333,10 @@ the 13 skills from `Leonxlnx/taste-skill` (UI-only, off by default here).
 tracker, triage labels, `docs/agents/`); `code-review` and `triage` need it.
 Re-enable a single one with `mv ~/.claude/skills-disabled/<skill> ~/.claude/skills/`.
 
-To re-measure after adding or removing skills:
+To validate and re-measure after adding or removing skills:
 
 ```sh
-python3 -c "
-import glob,re,os
-t=0
-for f in glob.glob(os.path.expanduser('~/.claude/skills/*/SKILL.md')):
-    m=re.match(r'^---\n(.*?)\n---\n', open(f,errors='replace').read(), re.S)
-    if not m: continue
-    d=re.search(r'^description:\s*(.*?)(?=\n[a-zA-Z_-]+:|\Z)', m.group(1), re.S|re.M)
-    t+=len(d.group(1).strip()) if d else 0
-print(f'{t} chars ~ {t//4} tokens por request')"
+python3 -I ~/.claude/skills/doc-write/scripts/check-skill.py --all
 ```
 
 ## Auditing token usage
