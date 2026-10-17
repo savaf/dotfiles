@@ -186,8 +186,8 @@ Scale: `low` → `medium` → `high` → `xhigh` → `max`. `max` is not used he
 
 | Level | Use |
 |---|---|
-| `low` | search, summaries, mechanical skills |
-| `medium` | standard implementation, drafting |
+| `low` | summaries, mechanical skills |
+| `medium` | search (`Explore` on Haiku 5.5, whose default it is), standard implementation, drafting |
 | `high` | design, review, analysis |
 | `xhigh` | security, critical architecture |
 
@@ -291,7 +291,7 @@ for a commit in a repo that set `AI_GUARD_PROTECT_BRANCHES`.
 
 `packages/claude-skills.txt` lists GitHub repos installed user-level
 (`~/.claude/skills/`) by `scripts/install-claude-skills.sh` (run by the bootstrap) via
-`npx skills add <repo> -g -a claude-code -s '*' -y`. The same script registers the
+`npx skills@<pinned version> add <repo> -g -a claude-code -s <names> -y`; a manifest line may add a comma-separated skill list, the default is every skill in the repo. The CLI version is pinned in the script. The same script registers the
 `context7` MCP server (library docs) at user scope with `claude mcp add`, once per profile; that
 lands in each profile's `.claude.json`, which is runtime state and can't be stowed.
 

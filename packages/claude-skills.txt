@@ -1,6 +1,7 @@
 # Claude Code skills, installed with `npx skills add <repo>` by
 # scripts/install-claude-skills.sh. Third-party skills are a prompt-injection
-# surface: review the repo before adding a new line here.
+# surface: review the repo before adding a new line here. Optional second column limits a repo
+# to some skills: `owner/repo skill-a,skill-b` (default: all). The CLI version is pinned in the script.
 # ponytail: pushes the agent toward minimal code (YAGNI) — fewer generated tokens
 DietrichGebert/ponytail
 # engineering workflow: tdd, diagnosing-bugs, grilling, domain-modeling, code-review, ...

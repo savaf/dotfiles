@@ -126,6 +126,7 @@ The ticket body verbatim inside `<ticket>` tags, then:
 
 When a builder settles in `idle` or `done`:
 
+0. The reply ends with a plan for the next step and cites no blocker: work is still open. Send one continuation that names the open items (at most 2 per round), then gate the result.
 1. Reply starts with `CHECK-DISPUTE:`: stop that ticket and show the user. Only the user changes a frozen check, through the check writer, with a new `CHECKS_SHA`.
 2. Frozen set untouched: `git diff --quiet <CHECKS_SHA> HEAD -- <frozen set>` and `git status --short -- <frozen set>` empty. A change fails the round as `checks-modified`; revert those files before the next round.
 3. Run the repo's test and lint commands in that checkout yourself. A claim is not evidence.
