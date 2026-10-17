@@ -22,6 +22,20 @@ Three anchors keep the loop honest. None of them is negotiable mid-run:
 - **Fresh verifier**: you run the checks yourself, and reviewers get the diff and the ticket, never the builder's transcript.
 - **Results log**: every round is a row in `.scratch/horde/results.tsv`. Repeated failures are read from it, not remembered.
 
+## Progress
+
+Copy and tick as you go:
+
+```text
+- [ ] 1 Preflight
+- [ ] 2 Pick tickets
+- [ ] 3 Conventions
+- [ ] 4 Checks written, approved, committed
+- [ ] 5 Builders launched
+- [ ] 6 Review gate passed, row logged
+- [ ] 8 Hand back
+```
+
 ## 1. Preflight
 
 Stop and tell the user what is missing; do not fix it silently.
@@ -85,48 +99,12 @@ The check writer never builds; the builder never writes checks. That split is th
 
 ### Batch
 
-```bash
-herdr worktree create --branch feat/<id>-<slug> --base <base> --label "<id>" --no-focus
-```
-
-- Read the workspace id, root pane id, and worktree path from the JSON response. Never guess them.
-- `.claude/settings.json` untracked (section 1): `cp` it into the same path in the worktree.
-- Write the checks (section 4) in the worktree, then:
-
-```bash
-herdr agent start b-<id> --kind claude --pane <pane-id> --timeout 60000 -- --model sonnet
-herdr agent prompt b-<id> "$(cat .scratch/horde/<id>/prompt.md)"
-herdr agent wait b-<id> --until working --until blocked --timeout 15000
-```
-
-- Agent names must match `[a-z][a-z0-9_-]{0,31}`: lowercase the ticket id.
-- Write each prompt to `.scratch/horde/<id>/prompt.md` in the base checkout first. It keeps quoting out of the shell and leaves a record.
-- The pane must sit at a shell prompt. `agent start` fails or returns `agent_not_ready`: run `herdr agent read b-<id> --source recent-unwrapped --lines 60`. A folder-trust or permission dialog is the user's to answer; tell them, never answer it. Do not retry in a loop.
-- `agent_prompt_stalled` or a timeout does not prove the prompt was lost. Read the pane before sending anything again.
-
-**Monitor.** After every builder is working, start one background wait per builder (Bash with `run_in_background`, so the harness wakes you when it settles):
-
-```bash
-herdr agent wait b-<id> --timeout 5400000
-```
-
-Then `herdr agent get b-<id>` to see which state it settled in:
-
-| State | Meaning | Do |
-|---|---|---|
-| `idle` / `done` | Turn finished | Review gate (section 6) |
-| `blocked` | Approval or question dialog | `agent read`, tell the user what it needs. Never answer for them |
-| `unknown` | Cannot classify | `agent read`; does not prove completion |
-| wait timed out | Still working after 90 min | `agent read`, report progress, start a new wait |
-
-While a builder works, leave its pane alone. `herdr agent list` is the cheap overview when the user asks for status.
-
-Merge each passed ticket branch into the base yourself, one at a time, tests green after each. No push.
+Launch, monitor, and plateau restarts: `references/batch.md`. Merge each passed ticket branch into the base yourself, one at a time, tests green after each. No push.
 
 ### Solo
 
 - One builder on the base in place: no worktree, no new branch.
-- Run it in this session with `tdd`, or in a herdr pane as above when herdr is running.
+- Run it in this session with `tdd`, or in a herdr pane (`references/batch.md`) when herdr is running.
 - Notes go to `.scratch/<slug>/notes.md` (plan, decisions, test results). `.scratch/` stays untracked.
 - Never create, comment on, or transition a ticket in the external tracker.
 
@@ -152,7 +130,7 @@ When a builder settles in `idle` or `done`:
 5. Gate: checks green, frozen set intact, 0 `blocker` and 0 `issue` findings (see `~/.claude/docs/review-output.md`).
 6. Log the round (section 7).
 7. Gate fails, round < 3: pick the builder for the next round.
-   - Same `failure` as the previous round: **plateau**. The builder is stuck in a habit and its context carries it. Split a fresh pane in the worktree (`herdr pane split --pane <pane-id> --direction down --cwd <worktree> --no-focus`), start `b-<id>-r<round>` there, and prompt it with the ticket, the frozen set, `git log <CHECKS_SHA>..HEAD`, and a three-line summary of what failed and what was already tried. Leave the old pane for the user to inspect.
+   - Same `failure` as the previous round: **plateau**. Start a fresh builder with a summary of what failed (`references/batch.md`, Plateau restart). Solo: a fresh session does the same.
    - Otherwise: send the findings to the same builder.
 8. Round 3 still failing: stop and report. Do not loosen the gate, and do not weaken a check to pass it.
 
