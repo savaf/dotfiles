@@ -38,6 +38,7 @@ format).
 4. **Check before writing**: filler phrases, prose paragraphs, non-structural lines over 100
    chars, claims you did not verify.
 5. **Write**, then re-read what landed.
+6. **SKILL.md only**: run `python3 -I ~/.claude/skills/doc-write/scripts/check-skill.py <skill dir>` and fix every failure. Skill rules: third-person description of at most 1024 chars, body under 500 lines, references one level deep from `SKILL.md`.
 
 ## Scope
 
