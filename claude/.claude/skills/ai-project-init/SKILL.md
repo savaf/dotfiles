@@ -115,6 +115,15 @@ For a folder whose rules differ from the root, or that an agent gets wrong repea
 - Keep it to what is not visible from reading two files in that folder.
 - Do not restate the root `AGENTS.md`. Point at it.
 
+## Refresh (`--refresh`)
+
+Runs steps 1 and 5 against an existing `AGENTS.md`. Rewrite nothing the code does not contradict.
+
+- Re-run the survey (step 1) and diff it against the file: commands, paths, branch, commit
+  convention.
+- List each drift as `line: claim -> what the repo shows`, then fix only those lines.
+- Report lines you could not verify instead of deleting them.
+
 ## 5. Verify
 
 - Re-read what you wrote. Every command must run; every path must exist.
