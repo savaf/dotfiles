@@ -1,6 +1,6 @@
 ---
 name: session-retro
-description: "Review this chat for where the agent struggled (repeated failures, user corrections, wrong assumptions, missing context) and propose fixes to the config that would have prevented it. Use when the user says session retro, retro this chat, what did you struggle with, what should we fix in the config, or invokes /session-retro."
+description: "Reviews this chat for where the agent struggled (repeated failures, user corrections, wrong assumptions, missing context) and proposes config fixes that would have prevented it. Use when the user asks for a session retro."
 argument-hint: "[optional: focus area]"
 effort: high
 ---

@@ -1,6 +1,6 @@
 ---
 name: create-pr
-description: "Open a pull request using the conventions the repo actually uses: title, template, labels, base branch. Use when the user says create PR, open PR, push and make a PR, or invokes /create-pr."
+description: "Opens a pull request using the conventions the repo actually uses: title, template, labels, base branch. Use when the user asks to open or create a PR."
 argument-hint: "[optional: base branch, or 'draft']"
 effort: low
 ---

@@ -1,6 +1,6 @@
 ---
 name: doc-write
-description: "Write or edit persistent markdown: AGENTS.md, CLAUDE.md, README, docs/, SKILL.md, and agent config. Invoke before writing or editing any such file. Skip transient plan files and issue/PR templates."
+description: "Writes or edits persistent markdown prose: README, docs/, and other long-lived files. Use before writing or editing any such file; for SKILL.md, AGENTS.md or CLAUDE.md also read writing-for-agents. Skips transient plan files and issue/PR templates."
 argument-hint: "[file path and what to write]"
 effort: medium
 ---

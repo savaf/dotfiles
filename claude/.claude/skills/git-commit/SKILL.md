@@ -1,6 +1,6 @@
 ---
 name: git-commit
-description: "Commit staged work using the convention this repo actually uses, inferred from its history. Use when the user says commit, commit this, save changes, or invokes /git-commit."
+description: "Commits staged work using the convention this repo actually uses, inferred from its history. Use when the user asks to commit."
 argument-hint: "[optional: what the commit should say]"
 effort: low
 ---

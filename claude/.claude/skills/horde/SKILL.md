@@ -1,6 +1,6 @@
 ---
 name: horde
-description: "Implement tickets with builder agents, in any tracker setup. Batch mode: parallel builders, one worktree per ticket, via herdr. Solo mode: one ticket, end to end, autonomous, notes kept local. Use when the user says build the tickets, unleash the horde, orchestrate agents on this project, work this ticket on its own, or invokes /horde."
+description: "Implements tickets with builder agents, in any tracker setup. Batch mode runs parallel builders, one worktree per ticket, via herdr; solo mode builds one ticket end to end, autonomously, with notes kept local. Use when the user asks to build tickets or unleash the horde."
 argument-hint: "[ticket ids, path or text] [--base <branch>] [--solo] [--no-checks] [max parallel builders]"
 effort: medium
 ---
