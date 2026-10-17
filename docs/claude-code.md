@@ -207,8 +207,8 @@ Rules:
 - The `Skill` tool takes no effort parameter; only the skill's frontmatter sets it.
 - The `Agent` tool takes `effort` per spawn; it beats the agent's frontmatter for that spawn.
 - Main-thread dispatch rule lives in `claude/.claude/CLAUDE.md`.
-- `Explore` and `summarizer` run on haiku, which ignores `effort` without an error; `low` is
-  documentation only.
+- `Explore` and `summarizer` run on haiku. Haiku 5.5 honors `effort`; older Haiku models ignore it
+  without an error, so `low` is documentation only there.
 
 Precedence, highest first:
 1. `CLAUDE_CODE_EFFORT_LEVEL`
