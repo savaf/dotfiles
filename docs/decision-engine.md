@@ -18,10 +18,28 @@ Fail open, Shadow mode.
 | `skill` | Every user prompt | 13 curated skills / ninguna |
 | `modelo-skill` (skill model) | When `skill` ≠ ninguna | haiku / sonnet / opus / ninguna |
 | `modelo-subagente` (subagent model) | Every `PreToolUse` on `Agent` | haiku / sonnet / opus / ninguna |
+| `agent` | Every user prompt | researcher / builder / test-runner / docs-reviewer / pr-reviewer / none |
+
+`agent` is the one Decision with English identifiers (`agent`, `none`); the others keep Spanish.
 
 - Questions and criteria: [`claude/.claude/hooks/decisiones.json`](../claude/.claude/hooks/decisiones.json).
 - Input: only the prompt text (or the agent's `description` + `prompt`), cut to 6,000 characters.
 - Prompts starting with `<` (notifications, internal commands) are skipped.
+
+## Agents and the frontmatter suggestion
+
+The engine decides the model of a subagent; the `model:` in the agent's frontmatter only
+suggests one.
+
+- On `PreToolUse(Agent)` the hook finds the agent by `subagent_type` in `agentsDir`
+  (`~/.claude/agents`) and prepends `[agent suggests model: <m>]` to the question. The log keeps
+  it as `suggested`, next to `final`; `decisiones-report` prints how often the engine differed.
+- While in shadow mode nothing is applied, so the frontmatter `model:` is what runs. It is also
+  the fallback when the engine fails open or answers `ninguna`.
+- When `modelo-subagente` starts acting (`updatedInput.model`), its answer wins over the
+  frontmatter. The acting requirements below still apply first.
+- `agent` only picks the subagent. It does not pick the model; `modelo-subagente` does, once the
+  agent is launched.
 
 ## Pieces
 

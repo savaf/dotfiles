@@ -11,15 +11,15 @@ herdr worktree create --branch feat/<id>-<slug> --base <base> --label "<id>" --n
 - Write the checks (section 4) in the worktree, then:
 
 ```bash
-herdr agent start b-<id> --kind claude --pane <pane-id> --timeout 60000 -- --model sonnet
+herdr agent start b-<id> --kind claude --pane <pane-id> --timeout 60000 -- --agent builder
 herdr agent prompt b-<id> "$(cat .scratch/horde/<id>/prompt.md)"
 herdr agent wait b-<id> --until working --until blocked --timeout 15000
 ```
 
 - Constants: `--timeout 60000` gives the pane a minute to reach a shell prompt; `--until working
   --until blocked --timeout 15000` waits just long enough to see the first state change, so a
-  dead start surfaces fast; `--model sonnet` is the implementation default, raise it only when the
-  user asks.
+  dead start surfaces fast; `--agent builder` loads the builder agent, whose model and effort live in
+  `agents/builder.md`.
 - Agent names must match `[a-z][a-z0-9_-]{0,31}`: lowercase the ticket id.
 - Write each prompt to `.scratch/horde/<id>/prompt.md` in the base checkout first. It keeps quoting out of the shell and leaves a record.
 - The pane must sit at a shell prompt. `agent start` fails or returns `agent_not_ready`: run `herdr agent read b-<id> --source recent-unwrapped --lines 60`. A folder-trust or permission dialog is the user's to answer; tell them, never answer it. Do not retry in a loop.
