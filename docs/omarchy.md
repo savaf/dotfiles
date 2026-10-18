@@ -154,8 +154,8 @@ hyprctl devices -j | jq -r '.keyboards[] | "\(.name)\t\(.layout)\t\(.active_keym
   detectarlo y resolverlo: `docs/shell-and-dotfiles.md`.
 - On Arch `fd` and `bat` install under their real names — no `fdfind`/`batcat`
   symlinks like on Ubuntu.
-- lazygit and Neovim come from the official repos (current versions), so the
-  GitHub-release fallbacks used on Ubuntu/Fedora aren't needed.
+- lazygit and Neovim are installed by mise (`mise/.config/mise/config.toml`), not
+  pacman, so every platform gets the same versions.
 - `wl-clipboard` is in the package list — Neovim's system clipboard needs it
   under Wayland/Hyprland.
 - GUI apps (the `brew-casks.txt` equivalent) install automatically from
@@ -372,4 +372,4 @@ hyprctl devices -j | jq -r '.keyboards[] | "\(.name)\t\(.layout)\t\(.active_keym
   habilitar y avisa en el log del bootstrap; una vez creado el token,
   re-ejecuta `scripts/bootstrap.sh` (o a mano:
   `coolercontrol-provision && systemctl --user enable --now coolercontrol-mode-watcher`).
-- To re-apply config after pulling changes: `cd ~/dotfiles && stow -R bash zsh git starship nvim tmux shell lazygit`.
+- To re-apply config after pulling changes: `cd ~/dotfiles && stow -R bash zsh git starship nvim tmux shell lazygit mise`.

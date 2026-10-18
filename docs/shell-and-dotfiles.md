@@ -22,7 +22,7 @@ focused files from `~/.config/zsh/`:
 | `keybindings.zsh` | key bindings |
 | `aliases.zsh` | aliases (git, eza, bat, docker, `lzg`, …) |
 | `functions.zsh` | utility functions (`ex`, `mkcd`, `glog`, …) |
-| `integrations.zsh` | fzf, zoxide, nvm, fastfetch, … |
+| `integrations.zsh` | fzf, zoxide, nvm, mise, fastfetch, … |
 
 Plugins are managed by [zinit](https://github.com/zdharma-continuum/zinit) and
 auto-install on first launch. **The prompt is [Starship](https://starship.rs)**
@@ -40,7 +40,7 @@ files from `~/.config/bash/`:
 
 | Module | Responsibility |
 |--------|----------------|
-| `plugins.sh` | installer functions for ble.sh + Starship (called from `.bashrc`/`integrations.sh`) |
+| `plugins.sh` | installer function for ble.sh (called from `.bashrc`/`integrations.sh`) |
 | `exports.sh` | locale + environment variables + colored man pages |
 | `path.sh` | Homebrew + `PATH` |
 | `completion.sh` | bash-completion + related `shopt` |
@@ -48,7 +48,7 @@ files from `~/.config/bash/`:
 | `git.sh` | puerto del plugin git de OMZ (`gco`, `gfo`, `ggp`…; generado desde `OMZP::git`) |
 | `aliases.sh` | aliases (same set as zsh, minus the zsh-only suffix aliases) |
 | `functions.sh` | utility functions (same as zsh's `functions.zsh`, portable as-is) |
-| `integrations.sh` | fzf, zoxide, nvm, phpbrew, Starship init |
+| `integrations.sh` | fzf, zoxide, nvm, mise, phpbrew, Starship init |
 
 Keybindings live in `bash/.inputrc` (readline, not bash-only — the same
 bindings apply to any readline program: `psql`, `python3 -i`, etc.).
@@ -83,8 +83,8 @@ same pattern already used for Homebrew itself in `path.sh`.
 
 [Starship](https://starship.rs) is the single prompt config for **both** zsh
 and bash, configured in `starship/.config/starship.toml` (its own Stow
-package). It self-installs the same way ble.sh does —
-no manual step needed.
+package). The binary is installed by mise (`mise/.config/mise/config.toml`), so
+no manual step is needed.
 
 **Prompt colors:** `starship.toml` uses ANSI indices
 **0-15** (`fg:4`, `fg:2`, …) on purpose, not hex/256-color values, so the
@@ -128,7 +128,7 @@ Or link packages manually:
 
 ```sh
 cd ~/dotfiles
-stow --no-folding zsh bash git starship nvim tmux herdr shell lazygit claude   # link everything
+stow --no-folding zsh bash git starship nvim tmux herdr shell lazygit claude mise   # link everything
 stow --no-folding omarchy                                             # Omarchy only
 stow --no-folding nvim                                                # just one package
 stow -D nvim                                                          # unlink
@@ -153,7 +153,7 @@ Find every package file that is no longer a link to the repo:
 
 ```sh
 cd ~/dotfiles
-for pkg in zsh bash git starship nvim tmux herdr shell lazygit claude omarchy; do
+for pkg in zsh bash git starship nvim tmux herdr shell lazygit claude mise omarchy; do
   [ -d "$pkg" ] || continue
   find "$pkg" -type f | while read -r f; do
     t="$HOME/${f#$pkg/}"

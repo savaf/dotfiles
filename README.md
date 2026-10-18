@@ -29,6 +29,7 @@ dotfiles/
 ├── nvim/           # .config/nvim/ (LazyVim distribution)
 ├── tmux/           # .config/tmux/tmux.conf
 ├── lazygit/        # .config/lazygit/config.yml (terminal UI for git)
+├── mise/           # .config/mise/config.toml (global CLI tools: neovim, lazygit, starship…)
 ├── shell/          # .profile
 ├── claude/         # .claude/ (Claude Code settings, agents, global CLAUDE.md; shared across profiles)
 ├── clef/           # systemd --user units + clef-server for the local decision engine (Linux; docs/decision-engine.md)
@@ -81,7 +82,7 @@ To link (or unlink) individual packages yourself:
 
 ```sh
 cd ~/dotfiles
-stow bash zsh git starship nvim tmux shell lazygit claude   # link everything
+stow bash zsh git starship nvim tmux shell lazygit claude mise   # link everything
 stow nvim                                    # link just one package
 stow -D nvim                                 # unlink (remove symlinks)
 stow -R zsh                                   # restow (refresh) after changes

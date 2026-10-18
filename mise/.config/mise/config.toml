@@ -1,0 +1,9 @@
+# Herramientas CLI globales: única fuente de versiones en todas las plataformas.
+# Versiones fijas: actualizar = cambiar el número aquí y re-ejecutar el bootstrap.
+# Node NO va aquí: lo decide nvm (ver docs/nodejs.md, MISE_DISABLE_TOOLS=node).
+[tools]
+neovim = "0.12.6"
+lazygit = "0.66.2"
+lazydocker = "0.25.2"
+dua = "2.46.0"
+starship = "1.27.0"

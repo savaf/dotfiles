@@ -25,9 +25,6 @@ linux-headers
 xclip
 wl-clipboard
 fontconfig
-# en repos oficiales con versión actual; en Omarchy ya presentes (--needed los salta)
-lazygit
-neovim
 # deps opcionales de CoolerControl (Kraken) + soporte i2c para el RGB de RAM/placa (OpenRGB)
 liquidctl
 lm_sensors
@@ -37,7 +34,5 @@ jq
 socat
 nginx
 btop
-dua-cli
 inxi
-lazydocker
 yt-dlp

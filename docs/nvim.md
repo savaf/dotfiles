@@ -48,7 +48,7 @@ prompt) as a guard.
 
 | Tool | Why | Provided by |
 |------|-----|-------------|
-| Neovim ≥ 0.11.2 (LuaJIT) | core | `neovim` |
+| Neovim ≥ 0.11.2 (LuaJIT) | core | mise (`mise/.config/mise/config.toml`) |
 | Git ≥ 2.19 | lazy.nvim partial clones | `git` |
 | C compiler | nvim-treesitter parsers | `build-essential` (Linux) / Xcode CLT (macOS) |
 | `tree-sitter` CLI | treesitter parser builds | auto-installed by Mason on first sync |

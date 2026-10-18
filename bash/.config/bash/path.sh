@@ -26,6 +26,10 @@ fi
 [[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"
 [[ -d "$HOME/bin" ]] && export PATH="$HOME/bin:$PATH"
 
+# Shims de mise: las herramientas globales (nvim, lazygit, starship…) resuelven
+# también fuera de la shell interactiva (popups de tmux, launchers, scripts).
+[[ -d "$HOME/.local/share/mise/shims" ]] && export PATH="$HOME/.local/share/mise/shims:$PATH"
+
 # ============================================================================
 # PNPM
 # ============================================================================

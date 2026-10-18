@@ -37,8 +37,8 @@ cd ~/dotfiles
 
 This installs the apt packages from [`packages/apt-cli.txt`](../packages/apt-cli.txt)
 (which includes `gh`, skipped automatically on older Ubuntu releases where it has
-no apt candidate), installs tools that aren't in apt (e.g. lazygit from its GitHub
-release and Claude Code via its official installer), stows the config packages,
+no apt candidate), installs the CLI tools declared in [`mise/.config/mise/config.toml`](../mise/.config/mise/config.toml)
+(Neovim, lazygit, lazydocker, dua, starship) with mise, plus Claude Code via its official installer, stows the config packages,
 sets zsh as the default shell (bash stays available: `./scripts/switch-shell.sh bash`), and—on WSL—copies `.wslconfig` to your Windows user
 profile.
 

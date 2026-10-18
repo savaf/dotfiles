@@ -1,5 +1,5 @@
 # ============================================================================
-# AUTO-INSTALACIÓN DE HERRAMIENTAS (ble.sh, starship)
+# AUTO-INSTALACIÓN DE HERRAMIENTAS (ble.sh)
 # ============================================================================
 # Mismo patrón que zinit en zsh: en cada arranque de shell se hace un chequeo
 # barato y, si falta algo, se instala una sola vez. bash-completion no vive
@@ -21,13 +21,4 @@ _bde_ensure_blesh() {
     echo "[bash] no se pudo descargar ble.sh; sigue sin autosugerencias." >&2
   fi
   rm -rf "${tmp}"
-}
-
-_bde_ensure_starship() {
-  command -v starship >/dev/null 2>&1 && return 0
-  command -v curl >/dev/null 2>&1 || return 0
-  echo "[bash] instalando starship…" >&2
-  curl -sS https://starship.rs/install.sh 2>/dev/null \
-    | sh -s -- --yes --bin-dir "$HOME/.local/bin" >/dev/null 2>&1 \
-    || echo "[bash] fallo instalando starship; prompt por defecto." >&2
 }

@@ -40,6 +40,7 @@ tmux attach -t work
 | `prefix \|` | Split pane **vertically** (keeps current path) |
 | `prefix -` | Split pane **horizontally** (keeps current path) |
 | `prefix c` | New window (keeps current path) |
+| `prefix g` | lazygit in a popup (current pane path) |
 | `prefix h/j/k/l` | Move to the pane left / down / up / right |
 | `prefix H/J/K/L` | Resize pane (repeatable — hold/repeat the letter) |
 | `prefix d` | Detach from the session (it keeps running) |

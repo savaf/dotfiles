@@ -162,126 +162,10 @@ install_macos() {
     "$(brew --prefix)/opt/fzf/install" --key-bindings --completion --no-update-rc || true
   fi
 
+  ensure_mise_tools
+
   ensure_zsh
   ensure_bash_installed
-}
-
-# lazygit is not reliably packaged in apt; try apt first, then fall back to the
-# latest GitHub release binary. Works on x86_64 and arm64 (incl. WSL).
-install_lazygit() {
-  if exists lazygit; then
-    log "lazygit ya instalado ($(lazygit --version 2>/dev/null | head -1))"
-    return 0
-  fi
-
-  if exists apt; then
-    log "Instalando lazygit (apt)…"
-    if sudo apt install -y lazygit 2>/dev/null && exists lazygit; then
-      return 0
-    fi
-  fi
-
-  log "Descargando el último release de lazygit desde GitHub…"
-  local arch tarball version tmp
-  case "$(uname -m)" in
-    x86_64|amd64) arch="x86_64" ;;
-    aarch64|arm64) arch="arm64" ;;
-    armv7l|armhf) arch="armv6" ;;
-    *) log "Arquitectura no soportada: $(uname -m); omitiendo lazygit"; return 0 ;;
-  esac
-
-  version="$(curl -fsSL https://api.github.com/repos/jesseduffield/lazygit/releases/latest \
-    | grep -Po '"tag_name":\s*"v\K[^"]*' || true)"
-  if [[ -z "${version}" ]]; then
-    log "No se pudo determinar la versión de lazygit; omitiendo."
-    return 0
-  fi
-
-  tmp="$(mktemp -d)"
-  tarball="lazygit_${version}_Linux_${arch}.tar.gz"
-  if curl -fsSL -o "${tmp}/${tarball}" \
-      "https://github.com/jesseduffield/lazygit/releases/download/v${version}/${tarball}"; then
-    tar -xf "${tmp}/${tarball}" -C "${tmp}" lazygit
-    sudo install "${tmp}/lazygit" /usr/local/bin/lazygit
-    log "lazygit ${version} instalado en /usr/local/bin/lazygit"
-  else
-    log "Fallo al descargar lazygit; omitiendo."
-  fi
-  rm -rf "${tmp}"
-}
-
-# lazydocker no está empaquetado en apt/dnf; misma mecánica que install_lazygit
-# (mismo autor, mismo esquema de releases), sin el intento de apt previo porque
-# nunca existió ahí. Arch/Omarchy lo trae de pacman-cli.txt (repo oficial).
-install_lazydocker() {
-  if exists lazydocker; then
-    log "lazydocker ya instalado ($(lazydocker --version 2>/dev/null | head -1))"
-    return 0
-  fi
-
-  log "Descargando el último release de lazydocker desde GitHub…"
-  local arch tarball version tmp
-  case "$(uname -m)" in
-    x86_64|amd64) arch="x86_64" ;;
-    aarch64|arm64) arch="arm64" ;;
-    armv7l|armhf) arch="armv6" ;;
-    *) log "Arquitectura no soportada: $(uname -m); omitiendo lazydocker"; return 0 ;;
-  esac
-
-  version="$(curl -fsSL https://api.github.com/repos/jesseduffield/lazydocker/releases/latest \
-    | grep -Po '"tag_name":\s*"v\K[^"]*' || true)"
-  if [[ -z "${version}" ]]; then
-    log "No se pudo determinar la versión de lazydocker; omitiendo."
-    return 0
-  fi
-
-  tmp="$(mktemp -d)"
-  tarball="lazydocker_${version}_Linux_${arch}.tar.gz"
-  if curl -fsSL -o "${tmp}/${tarball}" \
-      "https://github.com/jesseduffield/lazydocker/releases/download/v${version}/${tarball}"; then
-    tar -xf "${tmp}/${tarball}" -C "${tmp}" lazydocker
-    sudo install "${tmp}/lazydocker" /usr/local/bin/lazydocker
-    log "lazydocker ${version} instalado en /usr/local/bin/lazydocker"
-  else
-    log "Fallo al descargar lazydocker; omitiendo."
-  fi
-  rm -rf "${tmp}"
-}
-
-# dua-cli no está empaquetado en apt; binario estático (musl) del release de
-# GitHub. Arch/Omarchy lo trae de pacman-cli.txt.
-install_dua() {
-  if exists dua; then
-    log "dua ya instalado ($(dua --version 2>/dev/null | head -1))"
-    return 0
-  fi
-
-  log "Descargando el último release de dua-cli desde GitHub…"
-  local target name version tmp
-  case "$(uname -m)" in
-    x86_64|amd64) target="x86_64-unknown-linux-musl" ;;
-    aarch64|arm64) target="aarch64-unknown-linux-musl" ;;
-    *) log "Arquitectura no soportada: $(uname -m); omitiendo dua"; return 0 ;;
-  esac
-
-  version="$(curl -fsSL https://api.github.com/repos/Byron/dua-cli/releases/latest \
-    | grep -Po '"tag_name":\s*"v\K[^"]*' || true)"
-  if [[ -z "${version}" ]]; then
-    log "No se pudo determinar la versión de dua-cli; omitiendo."
-    return 0
-  fi
-
-  tmp="$(mktemp -d)"
-  name="dua-v${version}-${target}"
-  if curl -fsSL -o "${tmp}/${name}.tar.gz" \
-      "https://github.com/Byron/dua-cli/releases/download/v${version}/${name}.tar.gz"; then
-    tar -xzf "${tmp}/${name}.tar.gz" -C "${tmp}"
-    sudo install "${tmp}/${name}/dua" /usr/local/bin/dua
-    log "dua ${version} instalado en /usr/local/bin/dua"
-  else
-    log "Fallo al descargar dua-cli; omitiendo."
-  fi
-  rm -rf "${tmp}"
 }
 
 # Claude Code CLI: el instalador nativo oficial funciona igual en cualquier
@@ -299,6 +183,7 @@ install_claude_code() {
 # mise (version manager de lenguajes) no está en apt/dnf; el instalador oficial
 # funciona igual en cualquier distro y no pide sudo (instala en ~/.local/bin).
 # Arch/Omarchy: lo instala install_arch vía pacman (no va en pacman-cli.txt).
+# macOS: viene de brew-cli.txt.
 ensure_mise() {
   if exists mise; then
     log "mise ya instalado ($(mise --version 2>/dev/null)); se omite."
@@ -308,39 +193,19 @@ ensure_mise() {
   curl -fsSL https://mise.run | sh || log "Fallo al instalar mise; omitiendo."
 }
 
-# apt solo trae Neovim 0.9.x; LazyVim necesita >= 0.11.2. Instala el tarball
-# oficial en /opt y lo enlaza a /usr/local/bin (que precede a /usr/bin en PATH).
-ensure_neovim() {
-  local NVIM_VERSION="v0.11.3"
-  if exists nvim; then
-    local major minor
-    read -r major minor < <(nvim --version | sed -n '1s/^NVIM v\([0-9]*\)\.\([0-9]*\).*/\1 \2/p')
-    if [[ -n "${major}" && ( "${major}" -gt 0 || "${minor}" -ge 11 ) ]]; then
-      log "Neovim ya >= 0.11 ($(nvim --version | head -1)); se omite."
-      return 0
-    fi
+# Instala las herramientas CLI declaradas en mise/.config/mise/config.toml
+# (neovim, lazygit, lazydocker, dua, starship). Lee el config del repo directamente
+# porque corre antes que Stow; no requiere sudo. mise descarga de GitHub: si el
+# límite anónimo de la API se agota, exporta GITHUB_TOKEN y re-ejecuta.
+ensure_mise_tools() {
+  PATH="${HOME}/.local/bin:${PATH}"
+  if ! exists mise; then
+    log "mise no disponible; se omiten las herramientas CLI."
+    return 0
   fi
-
-  local arch
-  case "$(uname -m)" in
-    x86_64|amd64) arch="x86_64" ;;
-    aarch64|arm64) arch="arm64" ;;
-    *) log "Arquitectura no soportada para Neovim tarball: $(uname -m); omitiendo."; return 0 ;;
-  esac
-
-  local tarball="nvim-linux-${arch}.tar.gz" tmp
-  tmp="$(mktemp -d)"
-  log "Descargando Neovim ${NVIM_VERSION} (${arch})…"
-  if curl -fsSL -o "${tmp}/${tarball}" \
-      "https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/${tarball}"; then
-    sudo rm -rf "/opt/nvim-linux-${arch}"
-    sudo tar -xzf "${tmp}/${tarball}" -C /opt
-    sudo ln -sf "/opt/nvim-linux-${arch}/bin/nvim" /usr/local/bin/nvim
-    log "Neovim ${NVIM_VERSION} instalado en /usr/local/bin/nvim"
-  else
-    log "Fallo al descargar Neovim; omitiendo."
-  fi
-  rm -rf "${tmp}"
+  log "Instalando herramientas CLI con mise…"
+  MISE_GLOBAL_CONFIG_FILE="${ROOT_DIR}/mise/.config/mise/config.toml" mise install -y \
+    || log "Fallo en 'mise install' (¿límite de GitHub? exporta GITHUB_TOKEN y re-ejecuta)."
 }
 
 # LazyVim necesita una Nerd Font para los iconos. La instala en el perfil del
@@ -439,12 +304,9 @@ install_ubuntu() {
     tldr --update >/dev/null 2>&1 || log "Fallo al actualizar tldr; se omite."
   fi
 
-  install_lazygit
-  install_lazydocker
-  install_dua
   install_claude_code
-  ensure_neovim
   ensure_mise
+  ensure_mise_tools
   ensure_nerd_font
 
   ensure_zsh
@@ -477,10 +339,8 @@ install_fedora() {
     sudo dnf install -y ${pkgs}
   fi
 
-  install_lazygit
-  install_lazydocker
-  ensure_neovim
   ensure_mise
+  ensure_mise_tools
   ensure_nerd_font
 
   ensure_zsh
@@ -634,8 +494,7 @@ ensure_nct6687() {
   fi
 }
 
-# Arch/Omarchy: repos oficiales traen lazygit y neovim actuales, así que no
-# hacen falta los fallbacks de GitHub. Omarchy ya trae casi todo (--needed salta).
+# Arch/Omarchy: Omarchy ya trae casi todo (--needed salta lo presente).
 install_arch() {
   local pkgs
   pkgs="$(grep -Ev '^\s*#|^\s*$' "${PACMAN_CLI}" | tr '\n' ' ')"
@@ -665,6 +524,7 @@ install_arch() {
     fi
   fi
 
+  ensure_mise_tools
   ensure_nerd_font
 
   ensure_zsh
