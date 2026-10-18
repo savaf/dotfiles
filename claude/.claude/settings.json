@@ -132,9 +132,15 @@
     "command": "bash \"$HOME/.claude/hooks/statusline.sh\""
   },
   "enabledPlugins": {
-    "cloudflare@cloudflare": true,
+    "cloudflare@cloudflare": false,
     "teamclaude-status@dotfiles-mods": true,
-    "replay-theater@dotfiles-mods": true
+    "replay-theater@dotfiles-mods": true,
+    "design@synced": false,
+    "engineering@synced": false,
+    "productivity@synced": false,
+    "figma@synced": false,
+    "humanizer@synced": false,
+    "brightdata-plugin@synced": false
   },
   "extraKnownMarketplaces": {
     "cloudflare": {
