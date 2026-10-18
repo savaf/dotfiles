@@ -4,9 +4,10 @@
 # to some skills: `owner/repo skill-a,skill-b` (default: all). The CLI version is pinned in the script.
 # ponytail: pushes the agent toward minimal code (YAGNI) — fewer generated tokens
 DietrichGebert/ponytail
-# engineering workflow: tdd, diagnosing-bugs, grilling, domain-modeling, code-review, ...
+# engineering workflow (lista explícita; fuera a propósito: grill-me, grill-with-docs -> grilling;
+# retro -> session-retro; pr -> create-pr): tdd, diagnosing-bugs, grilling, domain-modeling, code-review, ...
 # Per repo, run /setup-matt-pocock-skills once (issue tracker + docs layout).
-mattpocock/skills
+mattpocock/skills ask-matt,chief-of-staff,claude-handoff,code-review,codebase-design,diagnosing-bugs,domain-modeling,git-guardrails-claude-code,grilling,handoff,implement,implement-spec,improve-codebase-architecture,loop-me,migrate-to-shoehorn,prototype,research,resolving-merge-conflicts,scaffold-exercises,setup-matt-pocock-skills,setup-pre-commit,setup-ts-deep-modules,tdd,teach,to-questionnaire,to-spec,to-tickets,triage,wait-what,wayfinder,wizard,writing-beats,writing-for-agents,writing-fragments,writing-shape
 # Leonxlnx/taste-skill — DESACTIVADO (13 skills de diseño UI que se pisan entre sí). Solo para
 # trabajo de frontend; directorios en ~/.claude/skills-disabled/. Para recuperar: descomenta la
 # línea y corre scripts/install-claude-skills.sh, o `mv` uno solo.

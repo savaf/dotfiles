@@ -331,6 +331,10 @@ the 13 skills from `Leonxlnx/taste-skill` (UI-only, off by default here).
 `mattpocock-skills@claude-plugins-official` plugin: enabling both lists every skill twice
 (`tdd` and `mattpocock-skills:tdd`). Per repo, run `/setup-matt-pocock-skills` once (issue
 tracker, triage labels, `docs/agents/`); `code-review` and `triage` need it.
+Solo se instalan `ponytail`, `mattpocock/skills` (lista explícita en el manifiesto; sin `grill-me`,
+`grill-with-docs`, `retro`, `pr`, que duplican `grilling`, `session-retro` y `create-pr`) y las
+skills propias. Los plugins de la cuenta (`design`, `engineering`, `productivity`, `figma`,
+`humanizer`, `brightdata-plugin`) y `cloudflare` están a `false` en `enabledPlugins`.
 Re-enable a single one with `mv ~/.claude/skills-disabled/<skill> ~/.claude/skills/`.
 
 To validate and re-measure after adding or removing skills:
