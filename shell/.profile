@@ -25,3 +25,8 @@ fi
 if [ -d "$HOME/.local/bin" ] ; then
     PATH="$HOME/.local/bin:$PATH"
 fi
+
+# shims de mise: herramientas globales (nvim, lazygit…) también en sesiones no interactivas
+if [ -d "$HOME/.local/share/mise/shims" ] ; then
+    PATH="$HOME/.local/share/mise/shims:$PATH"
+fi

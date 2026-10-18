@@ -17,9 +17,8 @@ tener que memorizar flags.
 
 Ya está integrado en estos dotfiles:
 
-- **macOS:** se instala vía Homebrew (`packages/brew-cli.txt`).
-- **Ubuntu/WSL:** `scripts/install-packages.sh` lo instala (apt o, si no está,
-  el binario del último release de GitHub).
+- **Todas las plataformas:** lo instala mise (`mise/.config/mise/config.toml`),
+  que `scripts/install-packages.sh` ejecuta con `mise install`.
 
 Instalación manual rápida:
 

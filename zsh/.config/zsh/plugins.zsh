@@ -18,11 +18,9 @@ source "${ZINIT_HOME}/zinit.zsh"
 # PROMPT THEME (Starship)
 # ============================================================================
 # Unificado con bash (ver bash/.config/bash/integrations.sh): mismo prompt en
-# ambos shells, configurado en starship/.config/starship.toml.
+# ambos shells, configurado en starship/.config/starship.toml. El binario lo
+# instala mise (mise/.config/mise/config.toml).
 
-if ! command -v starship >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
-  curl -sS https://starship.rs/install.sh 2>/dev/null | sh -s -- --yes --bin-dir "$HOME/.local/bin" >/dev/null 2>&1
-fi
 command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
 
 # ============================================================================

@@ -41,11 +41,16 @@ export NVM_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                 # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
+# ---- MISE ----
+# Herramientas y variables de entorno por proyecto (mise.toml). Node lo sigue
+# decidiendo nvm: mise lo ignora, así que no pisa el PATH de nvm.
+export MISE_DISABLE_TOOLS=node
+command -v mise >/dev/null 2>&1 && eval "$(mise activate bash)"
+
 # ---- PHP Brew ----
 [[ -e ~/.phpbrew/bashrc ]] && source ~/.phpbrew/bashrc
 
 # ---- STARSHIP -----
 # Unificado con zsh (ver zsh/.config/zsh/plugins.zsh): mismo prompt en ambos
-# shells. Se instala solo si falta (ver plugins.sh).
-_bde_ensure_starship
+# shells. El binario lo instala mise (mise/.config/mise/config.toml).
 command -v starship >/dev/null 2>&1 && eval "$(starship init bash)"
