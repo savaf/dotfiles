@@ -215,6 +215,7 @@ Skills (`claude/.claude/skills/`, all inline):
 | `ai-project-init` | medium |
 | `session-retro` | high |
 | `horde` | medium |
+| `idea-to-prs` | high |
 
 Rules:
 - An inline skill's `effort:` replaces the session's for that turn only.
@@ -253,6 +254,7 @@ coexist. Unprefixed on purpose: a project skill of the same name shadows the glo
 | `git-commit` | Commit using the convention inferred from `git log`, not an imposed one |
 | `create-pr` | Open a PR with title, template, labels and base inferred from recent merged PRs; draft approved before creating. Its `pr-template.md` is only a fallback: the repo's template wins |
 | `horde` | Implement open tickets with builder agents: one worktree per ticket via herdr, frozen checks approved before the build, background `herdr agent wait` per builder, parallel reviewer gate (0 blocker/issue, max 3 rounds), fresh builder on a repeated failure, every round in `.scratch/horde/results.tsv`. Never pushes. Herdr launch details live in `references/batch.md`, loaded only in batch mode |
+| `idea-to-prs` | Run a loose idea through wayfinder research, decisions, plan, `to-tickets`, `horde` builds and reviewed stacked PRs across repos. User-invoked orchestrator; each stage ends on a gate. Lessons from real runs live in `references/lessons.md`, reviewer prompts in `references/review-prompts.md` |
 
 ### Workflow and agents
 
