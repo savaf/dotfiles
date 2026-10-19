@@ -289,6 +289,14 @@ install_ubuntu() {
       sudo apt install -y "${pkgs[@]}"
     fi
   fi
+  # fd y bat vienen de mise: quitar los symlinks de instalaciones anteriores
+  # (fd→fdfind, bat→batcat) que taparían los shims.
+  for link in fd bat; do
+    case "$(readlink "/usr/local/bin/${link}" 2>/dev/null)" in
+      */fdfind|*/batcat) log "Quitando symlink obsoleto /usr/local/bin/${link}"
+                         sudo rm -f "/usr/local/bin/${link}" ;;
+    esac
+  done
 
   install_claude_code
   ensure_mise
