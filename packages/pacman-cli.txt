@@ -4,18 +4,10 @@ stow
 zsh
 bash
 bash-completion
-fastfetch
 curl
 eza
-# en Arch el paquete y el binario se llaman fd
-fd
-fzf
-ripgrep
-tldr
 wget
-zoxide
 net-tools
-bat
 unzip
 cmatrix
 # equivalente a build-essential (compilador para treesitter)
@@ -29,8 +21,7 @@ fontconfig
 liquidctl
 lm_sensors
 i2c-tools
-# deps de coolercontrol-mode-watcher: jq parsea la API/hyprctl, socat lee el socket de eventos de Hyprland
-jq
+# dep de coolercontrol-mode-watcher: socat lee el socket de eventos de Hyprland (jq viene de mise)
 socat
 nginx
 btop

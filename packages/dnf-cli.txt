@@ -4,20 +4,10 @@ stow
 zsh
 bash
 bash-completion
-# fastfetch reemplaza a neofetch (retirado de los repos de Fedora)
-fastfetch
 curl
 eza
-# en Fedora fd-find instala el binario como `fd` (sin symlink fdfind)
-fd-find
-fzf
-jq
-ripgrep
-tldr
 wget
-zoxide
 net-tools
-bat
 unzip
 cmatrix
 # equivalente a build-essential (compilador para treesitter)

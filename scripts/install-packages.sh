@@ -157,11 +157,6 @@ install_macos() {
     xargs brew install --cask < "${BREW_CASKS}"
   fi
 
-  if exists fzf; then
-    log "Configuring fzf key-bindings and completion..."
-    "$(brew --prefix)/opt/fzf/install" --key-bindings --completion --no-update-rc || true
-  fi
-
   ensure_mise_tools
 
   ensure_zsh
@@ -194,11 +189,11 @@ ensure_mise() {
 }
 
 # Instala las herramientas CLI declaradas en mise/.config/mise/config.toml
-# (neovim, lazygit, lazydocker, dua, starship). Lee el config del repo directamente
+# (neovim, lazygit, dua, fzf, ripgrep…: ver la lista en el propio archivo). Lee el config del repo directamente
 # porque corre antes que Stow; no requiere sudo. mise descarga de GitHub: si el
 # límite anónimo de la API se agota, exporta GITHUB_TOKEN y re-ejecuta.
 ensure_mise_tools() {
-  PATH="${HOME}/.local/bin:${PATH}"
+  PATH="${HOME}/.local/share/mise/shims:${HOME}/.local/bin:${PATH}"
   if ! exists mise; then
     log "mise no disponible; se omiten las herramientas CLI."
     return 0
@@ -206,6 +201,12 @@ ensure_mise_tools() {
   log "Instalando herramientas CLI con mise…"
   MISE_GLOBAL_CONFIG_FILE="${ROOT_DIR}/mise/.config/mise/config.toml" mise install -y \
     || log "Fallo en 'mise install' (¿límite de GitHub? exporta GITHUB_TOKEN y re-ejecuta)."
+
+  # tealdeer (cliente `tldr`) no trae páginas: bajar la caché la primera vez.
+  if exists tldr && [[ ! -d "${XDG_CACHE_HOME:-$HOME/.cache}/tealdeer" ]]; then
+    log "Descargando páginas de tldr (tealdeer)…"
+    tldr --update >/dev/null 2>&1 || log "Fallo al actualizar tldr; se omite."
+  fi
 }
 
 # LazyVim necesita una Nerd Font para los iconos. La instala en el perfil del
@@ -287,21 +288,6 @@ install_ubuntu() {
     if ((${#pkgs[@]})); then
       sudo apt install -y "${pkgs[@]}"
     fi
-  fi
-
-  if exists fdfind && ! exists fd; then
-    log "Creating fd convenience symlink → fdfind"
-    sudo ln -sf "$(command -v fdfind)" /usr/local/bin/fd
-  fi
-  if exists batcat && ! exists bat; then
-    log "Creating bat convenience symlink → batcat"
-    sudo ln -sf "$(command -v batcat)" /usr/local/bin/bat
-  fi
-
-  # tealdeer (cliente `tldr`) no trae páginas: bajar la caché la primera vez.
-  if exists tldr && [[ ! -d "${XDG_CACHE_HOME:-$HOME/.cache}/tealdeer" ]]; then
-    log "Descargando páginas de tldr (tealdeer)…"
-    tldr --update >/dev/null 2>&1 || log "Fallo al actualizar tldr; se omite."
   fi
 
   install_claude_code

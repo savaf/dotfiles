@@ -30,6 +30,16 @@ MISE_TOOLS=(
   lazydocker:lazydocker:lazydocker
   dua:dua:dua,dua-cli
   starship:starship:starship
+  fd:fd:fd,fd-find
+  fzf:fzf:fzf
+  bat:bat:bat
+  rg:ripgrep:ripgrep
+  zoxide:zoxide:zoxide
+  jq:jq:jq
+  gh:gh:gh
+  tldr:tealdeer:tealdeer,tldr
+  fastfetch:fastfetch:fastfetch
+  tree-sitter:tree-sitter:tree-sitter
 )
 
 [[ -f "${MISE_CONFIG}" ]] || { echo "FAIL: falta ${MISE_CONFIG}"; exit 1; }
