@@ -17,3 +17,7 @@ gh = "2.102.0"
 tealdeer = "1.9.0"
 fastfetch = "2.70.0"
 tree-sitter = "0.27.1"
+yt-dlp = "2026.08.19"
+# Sin binario de mise en macOS (eza compilaría con cargo, btop es solo Linux): ahí siguen en brew.
+eza = { version = "0.23.5", os = ["linux", "windows"] }
+btop = { version = "1.4.7", os = ["linux"] }

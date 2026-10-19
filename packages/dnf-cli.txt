@@ -5,7 +5,6 @@ zsh
 bash
 bash-completion
 curl
-eza
 wget
 net-tools
 unzip

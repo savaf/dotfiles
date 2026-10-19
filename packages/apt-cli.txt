@@ -4,7 +4,6 @@ zsh
 bash
 bash-completion
 curl
-eza
 wget
 net-tools
 unzip
@@ -14,6 +13,4 @@ xclip
 wl-clipboard
 fontconfig
 nginx
-btop
 inxi
-yt-dlp

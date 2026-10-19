@@ -40,7 +40,14 @@ MISE_TOOLS=(
   tldr:tealdeer:tealdeer,tldr
   fastfetch:fastfetch:fastfetch
   tree-sitter:tree-sitter:tree-sitter
+  yt-dlp:yt-dlp:yt-dlp
+  eza:eza:eza
+  btop:btop:btop
 )
+# Sin binario de mise en macOS (eza compilaría con cargo, btop es solo Linux): se restringen
+# con `os` en la config. eza sigue en brew en macOS; btop no se instala allí.
+OS_RESTRICTED=(eza btop)
+BREW_KEEP=(eza)
 
 [[ -f "${MISE_CONFIG}" ]] || { echo "FAIL: falta ${MISE_CONFIG}"; exit 1; }
 grep -Eq '^STOW_PACKAGES=\(.*\bmise\b' "${SCRIPT_DIR}/modules/stow.sh" \
@@ -56,11 +63,20 @@ echo "OK: config de mise"
 for entry in "${MISE_TOOLS[@]}"; do
   IFS=: read -r _ tool pkgs <<<"${entry}"
   for manifest in "${ROOT_DIR}"/packages/{apt-cli,dnf-cli,pacman-cli,brew-cli}.txt; do
+    [[ "${manifest}" == *brew-cli.txt && " ${BREW_KEEP[*]} " == *" ${tool} "* ]] && continue
     for pkg in ${pkgs//,/ }; do
       sed 's/#.*//; s/[[:space:]]*$//' "${manifest}" | grep -Fxq "${pkg}" \
         && { echo "FAIL: ${tool} (${pkg}) está en mise y en ${manifest##*/}"; exit 1; }
     done
   done
+done
+for tool in "${BREW_KEEP[@]}"; do
+  grep -Fxq "${tool}" "${ROOT_DIR}/packages/brew-cli.txt" \
+    || { echo "FAIL: ${tool} debe seguir en brew-cli.txt (sin binario de mise en macOS)"; exit 1; }
+done
+for tool in "${OS_RESTRICTED[@]}"; do
+  grep -Eq "^${tool} *=.*os *=" "${MISE_CONFIG}" \
+    || { echo "FAIL: ${tool} en mise debe restringirse con os"; exit 1; }
 done
 echo "OK: sin doble origen mise/sistema"
 
@@ -75,7 +91,7 @@ if command -v mise >/dev/null 2>&1; then
   shims="${MISE_DATA_DIR:-${HOME}/.local/share/mise}/shims"
   for entry in "${MISE_TOOLS[@]}"; do
     IFS=: read -r bin tool _ <<<"${entry}"
-    want="$(sed -n "s/^${tool} *= *\"\(.*\)\"/\1/p" "${MISE_CONFIG}")"
+    want="$(sed -n "s/^\"\?${tool}\"\? *= *.*\"\([0-9][^\"]*\)\".*/\1/p" "${MISE_CONFIG}")"
     got="$(env -i HOME="${HOME}" MISE_GLOBAL_CONFIG_FILE="${MISE_CONFIG}" PATH="${shims}:/usr/bin:/bin" \
       sh -c "${bin} --version" 2>&1 | head -3)" || true
     [[ -n "${want}" && "${got}" == *"${want}"* ]] \

@@ -5,7 +5,6 @@ zsh
 bash
 bash-completion
 curl
-eza
 wget
 net-tools
 unzip
@@ -24,6 +23,4 @@ i2c-tools
 # dep de coolercontrol-mode-watcher: socat lee el socket de eventos de Hyprland (jq viene de mise)
 socat
 nginx
-btop
 inxi
-yt-dlp
