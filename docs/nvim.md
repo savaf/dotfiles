@@ -60,9 +60,8 @@ prompt) as a guard.
 | Nerd Font v3+ | icons | `ensure_nerd_font` → Monaspace (Linux) / `font-*-nerd-font` cask (macOS) |
 | Terminal with truecolor + undercurl | rendering | iTerm2 / WezTerm / kitty |
 
-> On Ubuntu the apt package is `fd-find`; `install-packages.sh` symlinks it to
-> `fd`. nvim-treesitter pulls the `tree-sitter` CLI through Mason, so no system
-> package is required for it — only the C compiler to compile parsers.
+> `fd` and the `tree-sitter` CLI come from mise on every platform, so there is no
+> `fd-find`/`fdfind` naming issue. Only the C compiler is needed to compile parsers.
 > Node is provisioned via `nvm` (so it's modern enough for the TS server).
 
 ## Enabled extras

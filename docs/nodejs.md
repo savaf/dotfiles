@@ -51,7 +51,7 @@ on Ubuntu/Fedora, `install_arch` on Arch/Omarchy, `brew-cli.txt` on macOS).
 ### CLI tools via mise
 
 Besides per-project config, mise owns the global CLI tools: `mise/.config/mise/config.toml`
-(a Stow package) declares Neovim, lazygit, lazydocker, dua and starship, and the installer
+(a Stow package) declares the global CLI tools (see the cascade in the [README](../README.md#package-lists)), and the installer
 runs `mise install` against it (`ensure_mise_tools`, no sudo). Their shims directory
 (`~/.local/share/mise/shims`) is on `PATH` from `path.zsh`/`path.sh`, so they also resolve
 outside interactive shells (tmux popups, launchers, scripts). mise downloads from GitHub;
