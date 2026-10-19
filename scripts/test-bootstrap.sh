@@ -23,16 +23,62 @@ echo "OK: xkb_merge"
 # --- Herramientas CLI gestionadas por mise (config global como paquete Stow) ---
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 MISE_CONFIG="${ROOT_DIR}/mise/.config/mise/config.toml"
-MISE_TOOLS=(nvim:neovim lazygit:lazygit lazydocker:lazydocker dua:dua starship:starship)  # binario:herramienta
+# binario:herramienta:paquetes-del-sistema (nombres equivalentes en apt/dnf/pacman/brew)
+MISE_TOOLS=(
+  nvim:neovim:neovim
+  lazygit:lazygit:lazygit
+  lazydocker:lazydocker:lazydocker
+  dua:dua:dua,dua-cli
+  starship:starship:starship
+  fd:fd:fd,fd-find
+  fzf:fzf:fzf
+  bat:bat:bat
+  rg:ripgrep:ripgrep
+  zoxide:zoxide:zoxide
+  jq:jq:jq
+  gh:gh:gh
+  tldr:tealdeer:tealdeer,tldr
+  fastfetch:fastfetch:fastfetch
+  tree-sitter:tree-sitter:tree-sitter
+  yt-dlp:yt-dlp:yt-dlp
+  eza:eza:eza
+  btop:btop:btop
+)
+# Sin binario de mise en macOS (eza compilaría con cargo, btop es solo Linux): se restringen
+# con `os` en la config. eza sigue en brew en macOS; btop no se instala allí.
+OS_RESTRICTED=(eza btop)
+BREW_KEEP=(eza)
 
 [[ -f "${MISE_CONFIG}" ]] || { echo "FAIL: falta ${MISE_CONFIG}"; exit 1; }
 grep -Eq '^STOW_PACKAGES=\(.*\bmise\b' "${SCRIPT_DIR}/modules/stow.sh" \
   || { echo "FAIL: 'mise' no está en STOW_PACKAGES"; exit 1; }
 for entry in "${MISE_TOOLS[@]}"; do
-  grep -Eq "^\"?${entry#*:}\"? *=" "${MISE_CONFIG}" \
-    || { echo "FAIL: ${entry#*:} no declarado en la config de mise"; exit 1; }
+  IFS=: read -r _ tool _ <<<"${entry}"
+  grep -Eq "^\"?${tool}\"? *=" "${MISE_CONFIG}" \
+    || { echo "FAIL: ${tool} no declarado en la config de mise"; exit 1; }
 done
 echo "OK: config de mise"
+
+# Doble origen: lo que mise instala no puede seguir en un manifiesto del sistema.
+for entry in "${MISE_TOOLS[@]}"; do
+  IFS=: read -r _ tool pkgs <<<"${entry}"
+  for manifest in "${ROOT_DIR}"/packages/{apt-cli,dnf-cli,pacman-cli,brew-cli}.txt; do
+    [[ "${manifest}" == *brew-cli.txt && " ${BREW_KEEP[*]} " == *" ${tool} "* ]] && continue
+    for pkg in ${pkgs//,/ }; do
+      sed 's/#.*//; s/[[:space:]]*$//' "${manifest}" | grep -Fxq "${pkg}" \
+        && { echo "FAIL: ${tool} (${pkg}) está en mise y en ${manifest##*/}"; exit 1; }
+    done
+  done
+done
+for tool in "${BREW_KEEP[@]}"; do
+  grep -Fxq "${tool}" "${ROOT_DIR}/packages/brew-cli.txt" \
+    || { echo "FAIL: ${tool} debe seguir en brew-cli.txt (sin binario de mise en macOS)"; exit 1; }
+done
+for tool in "${OS_RESTRICTED[@]}"; do
+  grep -Eq "^${tool} *=.*os *=" "${MISE_CONFIG}" \
+    || { echo "FAIL: ${tool} en mise debe restringirse con os"; exit 1; }
+done
+echo "OK: sin doble origen mise/sistema"
 
 # Instala lo declarado y comprueba que cada binario resuelve desde un sh sin
 # activación (como un popup de tmux o un launcher): solo vale el PATH de shims, y
@@ -44,8 +90,10 @@ if command -v mise >/dev/null 2>&1; then
   done
   shims="${MISE_DATA_DIR:-${HOME}/.local/share/mise}/shims"
   for entry in "${MISE_TOOLS[@]}"; do
-    bin="${entry%%:*}" tool="${entry#*:}"
-    want="$(sed -n "s/^${tool} *= *\"\(.*\)\"/\1/p" "${MISE_CONFIG}")"
+    IFS=: read -r bin tool _ <<<"${entry}"
+    # En macOS mise no instala las restringidas con `os`: no hay binario que comprobar.
+    [[ "$(uname -s)" == Darwin && " ${OS_RESTRICTED[*]} " == *" ${tool} "* ]] && continue
+    want="$(sed -n "s/^\"\?${tool}\"\? *= *.*\"\([0-9][^\"]*\)\".*/\1/p" "${MISE_CONFIG}")"
     got="$(env -i HOME="${HOME}" MISE_GLOBAL_CONFIG_FILE="${MISE_CONFIG}" PATH="${shims}:/usr/bin:/bin" \
       sh -c "${bin} --version" 2>&1 | head -3)" || true
     [[ -n "${want}" && "${got}" == *"${want}"* ]] \

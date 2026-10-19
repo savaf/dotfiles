@@ -7,3 +7,17 @@ lazygit = "0.66.2"
 lazydocker = "0.25.2"
 dua = "2.46.0"
 starship = "1.27.0"
+fd = "10.5.0"
+fzf = "0.74.5"
+bat = "0.26.1"
+ripgrep = "15.2.0"
+zoxide = "0.10.0"
+jq = "1.8.2"
+gh = "2.102.0"
+tealdeer = "1.9.0"
+fastfetch = "2.70.0"
+tree-sitter = "0.27.1"
+yt-dlp = "2026.08.19"
+# Sin binario de mise en macOS (eza compilaría con cargo, btop es solo Linux): ahí siguen en brew.
+eza = { version = "0.23.5", os = ["linux", "windows"] }
+btop = { version = "1.4.7", os = ["linux"] }

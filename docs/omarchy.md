@@ -152,10 +152,9 @@ hyprctl devices -j | jq -r '.keyboards[] | "\(.name)\t\(.layout)\t\(.active_keym
   de ahí los cambios se quedan fuera del repo y el siguiente `stow` aborta por conflicto. Lo
   mismo le pasó a `~/.config/hypr/monitors.lua` con `omarchy-upgrade-to-quattro`. Cómo
   detectarlo y resolverlo: `docs/shell-and-dotfiles.md`.
-- On Arch `fd` and `bat` install under their real names — no `fdfind`/`batcat`
-  symlinks like on Ubuntu.
-- lazygit and Neovim are installed by mise (`mise/.config/mise/config.toml`), not
-  pacman, so every platform gets the same versions.
+- CLI tools such as `fd`, `bat`, lazygit and Neovim are installed by mise
+  (`mise/.config/mise/config.toml`), not pacman, so every platform gets the same
+  versions (see the [install cascade](../README.md#package-lists)).
 - `wl-clipboard` is in the package list — Neovim's system clipboard needs it
   under Wayland/Hyprland.
 - GUI apps (the `brew-casks.txt` equivalent) install automatically from

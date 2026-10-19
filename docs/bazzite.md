@@ -36,7 +36,7 @@ cd ~/dotfiles
 
 This installs the packages from [`packages/dnf-cli.txt`](../packages/dnf-cli.txt),
 installs the CLI tools declared in [`mise/.config/mise/config.toml`](../mise/.config/mise/config.toml)
-(Neovim, lazygit, lazydocker, dua, starship) with mise, stows the config packages, and sets zsh as the default shell (bash stays available: `./scripts/switch-shell.sh bash`).
+(see the [install cascade](../README.md#package-lists)) with mise, stows the config packages, and sets zsh as the default shell (bash stays available: `./scripts/switch-shell.sh bash`).
 
 - **Classic Fedora**: packages install with `dnf`.
 - **Bazzite**: there is no `dnf` on the host; the bootstrap layers the missing

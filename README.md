@@ -29,7 +29,7 @@ dotfiles/
 ├── nvim/           # .config/nvim/ (LazyVim distribution)
 ├── tmux/           # .config/tmux/tmux.conf
 ├── lazygit/        # .config/lazygit/config.yml (terminal UI for git)
-├── mise/           # .config/mise/config.toml (global CLI tools: neovim, lazygit, starship…)
+├── mise/           # .config/mise/config.toml (global CLI tools, see "Package lists")
 ├── shell/          # .profile
 ├── claude/         # .claude/ (Claude Code settings, agents, global CLAUDE.md; shared across profiles)
 ├── clef/           # systemd --user units + clef-server for the local decision engine (Linux; docs/decision-engine.md)
@@ -89,6 +89,19 @@ stow -R zsh                                   # restow (refresh) after changes
 ```
 
 ## Package lists
+
+**Installation cascade.** Every tool is installed by the first level that supports it:
+
+1. **mise**, any backend (`mise/.config/mise/config.toml`, pinned versions).
+2. The **system package manager** (apt, dnf, pacman; brew on macOS; winget on Windows).
+3. **Homebrew on Linux**, only if the system manager lacks it.
+4. Building from source, as a last resort.
+
+A tool lives in exactly one place: `scripts/test-bootstrap.sh` fails if something declared in
+mise also appears in a system manifest. Tools without a mise binary for a platform are
+restricted with `os` in the config (eza and btop) and stay in the system manifest where needed.
+What remains in the manifests below is what mise cannot provide (git, zsh, stow, curl,
+compilers, nginx, wget…).
 
 Reproducible package manifests live in `packages/`:
 
