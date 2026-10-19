@@ -23,16 +23,36 @@ echo "OK: xkb_merge"
 # --- Herramientas CLI gestionadas por mise (config global como paquete Stow) ---
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 MISE_CONFIG="${ROOT_DIR}/mise/.config/mise/config.toml"
-MISE_TOOLS=(nvim:neovim lazygit:lazygit lazydocker:lazydocker dua:dua starship:starship)  # binario:herramienta
+# binario:herramienta:paquetes-del-sistema (nombres equivalentes en apt/dnf/pacman/brew)
+MISE_TOOLS=(
+  nvim:neovim:neovim
+  lazygit:lazygit:lazygit
+  lazydocker:lazydocker:lazydocker
+  dua:dua:dua,dua-cli
+  starship:starship:starship
+)
 
 [[ -f "${MISE_CONFIG}" ]] || { echo "FAIL: falta ${MISE_CONFIG}"; exit 1; }
 grep -Eq '^STOW_PACKAGES=\(.*\bmise\b' "${SCRIPT_DIR}/modules/stow.sh" \
   || { echo "FAIL: 'mise' no está en STOW_PACKAGES"; exit 1; }
 for entry in "${MISE_TOOLS[@]}"; do
-  grep -Eq "^\"?${entry#*:}\"? *=" "${MISE_CONFIG}" \
-    || { echo "FAIL: ${entry#*:} no declarado en la config de mise"; exit 1; }
+  IFS=: read -r _ tool _ <<<"${entry}"
+  grep -Eq "^\"?${tool}\"? *=" "${MISE_CONFIG}" \
+    || { echo "FAIL: ${tool} no declarado en la config de mise"; exit 1; }
 done
 echo "OK: config de mise"
+
+# Doble origen: lo que mise instala no puede seguir en un manifiesto del sistema.
+for entry in "${MISE_TOOLS[@]}"; do
+  IFS=: read -r _ tool pkgs <<<"${entry}"
+  for manifest in "${ROOT_DIR}"/packages/{apt-cli,dnf-cli,pacman-cli,brew-cli}.txt; do
+    for pkg in ${pkgs//,/ }; do
+      sed 's/#.*//; s/[[:space:]]*$//' "${manifest}" | grep -Fxq "${pkg}" \
+        && { echo "FAIL: ${tool} (${pkg}) está en mise y en ${manifest##*/}"; exit 1; }
+    done
+  done
+done
+echo "OK: sin doble origen mise/sistema"
 
 # Instala lo declarado y comprueba que cada binario resuelve desde un sh sin
 # activación (como un popup de tmux o un launcher): solo vale el PATH de shims, y
@@ -44,7 +64,7 @@ if command -v mise >/dev/null 2>&1; then
   done
   shims="${MISE_DATA_DIR:-${HOME}/.local/share/mise}/shims"
   for entry in "${MISE_TOOLS[@]}"; do
-    bin="${entry%%:*}" tool="${entry#*:}"
+    IFS=: read -r bin tool _ <<<"${entry}"
     want="$(sed -n "s/^${tool} *= *\"\(.*\)\"/\1/p" "${MISE_CONFIG}")"
     got="$(env -i HOME="${HOME}" MISE_GLOBAL_CONFIG_FILE="${MISE_CONFIG}" PATH="${shims}:/usr/bin:/bin" \
       sh -c "${bin} --version" 2>&1 | head -3)" || true
