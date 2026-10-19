@@ -91,6 +91,8 @@ if command -v mise >/dev/null 2>&1; then
   shims="${MISE_DATA_DIR:-${HOME}/.local/share/mise}/shims"
   for entry in "${MISE_TOOLS[@]}"; do
     IFS=: read -r bin tool _ <<<"${entry}"
+    # En macOS mise no instala las restringidas con `os`: no hay binario que comprobar.
+    [[ "$(uname -s)" == Darwin && " ${OS_RESTRICTED[*]} " == *" ${tool} "* ]] && continue
     want="$(sed -n "s/^\"\?${tool}\"\? *= *.*\"\([0-9][^\"]*\)\".*/\1/p" "${MISE_CONFIG}")"
     got="$(env -i HOME="${HOME}" MISE_GLOBAL_CONFIG_FILE="${MISE_CONFIG}" PATH="${shims}:/usr/bin:/bin" \
       sh -c "${bin} --version" 2>&1 | head -3)" || true
