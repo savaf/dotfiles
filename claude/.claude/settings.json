@@ -140,7 +140,9 @@
     "productivity@synced": false,
     "figma@synced": false,
     "humanizer@synced": false,
-    "brightdata-plugin@synced": false
+    "brightdata-plugin@synced": false,
+    "image-preview@better-claude": true,
+    "quick-peek@better-claude": true
   },
   "extraKnownMarketplaces": {
     "cloudflare": {
@@ -153,7 +155,15 @@
       "source": {
         "source": "directory",
         "path": "~/dotfiles/claude-mods"
-      }
+      },
+      "autoUpdate": true
+    },
+    "better-claude": {
+      "source": {
+        "source": "github",
+        "repo": "midudev/better-claude"
+      },
+      "autoUpdate": true
     }
   },
   "skipDangerousModePermissionPrompt": true,
