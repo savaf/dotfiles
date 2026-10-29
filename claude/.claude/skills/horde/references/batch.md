@@ -54,4 +54,14 @@ herdr pane split --pane <pane-id> --direction down --cwd <worktree> --no-focus
 ```
 
 Prompt it with the ticket, the frozen set, `git log <CHECKS_SHA>..HEAD`, and a three-line summary
-of what failed and what was already tried. Leave the old pane for the user to inspect.
+of what failed and what was already tried. Leave the old pane open while the ticket is in review; it closes with the rest (below).
+
+## Close panes
+
+Once a ticket passed the review gate and its branch is merged into the base with tests green, close every pane of that ticket (original and any `-r<round>` restarts):
+
+```bash
+herdr pane close <pane-id>
+```
+
+Only the pane: keep the worktree and branch; cleanup stays in the hand-back. Ignore a pane that no longer exists. Never close the panes of a ticket that failed round 3, hit CHECK-DISPUTE, or was stopped. Later changes (e.g. PR feedback) go to a fresh builder in a new round. Solo in a herdr pane: same; without a pane there is nothing to close.
