@@ -99,7 +99,7 @@ The check writer never builds; the builder never writes checks. That split is th
 
 ### Batch
 
-Launch, monitor, and plateau restarts: `references/batch.md`. Merge each passed ticket branch into the base yourself, one at a time, tests green after each. No push.
+Launch, monitor, and plateau restarts: `references/batch.md`. Merge each passed ticket branch into the base yourself, one at a time, tests green after each. No push. After each merge, close every pane of that ticket (`references/batch.md`, Close panes). A ticket that did not pass keeps its panes open.
 
 ### Solo
 
@@ -168,6 +168,7 @@ Per ticket, one line: ticket, branch, path, checks result, review rounds, gate p
 
 - Open a PR only if the user asks (`create-pr` skill). A base that already has a PR needs none.
 - Several runs logged: point the user at `results.tsv` failures that repeat across tickets. They are candidates for the repo's `AGENTS.md`; propose the line, never add it yourself.
+- Mention tickets whose panes stayed open (failed, disputed, stopped).
 - Batch cleanup after the user merges: `herdr worktree remove --workspace <id>`, then `git branch -d <branch>`.
 
 ## Never
