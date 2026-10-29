@@ -329,6 +329,11 @@ Token note: every installed skill puts its `name` + `description` in the system 
 directories sit in `~/.claude/skills-disabled/`, as do `transitions-dev`, `transitions-polish` and
 the 13 skills from `Leonxlnx/taste-skill` (UI-only, off by default here).
 
+Plugins de terceros: el marketplace `better-claude` (`midudev/better-claude`, con `autoUpdate`) está en
+`extraKnownMarketplaces` de `settings.json` y se activan `image-preview` y `quick-peek` en
+`enabledPlugins`. En una máquina nueva, Claude Code los instala solo al aceptar el marketplace; cada uno
+trae una opción sin definir: `/plugin configure <plugin>@better-claude`.
+
 `mattpocock/skills` is installed through the manifest, **not** as the
 `mattpocock-skills@claude-plugins-official` plugin: enabling both lists every skill twice
 (`tdd` and `mattpocock-skills:tdd`). Per repo, run `/setup-matt-pocock-skills` once (issue
