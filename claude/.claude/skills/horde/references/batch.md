@@ -1,6 +1,6 @@
 # Batch launch
 
-Herdr mechanics for batch mode. The orchestration rules live in `SKILL.md`.
+Herdr mechanics. The orchestration rules live in `SKILL.md`.
 
 ```bash
 herdr worktree create --branch feat/<id>-<slug> --base <base> --label "<id>" --no-focus
@@ -64,4 +64,4 @@ Once a ticket passed the review gate and its branch is merged into the base with
 herdr pane close <pane-id>
 ```
 
-Only the pane: keep the worktree and branch; cleanup stays in the hand-back. Ignore a pane that no longer exists. Never close the panes of a ticket that failed round 3, hit CHECK-DISPUTE, or was stopped. Later changes (e.g. PR feedback) go to a fresh builder in a new round. Solo in a herdr pane: same; without a pane there is nothing to close.
+Only the pane: keep the worktree and branch; cleanup stays in the hand-back. Ignore a pane that no longer exists. Never close the panes of a ticket that failed round 3, hit CHECK-DISPUTE, or was stopped. Later changes (e.g. PR feedback) go to a fresh builder in a new round.
