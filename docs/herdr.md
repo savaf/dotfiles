@@ -64,6 +64,8 @@ hw                   # open the work workspaces (see below)
 | `alt+←/→` or `prefix p`/`prefix n` | Previous / next tab |
 | `alt+↑/↓` or `prefix shift+p`/`prefix shift+n` | Previous / next workspace |
 | `prefix a` | Jump to the next agent that needs attention |
+| `prefix alt+g` | lazygit in a popup (90% of the screen) |
+| `prefix o` | Open the notification target (`open_notification_target`, herdr default) |
 
 Quality-of-life already enabled: mouse support, `new_cwd = "follow"` (splits
 and new tabs inherit the current pane's cwd, like tmux's
