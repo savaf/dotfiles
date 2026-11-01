@@ -89,6 +89,21 @@ Claude Code pane per repo, no nvim:
 - To change the set, edit the three `_hw_workspace` calls in `hw`.
 - A repo outside the list: `prefix shift+c` (new workspace).
 
+## Updating herdr
+
+| Platform | Command |
+|----------|---------|
+| Omarchy | `omarchy-update` (herdr comes from the `omarchy` repo's base packages) |
+| Ubuntu/WSL, Bazzite, macOS | `herdr update` |
+
+- Updating replaces the binary only. The running server keeps the old version.
+- Restarting the server closes every pane, and the agents in them.
+- Restart only with no builders running: `herdr server stop`, then `hw`.
+- Do not use `--handoff`.
+- Afterwards run `herdr integration status`.
+- If it shows `claude: outdated`, follow the throwaway-home procedure in
+  [Claude Code integration hook](#claude-code-integration-hook).
+
 ## Extending it
 
 Keybindings and theme live entirely in `config.toml`'s `[keys]`/`[ui]`
