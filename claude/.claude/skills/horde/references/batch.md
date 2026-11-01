@@ -37,7 +37,7 @@ Then `herdr agent get b-<id>` to see which state it settled in:
 |---|---|---|
 | `idle` / `done` | Turn finished | Review gate (section 6) |
 | `blocked` | Approval or question dialog | `agent read`, tell the user what it needs. Never answer for them |
-| `unknown` | Cannot classify | `agent read`; does not prove completion |
+| `unknown` | Cannot classify | `herdr agent explain b-<id>` and `agent read`; neither proves completion |
 | wait timed out | Still working after 90 min | `agent read`, report progress, start a new wait |
 
 While a builder works, leave its pane alone. `herdr agent list` is the cheap overview when the user asks for status.
@@ -64,4 +64,4 @@ Once a ticket passed the review gate and its branch is merged into the base with
 herdr pane close <pane-id>
 ```
 
-Only the pane: keep the worktree and branch; cleanup stays in the hand-back. Ignore a pane that no longer exists. Never close the panes of a ticket that failed round 3, hit CHECK-DISPUTE, or was stopped. Later changes (e.g. PR feedback) go to a fresh builder in a new round.
+Only the pane: keep the worktree and branch; cleanup stays in the hand-back. Ignore a pane that no longer exists. Never close the panes of a ticket that failed round 3, hit CHECK-DISPUTE, or was stopped. Later changes (e.g. PR feedback) go to a fresh builder in a new round; if the worktree was removed, `herdr worktree create --branch <existing branch> --no-focus` recreates it.
