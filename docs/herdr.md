@@ -134,7 +134,7 @@ newer hook version, diff `herdr --skill`'s output (or the installer's target
 file) against the tracked hook manually and update the file in the repo
 instead.
 
-The tracked hook is at integration v10. It only reports the session id on
+The tracked hook is at integration v11. It only reports the session id on
 `SessionStart`; herdr reads `idle`/`working`/`blocked`/`done` from the
 terminal itself.
 
