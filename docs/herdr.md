@@ -71,10 +71,11 @@ Quality-of-life already enabled: mouse support, `new_cwd = "follow"` (splits
 and new tabs inherit the current pane's cwd, like tmux's
 `-c "#{pane_current_path}"`), and no confirmation prompts on close.
 
-Agent alerts: `[ui.toast] delivery = "system"` sends a desktop notification
-(`notify-send`) when a background agent blocks or finishes, after `delay_seconds = 3`.
-Test it with `herdr notification show prueba`; if nothing appears, use `delivery = "herdr"`.
-The sidebar uses `status_indicators = "symbols"` and `agent_panel_sort = "priority"`.
+Agent alerts:
+
+- `[ui.toast] delivery = "system"` sends a desktop notification (`notify-send`) when a background agent blocks or finishes, after `delay_seconds = 3`.
+- Test it with `herdr notification show prueba`; if nothing appears, use `delivery = "herdr"`.
+- The sidebar uses `status_indicators = "symbols"` and `agent_panel_sort = "priority"`.
 
 ## `hw`: the work workspaces
 
@@ -108,7 +109,7 @@ Claude Code pane per repo, no nvim:
 - Updating replaces the binary only. The running server keeps the old version.
 - Restarting the server closes every pane, and the agents in them.
 - Restart only with no builders running: `herdr server stop`, then `hw`.
-- Do not use `--handoff`.
+- Do not use `--handoff`: it is experimental and only keeps live agents across a server replacement.
 - Afterwards run `herdr integration status`.
 - If it shows `claude: outdated`, follow the throwaway-home procedure in
   [Claude Code integration hook](#claude-code-integration-hook).

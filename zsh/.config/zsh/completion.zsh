@@ -12,7 +12,7 @@ else
 fi
 
 # herdr no está en todas las máquinas: solo se carga su completion si existe
-(( $+commands[herdr] )) && source <(herdr completion zsh)
+if (( $+commands[herdr] )); then source <(herdr completion zsh); fi
 
 # Ignore missing completion files silently
 zstyle ':completion:*:warnings' format ' %F{red}-- no matches found --%f'
