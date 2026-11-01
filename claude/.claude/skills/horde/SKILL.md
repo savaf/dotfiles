@@ -1,7 +1,7 @@
 ---
 name: horde
-description: "Implements tickets with builder agents, in any tracker setup. Batch mode runs parallel builders, one worktree per ticket, via herdr; solo mode builds one ticket end to end, autonomously, with notes kept local. Use when the user asks to build tickets or unleash the horde."
-argument-hint: "[ticket ids, path or text] [--base <branch>] [--solo] [--no-checks] [max parallel builders]"
+description: "Implements tickets with builder agents, in any tracker setup. Runs parallel builders, one worktree per ticket, via herdr. Use when the user asks to build tickets or unleash the horde."
+argument-hint: "[ticket ids, path or text] [--base <branch>] [--no-checks] [max parallel builders]"
 effort: medium
 ---
 
@@ -9,12 +9,7 @@ effort: medium
 
 You orchestrate. Builders write the code. You merge ticket branches into the base; the user merges the base into the default branch. Never push, never touch a protected branch.
 
-Rule: one ticket = one builder session at a time.
-
-- **Batch**: several tickets, one worktree each, parallel builders via herdr.
-- **Solo**: one ticket, no map, no tracker writes, notes stay local.
-
-Solo when `--solo` is passed, or `$ARGUMENTS` names exactly one ticket, or the overlap check (section 2) says so.
+Rule: one ticket = one worktree = one builder session at a time, run in herdr.
 
 Three anchors keep the loop honest. None of them is negotiable mid-run:
 
@@ -50,7 +45,7 @@ git check-ignore -q .scratch/ && echo scratch-ignored
 - Base = `--base <branch>`, else the current branch. A base that is protected, or equals the default branch: stop and ask for a feature branch.
 - `.scratch/` must be git-ignored. Not ignored: ask before adding it to `.gitignore`.
 - Read `AGENTS.md` and `docs/agents/issue-tracker.md` to learn where tickets live. Every tracker the repo configured is valid; use its operations below.
-- Batch only: `test "${HERDR_ENV:-}" = 1` and `herdr status` shows the server running. Outside a herdr pane, batch is unavailable: offer solo.
+- `test "${HERDR_ENV:-}" = 1` and `herdr status` shows the server running. Outside a herdr pane: stop.
 - GitHub tracker only: `gh auth status` must pass.
 - Missing `.claude/settings.json`: run `ai-project-init`. It must set `AI_GUARD_PROTECT_BRANCHES` to the default branch and allow the repo's test, lint, build commands. A missing permission blocks a builder and interrupts the user.
 - Note whether `.claude/settings.json` is tracked (`git ls-files --error-unmatch .claude/settings.json`). A worktree only has the tracked copy; section 4 copies an untracked one in.
@@ -68,11 +63,11 @@ Source follows the tracker doc:
 - Ready label or role: `docs/agents/triage-labels.md`.
 - Skip a ticket that names an open blocker (`Blocked by`).
 - User named tickets in `$ARGUMENTS`: use those, still skipping blocked ones.
-- A ticket the repo tracks outside the agent tracker (Jira key, pasted text, a plan file): solo only. Read it, never write back.
+- A ticket the repo tracks outside the agent tracker (Jira key, pasted text, a plan file): read it, never write back.
 - Default to **1** builder. Go to 2-3 only if the user asked or the first one finished clean. Cost scales with agents × turns × context.
 - Overlap check: list the files each ticket will touch. All tickets overlap: recommend `/tdd` on the base directly, then let the user pick. Some overlap: those tickets run in sequence, never in parallel.
 - Independence check: run two tickets side by side only when neither reads the other's output. A ticket that needs another's code is a real dependency: sequence it.
-- Show the chosen list and wait for a yes before launching. Solo with one named ticket: no wait.
+- Show the chosen list and wait for a yes before launching.
 
 ## 3. Conventions
 
@@ -86,7 +81,7 @@ Read once, paste into every builder prompt:
 
 Skip with `--no-checks`; say in the hand-back that the ticket ran unchecked.
 
-Per ticket, on its branch (batch: the worktree; solo: the base), before any builder runs:
+Per ticket, in its worktree, before any builder runs:
 
 1. Dispatch a fresh `general-purpose` agent with the ticket body and the conventions. It writes tests for the acceptance criteria only, in the repo's existing test layout, and runs them. They must fail for the right reason (missing behaviour, not a syntax or import error).
 2. A criterion that no automated test can express: list it as **manual** instead of faking a test.
@@ -97,16 +92,7 @@ The check writer never builds; the builder never writes checks. That split is th
 
 ## 5. Launch builders
 
-### Batch
-
 Launch, monitor, and plateau restarts: `references/batch.md`. Merge each passed ticket branch into the base yourself, one at a time, tests green after each. No push. After each merge, close every pane of that ticket (`references/batch.md`, Close panes). A ticket that did not pass keeps its panes open.
-
-### Solo
-
-- One builder on the base in place: no worktree, no new branch.
-- Run it in this session with `tdd`, or in a herdr pane (`references/batch.md`) when herdr is running.
-- Notes go to `.scratch/<slug>/notes.md` (plan, decisions, test results). `.scratch/` stays untracked.
-- Never create, comment on, or transition a ticket in the external tracker.
 
 ### Prompt
 
@@ -134,7 +120,7 @@ When a builder settles in `idle` or `done`:
 5. Gate: checks green, frozen set intact, 0 `blocker` and 0 `issue` findings (see `~/.claude/docs/review-output.md`).
 6. Log the round (section 7).
 7. Gate fails, round < 3: pick the builder for the next round.
-   - Same `failure` as the previous round: **plateau**. Start a fresh builder with a summary of what failed (`references/batch.md`, Plateau restart). Solo: a fresh session does the same.
+   - Same `failure` as the previous round: **plateau**. Start a fresh builder with a summary of what failed (`references/batch.md`, Plateau restart).
    - Otherwise: send the findings to the same builder.
 8. Round 3 still failing: stop and report. Do not loosen the gate, and do not weaken a check to pass it.
 
@@ -169,7 +155,7 @@ Per ticket, one line: ticket, branch, path, checks result, review rounds, gate p
 - Open a PR only if the user asks (`create-pr` skill). A base that already has a PR needs none.
 - Several runs logged: point the user at `results.tsv` failures that repeat across tickets. They are candidates for the repo's `AGENTS.md`; propose the line, never add it yourself.
 - Mention tickets whose panes stayed open (failed, disputed, stopped).
-- Batch cleanup after the user merges: `herdr worktree remove --workspace <id>`, then `git branch -d <branch>`.
+- Cleanup after the user merges: `herdr worktree remove --workspace <id>`, then `git branch -d <branch>`.
 
 ## Never
 
