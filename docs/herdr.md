@@ -6,8 +6,8 @@ across client disconnects. The config lives in
 [`herdr/.config/herdr/config.toml`](../herdr/.config/herdr/config.toml) and is
 stowed to `~/.config/herdr/config.toml`. Not in the Ubuntu, Fedora, or
 macOS package managers — `scripts/bootstrap.sh` (`ensure_herdr`) installs it via
-`herdr.dev/install.sh` there. On Arch/Omarchy it ships in the base packages (see
-[Updating herdr](#updating-herdr)).
+`herdr.dev/install.sh` there. Same on Arch/Omarchy: one install in `~/.local/bin`,
+not the `herdr` pacman package (see [Updating herdr](#updating-herdr)).
 
 Adopted alongside tmux, not instead of it. The `hw` function opens the work
 workspaces; see
@@ -101,11 +101,10 @@ Claude Code pane per repo, no nvim:
 
 ## Updating herdr
 
-| Platform | Command |
-|----------|---------|
-| Omarchy | `omarchy-update` (herdr comes from the `omarchy` repo's base packages) |
-| Ubuntu/WSL, Bazzite, macOS | `herdr update` |
-
+- All platforms: `herdr update`. The binary lives in `~/.local/bin`.
+- Omarchy: remove the `omarchy` repo package with `sudo pacman -R herdr`. It lags behind and nothing depends on it.
+- If `omarchy-update` reinstalls it, the `~/.local/bin` copy still wins in `PATH`.
+- `herdr status` shows a client/server version mismatch only if something started the server with the other binary.
 - Updating replaces the binary only. The running server keeps the old version.
 - Restarting the server closes every pane, and the agents in them.
 - Restart only with no builders running: `herdr server stop`, then `hw`.
