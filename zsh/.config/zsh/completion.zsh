@@ -11,6 +11,9 @@ else
   compinit -C 2>/dev/null
 fi
 
+# herdr no está en todas las máquinas: solo se carga su completion si existe
+if (( $+commands[herdr] )); then source <(herdr completion zsh); fi
+
 # Ignore missing completion files silently
 zstyle ':completion:*:warnings' format ' %F{red}-- no matches found --%f'
 zstyle ':completion:*' accept-exact '*(N)'

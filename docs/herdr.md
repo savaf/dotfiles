@@ -4,9 +4,10 @@
 a persistent server that keeps sessions, panes, and running agents alive
 across client disconnects. The config lives in
 [`herdr/.config/herdr/config.toml`](../herdr/.config/herdr/config.toml) and is
-stowed to `~/.config/herdr/config.toml`. Not in any distro package manager —
-installed by `scripts/bootstrap.sh` (`ensure_herdr`) via `herdr.dev/install.sh`,
-same on Ubuntu/WSL, Fedora/Bazzite, Arch/Omarchy, and macOS.
+stowed to `~/.config/herdr/config.toml`. Not in the Ubuntu, Fedora, or
+macOS package managers — `scripts/bootstrap.sh` (`ensure_herdr`) installs it via
+`herdr.dev/install.sh` there. Same on Arch/Omarchy: one install in `~/.local/bin`,
+not the `herdr` pacman package (see [Updating herdr](#updating-herdr)).
 
 Adopted alongside tmux, not instead of it. The `hw` function opens the work
 workspaces; see
@@ -62,10 +63,19 @@ hw                   # open the work workspaces (see below)
 | `prefix shift+r` | Rename current workspace |
 | `alt+←/→` or `prefix p`/`prefix n` | Previous / next tab |
 | `alt+↑/↓` or `prefix shift+p`/`prefix shift+n` | Previous / next workspace |
+| `prefix a` | Jump to the next agent that needs attention |
+| `prefix alt+g` | lazygit in a popup (90% of the screen) |
+| `prefix o` | Open the notification target (`open_notification_target`, herdr default) |
 
 Quality-of-life already enabled: mouse support, `new_cwd = "follow"` (splits
 and new tabs inherit the current pane's cwd, like tmux's
 `-c "#{pane_current_path}"`), and no confirmation prompts on close.
+
+Agent alerts:
+
+- `[ui.toast] delivery = "system"` sends a desktop notification (`notify-send`) when a background agent blocks or finishes, after `delay_seconds = 3`.
+- Test it with `herdr notification show prueba`; if nothing appears, use `delivery = "herdr"`.
+- The sidebar uses `status_indicators = "symbols"` and `agent_panel_sort = "priority"`.
 
 ## `hw`: the work workspaces
 
@@ -89,6 +99,20 @@ Claude Code pane per repo, no nvim:
 - To change the set, edit the three `_hw_workspace` calls in `hw`.
 - A repo outside the list: `prefix shift+c` (new workspace).
 
+## Updating herdr
+
+- All platforms: `herdr update`. The binary lives in `~/.local/bin`.
+- Omarchy: remove the `omarchy` repo package with `sudo pacman -R herdr`. It lags behind and nothing depends on it.
+- If `omarchy-update` reinstalls it, the `~/.local/bin` copy still wins in `PATH`.
+- `herdr status` shows a client/server version mismatch only if something started the server with the other binary.
+- Updating replaces the binary only. The running server keeps the old version.
+- Restarting the server closes every pane, and the agents in them.
+- Restart only with no builders running: `herdr server stop`, then `hw`.
+- Do not use `--handoff`: it is experimental and only keeps live agents across a server replacement.
+- Afterwards run `herdr integration status`.
+- If it shows `claude: outdated`, follow the throwaway-home procedure in
+  [Claude Code integration hook](#claude-code-integration-hook).
+
 ## Extending it
 
 Keybindings and theme live entirely in `config.toml`'s `[keys]`/`[ui]`
@@ -110,7 +134,7 @@ newer hook version, diff `herdr --skill`'s output (or the installer's target
 file) against the tracked hook manually and update the file in the repo
 instead.
 
-The tracked hook is at integration v10. It only reports the session id on
+The tracked hook is at integration v11. It only reports the session id on
 `SessionStart`; herdr reads `idle`/`working`/`blocked`/`done` from the
 terminal itself.
 
