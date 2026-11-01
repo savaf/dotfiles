@@ -12,13 +12,12 @@ herdr worktree create --branch feat/<id>-<slug> --base <base> --label "<id>" --n
 
 ```bash
 herdr agent start b-<id> --kind claude --pane <pane-id> --timeout 60000 -- --agent builder
-herdr agent prompt b-<id> "$(cat .scratch/horde/<id>/prompt.md)"
-herdr agent wait b-<id> --until working --until blocked --timeout 15000
+herdr agent prompt b-<id> "$(cat .scratch/horde/<id>/prompt.md)" --wait --until working --until blocked --timeout 15000
 ```
 
-- Constants: `--timeout 60000` gives the pane a minute to reach a shell prompt; `--until working
-  --until blocked --timeout 15000` waits just long enough to see the first state change, so a
-  dead start surfaces fast; `--agent builder` loads the builder agent, whose model and effort live in
+- Constants: `--timeout 60000` gives the pane a minute to reach a shell prompt; `--wait --until working
+  --until blocked --timeout 15000` returns at the first state change, so a dead start surfaces fast
+  (a bare `--wait` would block until the turn ends and hit the timeout on every healthy builder); `--agent builder` loads the builder agent, whose model and effort live in
   `agents/builder.md`.
 - Agent names must match `[a-z][a-z0-9_-]{0,31}`: lowercase the ticket id.
 - Write each prompt to `.scratch/horde/<id>/prompt.md` in the base checkout first. It keeps quoting out of the shell and leaves a record.
