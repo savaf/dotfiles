@@ -4,9 +4,10 @@
 a persistent server that keeps sessions, panes, and running agents alive
 across client disconnects. The config lives in
 [`herdr/.config/herdr/config.toml`](../herdr/.config/herdr/config.toml) and is
-stowed to `~/.config/herdr/config.toml`. Not in any distro package manager —
-installed by `scripts/bootstrap.sh` (`ensure_herdr`) via `herdr.dev/install.sh`,
-same on Ubuntu/WSL, Fedora/Bazzite, Arch/Omarchy, and macOS.
+stowed to `~/.config/herdr/config.toml`. Not in the Ubuntu, Fedora, or
+macOS package managers — `scripts/bootstrap.sh` (`ensure_herdr`) installs it via
+`herdr.dev/install.sh` there. On Arch/Omarchy it ships in the base packages (see
+[Updating herdr](#updating-herdr)).
 
 Adopted alongside tmux, not instead of it. The `hw` function opens the work
 workspaces; see
@@ -62,10 +63,16 @@ hw                   # open the work workspaces (see below)
 | `prefix shift+r` | Rename current workspace |
 | `alt+←/→` or `prefix p`/`prefix n` | Previous / next tab |
 | `alt+↑/↓` or `prefix shift+p`/`prefix shift+n` | Previous / next workspace |
+| `prefix a` | Jump to the next agent that needs attention |
 
 Quality-of-life already enabled: mouse support, `new_cwd = "follow"` (splits
 and new tabs inherit the current pane's cwd, like tmux's
 `-c "#{pane_current_path}"`), and no confirmation prompts on close.
+
+Agent alerts: `[ui.toast] delivery = "system"` sends a desktop notification
+(`notify-send`) when a background agent blocks or finishes, after `delay_seconds = 3`.
+Test it with `herdr notification show prueba`; if nothing appears, use `delivery = "herdr"`.
+The sidebar uses `status_indicators = "symbols"` and `agent_panel_sort = "priority"`.
 
 ## `hw`: the work workspaces
 

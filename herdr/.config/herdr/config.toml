@@ -33,6 +33,9 @@ close_pane = ["prefix+x", "alt+esc"]
 zoom = "prefix+z"
 last_pane = "prefix+;"
 
+# No tmux equivalent; jumps to the next agent that needs attention (blocked or done)
+next_agent = "prefix+a"
+
 focus_pane_left = "ctrl+alt+left"
 focus_pane_down = "ctrl+alt+down"
 focus_pane_up = "ctrl+alt+up"
@@ -94,3 +97,18 @@ tab_bar_right = [{ type = "zoom" }, { type = "hostname" }]
 # the basename of the pane cwd. This is what Hyprland shows in the group bar,
 # and it resolves on the server so remote sessions name the remote host.
 window_title = "{hostname}: {workspace}"
+
+# Blocked agents are the only ones that need an answer, so the sidebar queues them
+# on top instead of grouping by workspace
+agent_panel_sort = "priority"
+
+# Distinct glyphs per state, so blocked/done/working read without relying on color
+status_indicators = "symbols"
+
+[ui.toast]
+# Desktop notification through notify-send, which Omarchy's notification shell shows;
+# herdr sends it when a background agent blocks or finishes
+delivery = "system"
+
+# Only notify if the agent is still in that state after 3s, filtering working/idle flicker
+delay_seconds = 3
