@@ -538,6 +538,8 @@ install_arch() {
 
 post_checks() {
   echo "[versions]"
+  # Stow aún no enlazó ~/.config/mise: sin esto los shims de mise fallan ("No version is set").
+  export MISE_GLOBAL_CONFIG_FILE="${ROOT_DIR}/mise/.config/mise/config.toml"
   exists zsh && zsh --version || echo "zsh: not found"
   exists brew && brew --version || true
   exists fzf && fzf --version || echo "fzf: not found"
