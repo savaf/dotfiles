@@ -55,6 +55,30 @@ export const isSecretPath = (p) => {
     );
 };
 
+// Nombres de ejemplo contra los que se prueba un glob: si puede expandirse a uno, se deniega.
+const SAMPLES = ['.env', '.env.local', '.env.production', 'id_rsa', 'id_ed25519', '.npmrc', 'credentials', 'credentials.json', 'service-account.json', 'server.pem'];
+
+const globToRegExp = (g) =>
+    new RegExp(
+        '^' +
+            g.replace(/[.+^${}()|\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.') +
+            '$',
+    );
+
+// `*` o `*.json` solos no cuentan (romperian `ls *`): hace falta un literal al inicio, o `.pem` al final.
+export const globHitsSecret = (token) => {
+    const base = token.replace(/^['"]|['"]$/g, '').split('/').pop();
+    if (!/[*?[]/.test(base) || (/^[*?[]/.test(base) && !base.endsWith('.pem'))) {
+        return false;
+    }
+    try {
+        const re = globToRegExp(base);
+        return SAMPLES.some((s) => re.test(s) && isSecretPath(s));
+    } catch {
+        return false;
+    }
+};
+
 // Una sola llamada al helper, solo con nombres de variable como argumentos.
 const ENV_CHECK = /^(?:bash\s+)?\S*env-check\.sh(?:\s+[A-Za-z_][A-Za-z0-9_]*)+$/;
 
@@ -75,7 +99,7 @@ function checkRead(toolName, input) {
         if (ENV_CHECK.test(command)) {
             return;
         }
-        const hit = command.split(/[\s<>|;&()]+/).find((t) => t && isSecretPath(t));
+        const hit = command.split(/[\s<>|;&()]+/).find((t) => t && (/[*?[]/.test(t) ? globHitsSecret(t) : isSecretPath(t)));
         return hit ? REASON(hit.replace(/^['"]|['"]$/g, '')) : undefined;
     }
 }

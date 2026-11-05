@@ -52,11 +52,24 @@ check('redireccion de entrada', bash('grep KEY < .env'), true);
 check('cat clave ssh', bash('cat ~/.ssh/id_rsa'), true);
 check('encadenado', bash('ls && cat .env'), true);
 check('cat .pem', bash('cat certs/server.pem'), true);
+check('glob .e*', bash('cat .e*'), true);
+check('glob .en?', bash('cat .en?'), true);
+check('glob .env.*', bash('cat .env.*'), true);
+check('glob con ruta', bash('cat app/.e*'), true);
+check('glob id_*', bash('cat ~/.ssh/id_*'), true);
+check('glob cred*', bash('cat cred*'), true);
+check('glob *.pem', bash('cat certs/*.pem'), true);
+check('glob con clase', bash('cat .env[.l]*'), true);
 
 console.log('\n--- Bash: deben pasar ---');
 check('cat .env.example', bash('cat .env.example'), false);
 check('ls', bash('ls -la'), false);
 check('comando normal', bash('npm test'), false);
+check('glob normal src/*.ts', bash('ls src/*.ts'), false);
+check('glob * solo', bash('ls *'), false);
+check('glob *.json', bash('cat *.json'), false);
+check('glob .git*', bash('ls .git*'), false);
+check('cat .env.ex*', bash('cat .env.ex*'), false);
 check('env-check simple', bash('bash ~/.claude/hooks/env-check.sh API_KEY DB_URL'), false);
 check('env-check con pipe se deniega si toca .env', bash('bash env-check.sh API_KEY | cat .env'), true);
 
