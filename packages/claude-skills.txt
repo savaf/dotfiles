@@ -7,6 +7,24 @@ DietrichGebert/ponytail
 # engineering workflow: todos los skills del repo (incluye grill-me, grill-with-docs, retro, pr)
 # Per repo, run /setup-matt-pocock-skills once (issue tracker + docs layout).
 mattpocock/skills
+# Dependencias de super-board (solo sus skills, nunca el plugin ni el tablero). `owner/repo#<sha>`
+# fija el commit auditado (la CLI acepta `#ref`; ver docs/claude-code.md). Actualizar = auditar de nuevo.
+# verification-before-completion: no declarar "hecho" sin evidencia (superpowers v7.0.2)
+obra/superpowers#22f0b463e7a5e579904dd6211a520321035526f7 verification-before-completion
+# testing-strategy: solo esta skill, no el plugin engineering completo
+anthropics/knowledge-work-plugins#d900840716eb262e1feb17c6f4406c9ce0e06bcf testing-strategy
+# pr-security-review: no hay release que la incluya, por eso va fijada a un commit de main
+EricTechPro/super-board#d0b7d5a6850614ca809477c1af43d5d7da408726 pr-security-review
+# Opcionales (check-skills.sh solo avisa si faltan):
+# humanizer: la skill es la raíz del repo; la CLI copia el repo entero (14 archivos) y
+# install-claude-skills.sh deja solo SKILL.md (así lo pide la auditoría). Usar solo en prosa para humanos.
+blader/humanizer#0ef9fe5bc3572734fd3ae6c448fe00a30cd5dcf0 humanizer
+antfu/skills#f63e9ec7bc85f67364b6596c2d29da87e83ce445 vitest
+currents-dev/playwright-best-practices-skill#283d5cbc5d11aac1abda058b16ad22c317d54dc0 playwright-best-practices
+cloudflare/security-audit-skill#c1c8a8c1471069fb0e188eeaff69b8e8db6564a8 security-audit
+# impeccable (pbakaus/impeccable) — DESACTIVADO. Auditoría incompleta y varias razones para no
+# instalarlo: descarga un binario de 22 MB en el primer uso, hace llamadas de red, trae directivas
+# que se imponen al agente y un modo live que usa bypassPermissions. Solo /ui-refine-loop lo necesita.
 # Leonxlnx/taste-skill — DESACTIVADO (13 skills de diseño UI que se pisan entre sí). Solo para
 # trabajo de frontend; directorios en ~/.claude/skills-disabled/. Para recuperar: descomenta la
 # línea y corre scripts/install-claude-skills.sh, o `mv` uno solo.

@@ -30,6 +30,23 @@ install_skills() {
     npx -y "${SKILLS_CLI}" add "${repo}" -g -a claude-code -s "${names[@]}" -y </dev/null \
       || log "Failed: ${repo} (continuing)."
   done < "${SKILLS_LIST}"
+  keep_only_skill_md
+}
+
+# humanizer vive en la raíz del repo y la CLI copia el repo entero (scripts, workflows,
+# manifiestos); la auditoría acepta solo SKILL.md.
+SKILL_MD_ONLY=(humanizer)
+
+keep_only_skill_md() {
+  local name dir tmp
+  for name in "${SKILL_MD_ONLY[@]}"; do
+    dir="${HOME}/.claude/skills/${name}"
+    [[ -d "${dir}" && ! -L "${dir}" && -s "${dir}/SKILL.md" ]] || continue
+    tmp="$(mktemp)"
+    cp "${dir}/SKILL.md" "${tmp}"
+    find "${dir}" -mindepth 1 -delete
+    mv "${tmp}" "${dir}/SKILL.md"
+  done
 }
 
 # MCP servers live in each profile's own .claude.json, so they can't be
