@@ -105,12 +105,32 @@
         ]
       },
       {
+        "matcher": "Bash|Read|Grep|Write|Edit|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$HOME/.claude/hooks/guard-secrets.mjs\""
+          }
+        ]
+      },
+      {
         "matcher": "Agent",
         "hooks": [
           {
             "type": "command",
             "command": "node \"$HOME/.claude/hooks/decision-shadow.mjs\"",
             "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$HOME/.claude/hooks/guard-secrets.mjs\""
           }
         ]
       }
