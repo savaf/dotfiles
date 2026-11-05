@@ -129,8 +129,10 @@ When a builder settles in `idle` or `done`:
 `.scratch/horde/results.tsv` in the base checkout, append-only, one row per round, across every run. Write it yourself; builders never touch it. Create it with this header row:
 
 ```text
-ts	ticket	round	builder	checks	gate	findings	failure	action
+ts	ticket	round	builder	checks	gate	findings	failure	action	minutes	tokens_in	tokens_out	cost_usd
 ```
+
+A log created before the last four columns existed keeps its 9-column header; new rows still append the four fields (empty if unknown) and the header is never rewritten. Readers go by column name and treat a missing column as empty.
 
 | Column | Value |
 |---|---|
@@ -143,6 +145,12 @@ ts	ticket	round	builder	checks	gate	findings	failure	action
 | `findings` | `<blockers>/<issues>/<nits>`, e.g. `0/2/1` |
 | `failure` | one stable key, empty on pass: `checks-modified`, `check-dispute`, `test:<test id>`, `lint:<rule>`, `review:<file>:<topic>` |
 | `action` | `retry`, `restart`, `merged`, `stopped` |
+| `minutes` | Wall-clock minutes the builder worked this round, rounded: from `agent prompt` to the settle you saw (`references/batch.md`, Round metrics). Empty if not measured |
+| `tokens_in` | Input + cache read + cache creation tokens of this round, all models. Empty if unknown |
+| `tokens_out` | Output tokens of this round, all models. Empty if unknown |
+| `cost_usd` | Cost of this round in USD. Empty if unknown |
+
+`tokens_in`, `tokens_out` and `cost_usd` come only from `scripts/usage.mjs` (the builder session's transcript). It prints them empty when the transcript has no reliable cost record. Never estimate them from pane text or the status bar.
 
 Keep `failure` stable across rounds: the same cause must produce the same key, or the plateau rule never fires. Strip tabs and newlines from every field (`tr '\t\n' '  '`).
 
@@ -153,7 +161,7 @@ The log is evidence for the user, not a target for you. Never shape a fix to mak
 Per ticket, one line: ticket, branch, path, checks result, review rounds, gate pass or fail, and whether a plateau restart happened.
 
 - Open a PR only if the user asks (`create-pr` skill). A base that already has a PR needs none.
-- Several runs logged: point the user at `results.tsv` failures that repeat across tickets. They are candidates for the repo's `AGENTS.md`; propose the line, never add it yourself.
+- Run `node ~/.claude/skills/horde/scripts/report.mjs` and paste its numbers. Its "Fallas en 2 o más tickets" list is where failures repeat across tickets. They are candidates for the repo's `AGENTS.md`; propose the line, never add it yourself.
 - Mention tickets whose panes stayed open (failed, disputed, stopped).
 - Cleanup after the user merges: `herdr worktree remove --workspace <id>`, then `git branch -d <branch>`.
 

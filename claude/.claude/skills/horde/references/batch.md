@@ -43,6 +43,21 @@ While a builder works, leave its pane alone. `herdr agent list` is the cheap ove
 
 Merge each passed ticket branch into the base yourself, one at a time, tests green after each. No push.
 
+## Round metrics
+
+For the `minutes`, `tokens_in`, `tokens_out` and `cost_usd` columns of the results log (`SKILL.md`, section 7).
+
+- Before each `agent prompt` (first round, continuation or restart): `date +%s` and, if the session already exists, the base `scripts/usage.mjs` reads (below). A fresh session has no base.
+- At settle: `minutes` = (now - start) / 60, rounded.
+- Transcript: `~/.claude/projects/<worktree path with / and . replaced by ->/<session id>.jsonl`. The session id is the one `herdr agent get b-<id>` reports for the agent. Not found: leave the three fields empty.
+
+```bash
+node ~/.claude/skills/horde/scripts/usage.mjs <transcript>                                   # base, before the round
+node ~/.claude/skills/horde/scripts/usage.mjs <transcript> --minus "<in>,<out>,<cost>"       # after: this round only
+```
+
+Output is `tokens_in<TAB>tokens_out<TAB>cost_usd`, empty when the transcript has no reliable `cost-state` record (an internal Claude Code record, not a documented one; the script never estimates). Summing per-message `usage` is wrong: each `message.id` repeats once per content block.
+
 ## Plateau restart
 
 Same `failure` as the previous round: the builder is stuck in a habit and its context carries it.
