@@ -10,7 +10,7 @@ trap 'rm -rf "${TMP}"' EXIT
 
 REQUIRED=(tdd diagnosing-bugs implement codebase-design code-review
   domain-modeling ask-matt to-spec to-tickets implement-spec improve-codebase-architecture
-  ponytail ponytail-review verification-before-completion testing-strategy pr-security-review)
+  ponytail ponytail-review verification-before-completion testing-strategy pr-security-review impeccable)
 OPTIONAL=(resolving-merge-conflicts vitest playwright-best-practices security-audit humanizer)
 
 fail() { echo "FAIL: $*"; echo "--- salida:"; echo "${OUT}"; exit 1; }
@@ -119,15 +119,15 @@ OUT="$(HOME="${TMP}/full" PATH="${TMP}/nojq" "${TMP}/nojq/bash" "${CHECK}" 2>&1)
 grep -q "✗ jq" <<<"${OUT}" || fail "falta ✗ jq"
 echo "OK: herramienta ausente"
 
-# 9. impeccable es opt-in: presente o ausente no produce ✗ ni aviso, y no cambia el exit 0.
-fake_gh "${GOOD_SCOPES}"
+# 9. impeccable es requerida: presente = ✓, ausente = ✗ y no listo.
+make_home impyes "${REQUIRED[@]}" "${OPTIONAL[@]}"
+run impyes
+[[ ${RC} -eq 0 ]] || fail "impeccable presente debía salir 0 (salió ${RC})"
+grep -q "✓ impeccable\$" <<<"${OUT}" || fail "falta ✓ impeccable"
 make_home impno "${REQUIRED[@]}" "${OPTIONAL[@]}"
-make_home impyes "${REQUIRED[@]}" "${OPTIONAL[@]}" impeccable
-for h in impno impyes; do
-  run "${h}"
-  [[ ${RC} -eq 0 ]] || fail "impeccable (${h}) no debe fallar (salió ${RC})"
-  ! grep -q "^✗" <<<"${OUT}" || fail "impeccable (${h}) no debe producir ✗"
-  ! grep -q "^!" <<<"${OUT}" || fail "impeccable (${h}) no debe producir avisos"
-  grep -q "0 optional missing" <<<"${OUT}" || fail "impeccable (${h}) no debe contar como opcional ausente"
-done
-echo "OK: impeccable opt-in sin fallo ni aviso"
+rm -r "${TMP}/impno/.claude/skills/impeccable"
+run impno
+[[ ${RC} -eq 1 ]] || fail "impeccable ausente debía salir 1 (salió ${RC})"
+grep -q "✗ impeccable" <<<"${OUT}" || fail "falta ✗ impeccable"
+grep -q "^not ready" <<<"${OUT}" || fail "impeccable ausente debía dar not ready"
+echo "OK: impeccable requerida"

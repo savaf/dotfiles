@@ -11,7 +11,7 @@ SCOPES=(project read:project repo)
 SCOPES_FIX="gh auth refresh -s project,read:project,repo"
 REQUIRED=(tdd diagnosing-bugs implement codebase-design code-review
   domain-modeling ask-matt to-spec to-tickets implement-spec improve-codebase-architecture
-  ponytail ponytail-review verification-before-completion testing-strategy pr-security-review)
+  ponytail ponytail-review verification-before-completion testing-strategy pr-security-review impeccable)
 OPTIONAL=(resolving-merge-conflicts vitest playwright-best-practices security-audit humanizer)
 
 missing=0
