@@ -24,3 +24,4 @@ i2c-tools
 socat
 nginx
 inxi
+shellcheck

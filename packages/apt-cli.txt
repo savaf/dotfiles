@@ -14,3 +14,4 @@ wl-clipboard
 fontconfig
 nginx
 inxi
+shellcheck

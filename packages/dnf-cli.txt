@@ -16,3 +16,4 @@ make
 xclip
 wl-clipboard
 fontconfig
+shellcheck

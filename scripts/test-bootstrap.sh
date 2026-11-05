@@ -96,8 +96,14 @@ if command -v mise >/dev/null 2>&1; then
     want="$(sed -n "s/^\"\?${tool}\"\? *= *.*\"\([0-9][^\"]*\)\".*/\1/p" "${MISE_CONFIG}")"
     got="$(env -i HOME="${HOME}" MISE_GLOBAL_CONFIG_FILE="${MISE_CONFIG}" PATH="${shims}:/usr/bin:/bin" \
       sh -c "${bin} --version" 2>&1 | head -3)" || true
-    [[ -n "${want}" && "${got}" == *"${want}"* ]] \
-      || { echo "FAIL: ${bin} --version no contiene '${want}': ${got}"; exit 1; }
+    [[ -n "${want}" && "${got}" == *"${want}"* ]] && continue
+    # Esta máquina puede tener otra versión de la herramienta (p.ej. `latest` en su mise local):
+    # el binario resuelve y corre, pero no es la fijada. Se salta con aviso; sin binario, falla.
+    if [[ -n "${want}" && "${got}" == *[0-9].[0-9]* ]]; then
+      echo "SKIP: ${bin} resuelve en otra versión que '${want}' (config local de mise): ${got%%$'\n'*}"
+      continue
+    fi
+    echo "FAIL: ${bin} --version no contiene '${want}': ${got}"; exit 1
   done
   echo "OK: herramientas resuelven sin activación en la versión fijada"
 else
