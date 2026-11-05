@@ -1,0 +1,222 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { existsSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+import { evaluate, evaluatePost } from './guard-secrets.mjs';
+
+let fail = 0;
+const check = (label, actual, expected) => {
+    const ok = expected ? Boolean(actual) : !actual;
+    if (!ok) { fail++; }
+    console.log(`${ok ? 'ok  ' : 'FAIL'}  ${label}`);
+};
+
+const read = (file_path, env) => evaluate('Read', { file_path }, env);
+const grep = (input, env) => evaluate('Grep', input, env);
+const bash = (command, env) => evaluate('Bash', { command }, env);
+
+console.log('--- Read: deben denegar ---');
+check('.env', read('/p/.env'), true);
+check('.env.local', read('/p/.env.local'), true);
+check('.env.production', read('/p/app/.env.production'), true);
+check('clave ssh id_rsa', read('/home/u/.ssh/id_rsa'), true);
+check('clave ssh id_ed25519', read('/home/u/.ssh/id_ed25519'), true);
+check('.npmrc', read('/home/u/.npmrc'), true);
+check('credentials', read('/home/u/.aws/credentials'), true);
+check('credentials.json', read('/p/credentials.json'), true);
+check('service account json', read('/p/service-account-prod.json'), true);
+check('.pem', read('/p/certs/server.pem'), true);
+check('credentials.yml', read('/p/credentials.yml'), true);
+check('credentials.yaml', read('/p/credentials.yaml'), true);
+check('credentials.ini', read('/home/u/credentials.ini'), true);
+check('service account con prefijo', read('/p/my-service-account.json'), true);
+check('service account con guion bajo', read('/p/prod_service_account.json'), true);
+
+console.log('\n--- Read: deben pasar ---');
+check('.env.example', read('/p/.env.example'), false);
+check('.env.sample', read('/p/.env.sample'), false);
+check('.env.template', read('/p/.env.template'), false);
+check('clave publica', read('/home/u/.ssh/id_ed25519.pub'), false);
+check('archivo normal', read('/p/src/app.ts'), false);
+check('"environment.ts" no es dotenv', read('/p/src/environment.ts'), false);
+
+console.log('\n--- Grep ---');
+check('grep sobre .env', grep({ pattern: 'KEY', path: '/p/.env' }), true);
+check('grep con glob .env*', grep({ pattern: 'KEY', glob: '.env*' }), true);
+check('grep normal', grep({ pattern: 'KEY', path: '/p/src' }), false);
+
+// Grep sobre un directorio: se deniega si su primer nivel trae un secreto.
+const gdir = mkdtempSync(path.join(tmpdir(), 'guard-grep-'));
+const withSecret = path.join(gdir, 'app');
+const withoutSecret = path.join(gdir, 'lib');
+mkdirSync(withSecret);
+mkdirSync(withoutSecret);
+writeFileSync(path.join(withSecret, '.env'), 'A=1\n');
+writeFileSync(path.join(withSecret, 'main.ts'), 'x\n');
+writeFileSync(path.join(withoutSecret, '.env.example'), 'A=\n');
+check('grep sobre directorio con .env', grep({ pattern: 'KEY', path: withSecret }), true);
+check('el motivo dice como proceder', /name the files/i.test(String(grep({ pattern: 'KEY', path: withSecret }))), true);
+check('grep sobre directorio limpio', grep({ pattern: 'KEY', path: withoutSecret }), false);
+check('grep sobre directorio inexistente', grep({ pattern: 'KEY', path: path.join(gdir, 'nope') }), false);
+check('grep sobre directorio con secreto y secret-read desactivado', grep({ pattern: 'KEY', path: withSecret }, { AI_GUARD_DISABLE: 'secret-read' }), false);
+rmSync(gdir, { recursive: true });
+
+console.log('\n--- Bash: deben denegar ---');
+check('cat .env', bash('cat .env'), true);
+check('head .env.local', bash('head -n 3 .env.local'), true);
+check('pipe desde .env', bash('cat ./app/.env | grep KEY'), true);
+check('redireccion de entrada', bash('grep KEY < .env'), true);
+check('cat clave ssh', bash('cat ~/.ssh/id_rsa'), true);
+check('encadenado', bash('ls && cat .env'), true);
+check('cat .pem', bash('cat certs/server.pem'), true);
+check('glob .e*', bash('cat .e*'), true);
+check('glob .en?', bash('cat .en?'), true);
+check('glob .env.*', bash('cat .env.*'), true);
+check('glob con ruta', bash('cat app/.e*'), true);
+check('glob id_*', bash('cat ~/.ssh/id_*'), true);
+check('glob cred*', bash('cat cred*'), true);
+check('glob *.pem', bash('cat certs/*.pem'), true);
+check('glob con clase', bash('cat .env[.l]*'), true);
+check('glob .[e]nv', bash('cat .[e]nv'), true);
+check('clase negada .e[!x]v', bash('cat .e[!x]v'), true);
+check('clase negada .e[^x]v', bash('cat .e[^x]v'), true);
+check('glob credentials.y*', bash('cat credentials.y*'), true);
+check('glob cred*.y*', bash('cat cred*.y*'), true);
+check('git show HEAD:.env', bash('git show HEAD:.env'), true);
+check('git show main:.env', bash('git show main:.env'), true);
+check('git cat-file -p HEAD:.env', bash('git cat-file -p HEAD:.env'), true);
+check('git show :.env', bash('git show :.env'), true);
+check('env-check con salto de linea', bash('env-check.sh KEY\ncat .env'), true);
+
+console.log('\n--- Bash: deben pasar ---');
+check('cat .env.example', bash('cat .env.example'), false);
+check('ls', bash('ls -la'), false);
+check('comando normal', bash('npm test'), false);
+check('glob normal src/*.ts', bash('ls src/*.ts'), false);
+check('glob * solo', bash('ls *'), false);
+check('glob *.json', bash('cat *.json'), false);
+check('glob .git*', bash('ls .git*'), false);
+check('cat .env.ex*', bash('cat .env.ex*'), false);
+check('glob s* no es secreto', bash('ls s*'), false);
+check('glob src/s*', bash('ls src/s*'), false);
+check('glob c*', bash('ls c*'), false);
+check('glob .n*', bash('ls .n*'), false);
+check('glob .*', bash('ls .*'), false);
+check('rm -rf .*', bash('rm -rf .*'), false);
+check('glob .?*', bash('ls .?*'), false);
+check('env-check simple', bash('bash ~/.claude/hooks/env-check.sh API_KEY DB_URL'), false);
+check('env-check con pipe se deniega si toca .env', bash('bash env-check.sh API_KEY | cat .env'), true);
+check('env-check tras ${IFS} se deniega', bash('cat${IFS}.env;env-check.sh KEY'), true);
+check('env-check tras sustitucion se deniega', bash('$(cat .env)env-check.sh KEY'), true);
+check('env-check con ruta absoluta pasa', bash('bash /home/u/.claude-b0/hooks/env-check.sh KEY1 KEY2'), false);
+const helper = String(bash('cat .env')).match(/(\/\S*env-check\.sh)/)?.[1];
+check('el motivo trae la ruta del helper, existente', Boolean(helper && existsSync(helper)), true);
+
+console.log('\n--- Bash: grep -r y rg ---');
+const rdir = mkdtempSync(path.join(tmpdir(), 'guard-rg-'));
+const rSecret = path.join(rdir, 'app');
+const rClean = path.join(rdir, 'lib');
+mkdirSync(rSecret);
+mkdirSync(rClean);
+writeFileSync(path.join(rSecret, '.env'), 'A=1\n');
+writeFileSync(path.join(rClean, 'a.ts'), 'x\n');
+check('grep -r sobre dir con secreto', bash(`grep -r KEY ${rSecret}`), true);
+check('grep -rn --include=*', bash(`grep -rn KEY --include=* ${rSecret}`), true);
+check('grep --recursive', bash(`grep --recursive KEY ${rSecret}`), true);
+check('grep -R', bash(`grep -R KEY ${rSecret}`), true);
+check('rg sobre dir con secreto', bash(`rg KEY ${rSecret}`), true);
+check('rg -uu', bash(`rg -uu KEY ${rSecret}`), true);
+check('ag', bash(`ag KEY ${rSecret}`), true);
+check('ack', bash(`ack KEY ${rSecret}`), true);
+check('grep -r sobre dir limpio', bash(`grep -r KEY ${rClean}`), false);
+check('grep -r sobre archivo suelto', bash(`grep -r KEY ${path.join(rClean, 'a.ts')}`), false);
+check('grep sin -r no aplica', bash(`grep KEY ${rSecret}`), false);
+const cwd0 = process.cwd();
+process.chdir(rSecret);
+check('rg sin operando usa el cwd', bash('rg KEY'), true);
+check('grep -r KEY .', bash('grep -r KEY .'), true);
+check('grep -rn --include=* .', bash('grep -rn KEY --include=* .'), true);
+check('rg -uu sin operando', bash('rg -uu KEY'), true);
+process.chdir(rClean);
+check('rg en cwd limpio', bash('rg KEY'), false);
+process.chdir(cwd0);
+check('rg con secret-read desactivado', bash(`rg KEY ${rSecret}`, { AI_GUARD_DISABLE: 'secret-read' }), false);
+rmSync(rdir, { recursive: true });
+
+console.log('\n--- AI_GUARD_DISABLE ---');
+check('secret-read desactivado', read('/p/.env', { AI_GUARD_DISABLE: 'secret-read' }), false);
+check('otro id no desactiva', read('/p/.env', { AI_GUARD_DISABLE: 'key-literal' }), true);
+
+console.log('\n--- otras herramientas ---');
+check('herramienta desconocida', evaluate('Glob', { pattern: '**/.env' }), false);
+check('input vacio no rompe', evaluate('Read', undefined), false);
+
+// Las claves de prueba se construyen por partes: ni este archivo dispara
+// escaneres de secretos ni el propio hook al escribirlo.
+const anthropic = 'sk-' + 'ant-' + 'api03-' + 'aB3dE5fG7hI9jK1lM3nO5pQ7';
+const aws = 'AKIA' + 'IOSFODNN7EXAMPL3';
+const github = 'ghp_' + 'aB3dE5fG7hI9jK1lM3nO5pQ7rS9tU1vW3xY5';
+const write = (content, env) => evaluate('Write', { file_path: '/p/src/config.ts', content }, env);
+
+console.log('\n--- key-literal: deben denegar ---');
+check('Write con clave anthropic', write(`const k = "${anthropic}";`), true);
+check('Write con clave AWS', write(`aws = ${aws}`), true);
+check('Write con token de GitHub', write(`TOKEN=${github}`), true);
+check('Write con clave privada PEM', write('-----BEGIN RSA PRIVATE KEY-----\nMIIE'), true);
+check('Edit con clave', evaluate('Edit', { file_path: '/p/a.ts', new_string: anthropic }), true);
+check('Bash que escribe la clave', bash(`echo "${github}" >> notes.txt`), true);
+check('el motivo no contiene la clave', String(write(`k=${anthropic}`)).includes(anthropic), false);
+check('el motivo trae el numero de linea', /line 2/.test(String(write(`a\nk=${anthropic}`))), true);
+
+check('clave real que termina en xxxx', write('k=' + 'ghp_' + 'aB3dE5gH7jK9mN1pQ3sT5vW7yZ9bD1fH3jL5' + 'xxxx'), true);
+
+check('clave real que termina en example', write('k=' + 'sk-' + 'ant-' + 'aB3dE5fG7hI9jK1lM3nO5pQ7' + 'example'), true);
+check('clave real con your dentro', write('k=' + 'ghp_' + 'aB3dE5gH7jK9mN1pQ3sT5vW7yZ' + 'your' + 'bD1fH3'), true);
+
+console.log('\n--- key-literal: deben pasar ---');
+check('placeholder con x', write('KEY=sk-' + 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'), false);
+check('placeholder YOUR_KEY_HERE', write('KEY=YOUR_KEY_HERE'), false);
+check('AKIA de ejemplo marcado', write(`# example: ${'AKIA' + 'XXXXXXXXXXXXXXXX'}`), false);
+check('cuerpo solo de x en minuscula', write('k=' + 'ghp_' + 'x'.repeat(36)), false);
+check('cuerpo con example', write('k=' + 'sk-' + 'example'.repeat(5)), false);
+check('cuerpo mezcla de marcadores', write('k=' + 'sk-' + 'ant-' + 'your-example_placeholder-xxxxx'), false);
+check('texto normal', write('const x = 1;'), false);
+check('key-literal desactivado', write(anthropic, { AI_GUARD_DISABLE: 'key-literal' }), false);
+check('secret-read desactivado no afecta key-literal', write(anthropic, { AI_GUARD_DISABLE: 'secret-read' }), true);
+
+console.log('\n--- key-literal: aviso posterior (PostToolUse) ---');
+const dir = mkdtempSync(path.join(tmpdir(), 'guard-secrets-'));
+const withKey = path.join(dir, 'a.ts');
+const clean = path.join(dir, 'b.ts');
+writeFileSync(withKey, `ok\nconst k = "${anthropic}";\n`);
+writeFileSync(clean, 'const x = 1;\n');
+check('avisa si ya esta en disco', evaluatePost('Write', { file_path: withKey }), true);
+check('el aviso da la linea', /line 2/.test(String(evaluatePost('Edit', { file_path: withKey }))), true);
+check('el aviso no trae la clave', String(evaluatePost('Write', { file_path: withKey })).includes(anthropic), false);
+check('archivo limpio no avisa', evaluatePost('Write', { file_path: clean }), false);
+check('archivo inexistente no rompe', evaluatePost('Write', { file_path: path.join(dir, 'nope') }), false);
+check('post respeta key-literal desactivado', evaluatePost('Write', { file_path: withKey }, { AI_GUARD_DISABLE: 'key-literal' }), false);
+const nb = path.join(dir, 'n.ipynb');
+writeFileSync(nb, `{"k": "${anthropic}"}\n`);
+check('avisa con notebook_path', evaluatePost('NotebookEdit', { notebook_path: nb }), true);
+check('el aviso de notebook da solo la linea', /line 1/.test(String(evaluatePost('NotebookEdit', { notebook_path: nb }))) && !String(evaluatePost('NotebookEdit', { notebook_path: nb })).includes(anthropic), true);
+rmSync(dir, { recursive: true });
+
+console.log('\n--- env-check.sh ---');
+const helperPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'env-check.sh');
+const edir = mkdtempSync(path.join(tmpdir(), 'env-check-'));
+writeFileSync(path.join(edir, '.env'), 'A=1\nB=\nC=val # comentario\nE= # solo comentario\nF="q # dentro"\n');
+const out = execFileSync('bash', [helperPath, 'A', 'B', 'C', 'D', 'E', 'F'], { cwd: edir, env: { PATH: process.env.PATH }, encoding: 'utf8' });
+check('A present', /^A: present$/m.test(out), true);
+check('B empty', /^B: empty$/m.test(out), true);
+check('C present', /^C: present$/m.test(out), true);
+check('D missing', /^D: missing$/m.test(out), true);
+check('E (solo comentario) empty', /^E: empty$/m.test(out), true);
+check('F entrecomillado present', /^F: present$/m.test(out), true);
+check('nunca imprime el valor', /val|comentario|dentro/.test(out), false);
+rmSync(edir, { recursive: true });
+
+console.log(`\n${fail === 0 ? 'TODOS OK' : fail + ' FALLOS'}`);
+process.exit(fail ? 1 : 0);
