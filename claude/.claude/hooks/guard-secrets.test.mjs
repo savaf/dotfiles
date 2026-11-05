@@ -54,7 +54,7 @@ writeFileSync(path.join(withSecret, '.env'), 'A=1\n');
 writeFileSync(path.join(withSecret, 'main.ts'), 'x\n');
 writeFileSync(path.join(withoutSecret, '.env.example'), 'A=\n');
 check('grep sobre directorio con .env', grep({ pattern: 'KEY', path: withSecret }), true);
-check('el motivo dice como proceder', /name the files/.test(String(grep({ pattern: 'KEY', path: withSecret }))), true);
+check('el motivo dice como proceder', /name the files/i.test(String(grep({ pattern: 'KEY', path: withSecret }))), true);
 check('grep sobre directorio limpio', grep({ pattern: 'KEY', path: withoutSecret }), false);
 check('grep sobre directorio inexistente', grep({ pattern: 'KEY', path: path.join(gdir, 'nope') }), false);
 check('grep sobre directorio con secreto y secret-read desactivado', grep({ pattern: 'KEY', path: withSecret }, { AI_GUARD_DISABLE: 'secret-read' }), false);
