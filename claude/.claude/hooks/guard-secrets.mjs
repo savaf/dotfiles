@@ -14,7 +14,7 @@
 // Reglas (ids para AI_GUARD_DISABLE): secret-read, key-literal
 // Falla abierto: un error del propio hook nunca bloquea trabajo ajeno.
 
-import { readFileSync, realpathSync } from 'node:fs';
+import { readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const deny = (reason) =>
@@ -92,7 +92,23 @@ function checkRead(toolName, input) {
     }
     if (toolName === 'Grep') {
         const hit = [input.path, input.glob].find((v) => v && isSecretPath(v));
-        return hit ? REASON(hit) : undefined;
+        if (hit) {
+            return REASON(hit);
+        }
+        // Regla: un directorio con un secreto en su primer nivel no se busca entero.
+        const dir = input.path || process.cwd();
+        try {
+            const secret = readdirSync(dir).find(isSecretPath);
+            if (secret) {
+                return (
+                    `secret-read: ${dir} holds ${secret} at its top level, so Grep over the whole directory is blocked. ` +
+                    'Name the files to search (path to a file, or a subdirectory without secrets).'
+                );
+            }
+        } catch {
+            // No es un directorio legible (archivo o ruta inexistente): nada que revisar.
+        }
+        return undefined;
     }
     if (toolName === 'Bash') {
         const command = String(input.command || '').trim();

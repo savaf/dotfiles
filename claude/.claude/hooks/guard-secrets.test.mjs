@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { evaluate, evaluatePost } from './guard-secrets.mjs';
@@ -43,6 +43,22 @@ console.log('\n--- Grep ---');
 check('grep sobre .env', grep({ pattern: 'KEY', path: '/p/.env' }), true);
 check('grep con glob .env*', grep({ pattern: 'KEY', glob: '.env*' }), true);
 check('grep normal', grep({ pattern: 'KEY', path: '/p/src' }), false);
+
+// Grep sobre un directorio: se deniega si su primer nivel trae un secreto.
+const gdir = mkdtempSync(path.join(tmpdir(), 'guard-grep-'));
+const withSecret = path.join(gdir, 'app');
+const withoutSecret = path.join(gdir, 'lib');
+mkdirSync(withSecret);
+mkdirSync(withoutSecret);
+writeFileSync(path.join(withSecret, '.env'), 'A=1\n');
+writeFileSync(path.join(withSecret, 'main.ts'), 'x\n');
+writeFileSync(path.join(withoutSecret, '.env.example'), 'A=\n');
+check('grep sobre directorio con .env', grep({ pattern: 'KEY', path: withSecret }), true);
+check('el motivo dice como proceder', /name the files/.test(String(grep({ pattern: 'KEY', path: withSecret }))), true);
+check('grep sobre directorio limpio', grep({ pattern: 'KEY', path: withoutSecret }), false);
+check('grep sobre directorio inexistente', grep({ pattern: 'KEY', path: path.join(gdir, 'nope') }), false);
+check('grep sobre directorio con secreto y secret-read desactivado', grep({ pattern: 'KEY', path: withSecret }, { AI_GUARD_DISABLE: 'secret-read' }), false);
+rmSync(gdir, { recursive: true });
 
 console.log('\n--- Bash: deben denegar ---');
 check('cat .env', bash('cat .env'), true);
