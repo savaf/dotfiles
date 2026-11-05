@@ -20,6 +20,8 @@
 // considera mergeada: es indistinguible de una rama nueva sin commits. Los squash
 // merges tampoco se detectan. Ambos se quedan, que es lo seguro.
 //
+// AI_GUARD_DISABLE=cleanup-wt lo desactiva (tambien en --auto).
+//
 // Falla abierto: un error aqui nunca debe bloquear una sesion.
 
 import { execFileSync } from 'node:child_process';
@@ -56,12 +58,15 @@ export function planCleanup({ worktrees, branches, merged, bases, currentPath })
     return actions;
 }
 
-export const recoveryTsv = (actions, shaOf) => {
+export const recoveryTsv = (actions, shaOf, failed = new Set()) => {
     const rows = actions
-        .filter((a) => a.action === 'delete-branch')
+        .filter((a) => a.action === 'delete-branch' && !failed.has(a.branch))
         .map((a) => `${a.branch}\t${shaOf(a.branch)}`);
     return rows.length ? rows.join('\n') + '\n' : '';
 };
+
+export const isDisabled = (env) =>
+    (env.AI_GUARD_DISABLE || '').split(',').some((s) => s.trim() === 'cleanup-wt');
 
 export const baseMoved = (previous, current) => Boolean(current) && previous !== current;
 
@@ -99,6 +104,9 @@ const refExists = (ref, cwd) => {
 };
 
 function main() {
+    if (isDisabled(process.env)) {
+        return;
+    }
     const argv = process.argv.slice(2);
     const auto = argv.includes('--auto');
     const apply = argv.includes('--apply') || argv.includes('--post-merge');
@@ -152,22 +160,15 @@ function main() {
     }
 
     mkdirSync(stateDir, { recursive: true });
-    const tsv = recoveryTsv(actions, tipOf);
-    if (tsv) {
-        const file = path.join(stateDir, `${new Date().toISOString().replace(/[:.]/g, '-')}.tsv`);
-        writeFileSync(file, tsv);
-        log(`Recuperacion: ${file}`);
-    }
-
     const failedWorktrees = new Set();
-    for (const a of actions) {
+    const run = (a) => {
         try {
             if (a.action === 'wip-commit') {
                 git(['add', '-A'], a.path);
                 git(['commit', '-q', '--no-verify', '-m', 'wip: cleanup-wt autosave'], a.path);
             } else if (a.action === 'remove-worktree') {
                 git(['worktree', 'remove', a.path], cwd);
-            } else if (a.action === 'delete-branch' && !failedWorktrees.has(a.branch)) {
+            } else if (a.action === 'delete-branch') {
                 git(['branch', '-D', a.branch], cwd);
             }
             log(`ok  ${a.action} ${a.path ?? a.branch}`);
@@ -175,7 +176,18 @@ function main() {
             failedWorktrees.add(a.branch);
             log(`skip ${a.action} ${a.path ?? a.branch}: ${String(e.stderr || e.message).trim()}`);
         }
+    };
+
+    // Primero los worktrees; el TSV solo lista ramas que se van a borrar de verdad.
+    actions.filter((a) => a.action !== 'delete-branch').forEach(run);
+    const deletions = actions.filter((a) => a.action === 'delete-branch' && !failedWorktrees.has(a.branch));
+    const tsv = recoveryTsv(deletions, tipOf, failedWorktrees);
+    if (tsv) {
+        const file = path.join(stateDir, `${new Date().toISOString().replace(/[:.]/g, '-')}.tsv`);
+        writeFileSync(file, tsv);
+        log(`Recuperacion: ${file}`);
     }
+    deletions.forEach(run);
     writeFileSync(stateFile, tips + '\n');
 }
 
