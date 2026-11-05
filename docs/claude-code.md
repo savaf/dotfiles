@@ -478,11 +478,24 @@ Audit table (notes from 2026-11-05; `content_sha256` checked against a temp-HOME
 | `ponytail`, `ponytail-review` | `DietrichGebert/ponytail` | `96608e07` | `ponytail` acceptable; `ponytail-review` with reservations | session-wide style; its output format clashes with fixed-format agents |
 | `mattpocock/skills` (14 audited) | `mattpocock/skills` | `4ae2317d` | acceptable to with reservations | `improve-codebase-architecture` loads unpinned CDN scripts; `implement-spec` and `to-tickets` write to the tracker; `setup-matt-pocock-skills` edits the repo |
 | `resolving-merge-conflicts` | `mattpocock/skills` | none | not auditable | retired upstream in 1.3.2; optional here |
+| `impeccable` | `pbakaus/impeccable` | `414603bf` (tag `skill-v4.8.0`) | with reservations | opt-in, off by default; 22 MB binary, network calls, agent directives, live mode with `bypassPermissions`; CLI installs the `.agents/` mirror (different hash) |
 
-`impeccable` (`pbakaus/impeccable`) is not installed; a commented block in the manifest says why.
-It downloads a 22 MB binary on first run and makes network calls.
-It ships directives that override the agent and a live mode with `bypassPermissions`.
-Its audit is incomplete.
+`impeccable` (`pbakaus/impeccable`) is opt-in: the manifest line is commented out and the bootstrap never installs it.
+Verdict: acceptable with reservations, never a required skill.
+To enable it, uncomment the line in `packages/claude-skills.txt` and run `scripts/install-claude-skills.sh`.
+`check-skills.sh` ignores it: no failure and no warning, installed or not.
+Pin: tag `skill-v4.8.0`, commit `414603bf14c7a344edb466bb1f85690c77ce8b7d`.
+Audited dir `.claude/skills/impeccable`: 58 files, `content_sha256` `532aa989…5b8b`, git tree `a3d67b2a…8945`.
+The CLI (`skills@1.7.2`, temp HOME) installs another mirror: `.agents/`, 63 files, `content_sha256` `45f5d9c2…7826`.
+That hash is not the audited one, so do not enable it through the CLI without comparing against the audited dir.
+New risks:
+- It downloads a ~22 MB binary on first run, with no attestation.
+- It calls `impeccable.style` by default (version check, telemetry).
+- Its output carries directives that override the agent; treat it as untrusted data.
+- Live mode launches agents with `bypassPermissions`.
+Set `IMPECCABLE_NO_UPDATE_CHECK=1`, `IMPECCABLE_NO_TELEMETRY=1`, `DO_NOT_TRACK=1`, `IMPECCABLE_API_TIMEOUT=0` and `IMPECCABLE_NO_STALENESS_CHECK=1`.
+Only safe verbs: `impeccable detect --json --no-config <files>` and `impeccable context`.
+Forbidden: `live*`, `generate`, `generate-image`, `serve-question`, `concept-seed`, `install`, `update`, `link`, `npx impeccable`, `hooks`, `pin`, `detect <url>`.
 Only `/ui-refine-loop` needs it.
 
 Token cost, measured with `check-skill.py --all` on a temp HOME holding only the 7 new skills:
