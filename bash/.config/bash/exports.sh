@@ -8,8 +8,10 @@ setup_locale() {
   # locale -a spells UTF-8 locales as "c.utf8"/"en_us.utf8"; normalize both
   # sides (lowercase, drop dashes) so our candidates actually match.
   local loc want available
+  # shellcheck disable=SC2018,SC2019 # nombres de locale ASCII; [:upper:] no aporta
   available=$(locale -a 2>/dev/null | tr 'A-Z' 'a-z' | tr -d '-')
   for loc in "C.UTF-8" "en_US.UTF-8"; do
+    # shellcheck disable=SC2018,SC2019 # idem
     want=$(echo "$loc" | tr 'A-Z' 'a-z' | tr -d '-')
     if echo "$available" | grep -qx "$want"; then
       export LANG="$loc"

@@ -1,0 +1,6 @@
+# Los fragmentos de bash/.config/bash y scripts/lib se cargan con source: no llevan shebang.
+shell=bash
+source-path=SCRIPTDIR
+# SC1090/SC1091: rutas dinámicas o del sistema que shellcheck no puede seguir.
+# SC2015: el patrón `A && B || true` es intencional en estos scripts.
+disable=SC1090,SC1091,SC2015

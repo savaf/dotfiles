@@ -53,6 +53,7 @@ echo "OK: test fallido no oculta los demás"
 # 3. Hallazgo de shellcheck: exit ≠0.
 make_repo finding
 add_test finding test-a.sh 0
+# shellcheck disable=SC2016 # el script generado debe llevar $x literal
 printf '#!/usr/bin/env bash\nx=$1\necho $x\n' >"${TMP}/finding/scripts/bad.sh"
 run finding
 [[ ${RC} -ne 0 ]] || fail "hallazgo de shellcheck debía salir ≠0"

@@ -24,6 +24,7 @@ echo "OK: xkb_merge"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 MISE_CONFIG="${ROOT_DIR}/mise/.config/mise/config.toml"
 # binario:herramienta:paquetes-del-sistema (nombres equivalentes en apt/dnf/pacman/brew)
+# shellcheck disable=SC2054 # la coma separa paquetes alternativos dentro del elemento
 MISE_TOOLS=(
   nvim:neovim:neovim
   lazygit:lazygit:lazygit
@@ -105,7 +106,7 @@ if command -v mise >/dev/null 2>&1; then
     fi
     echo "FAIL: ${bin} --version no contiene '${want}': ${got}"; exit 1
   done
-  echo "OK: herramientas resuelven sin activación en la versión fijada"
+  echo "OK: herramientas resuelven sin activación"
 else
   echo "SKIP: mise no instalado; no se comprueba la instalación"
 fi
