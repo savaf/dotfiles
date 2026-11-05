@@ -38,7 +38,7 @@ const TEMPLATE_SUFFIX = /\.(example|sample|template)$/;
 // `.env`, `.env.local`, `.env*`; no `.envrc` ni `environment.ts`.
 const DOTENV = /^\.env(?![A-Za-z0-9_-])/;
 const SSH_KEY = /^id_(rsa|dsa|ecdsa|ed25519)(_[\w-]+)?$/;
-const SERVICE_ACCOUNT = /^service[-_]?account.*\.json$/i;
+const SERVICE_ACCOUNT = /service[-_]?account.*\.json$/i;
 
 export const isSecretPath = (p) => {
     const base = String(p).replace(/^['"]|['"]$/g, '').split('/').pop();
@@ -49,8 +49,7 @@ export const isSecretPath = (p) => {
         DOTENV.test(base) ||
         SSH_KEY.test(base) ||
         base === '.npmrc' ||
-        base === 'credentials' ||
-        base === 'credentials.json' ||
+        base.startsWith('credentials') ||
         SERVICE_ACCOUNT.test(base) ||
         base.endsWith('.pem')
     );

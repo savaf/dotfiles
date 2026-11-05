@@ -25,6 +25,11 @@ check('credentials', read('/home/u/.aws/credentials'), true);
 check('credentials.json', read('/p/credentials.json'), true);
 check('service account json', read('/p/service-account-prod.json'), true);
 check('.pem', read('/p/certs/server.pem'), true);
+check('credentials.yml', read('/p/credentials.yml'), true);
+check('credentials.yaml', read('/p/credentials.yaml'), true);
+check('credentials.ini', read('/home/u/credentials.ini'), true);
+check('service account con prefijo', read('/p/my-service-account.json'), true);
+check('service account con guion bajo', read('/p/prod_service_account.json'), true);
 
 console.log('\n--- Read: deben pasar ---');
 check('.env.example', read('/p/.env.example'), false);
