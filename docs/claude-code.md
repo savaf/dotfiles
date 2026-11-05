@@ -426,6 +426,71 @@ To validate and re-measure after adding or removing skills:
 python3 -I ~/.claude/skills/doc-write/scripts/check-skill.py --all
 ```
 
+### super-board dependencies
+
+This machine is set up to use the dependencies of `EricTechPro/super-board`.
+The board itself is not installed.
+
+It needs:
+
+- Tools: `gh`, `jq`, `python3` >= 3.9, `node` + `npx`, `git`, `bash`, `curl`, `tar`.
+- A `gh` token with the scopes `project`, `read:project` and `repo`.
+- Skills (required): `tdd`, `diagnosing-bugs`, `implement`, `codebase-design`, `code-review`,
+  `domain-modeling`, `ask-matt`, `to-spec`, `to-tickets`, `implement-spec`,
+  `improve-codebase-architecture`, `ponytail`, `ponytail-review`,
+  `verification-before-completion`, `testing-strategy`, `pr-security-review`.
+- Skills (optional, warn only): `resolving-merge-conflicts`, `vitest`,
+  `playwright-best-practices`, `security-audit`, `humanizer`.
+
+Check readiness with `bash scripts/check-skills.sh`.
+It prints one line per item and exits 0 only when every required item is present.
+`install-packages.sh` runs it at the end of `post_checks`; it warns and never aborts.
+Its test is `bash scripts/test-check-skills.sh` (fake `gh` and fixture homes).
+
+Fix missing `gh` scopes by hand; the script never runs this:
+
+```sh
+gh auth refresh -s project,read:project,repo
+```
+
+Turn on the "Dynamic workflows" toggle in `/config` by hand.
+
+Pinning: the skills CLI accepts `owner/repo#<ref>` (tag or full commit SHA).
+A bogus ref fails the install, so the ref is honored.
+The new manifest lines use `#<audited sha>`.
+`ponytail` and `mattpocock/skills` stay unpinned (CLI installs HEAD); their audited commits are below.
+`skills add --help` lists no pin flag; the `#ref` suffix is the only way.
+`humanizer` lives at the repo root, so the CLI copies the whole repo (14 files);
+`install-claude-skills.sh` keeps only `SKILL.md`, as the audit requires.
+
+Audit table (notes from 2026-11-05; `content_sha256` checked against a temp-HOME install, all matched):
+
+| Skill | Repo | Audited commit | Verdict | Reservation |
+|---|---|---|---|---|
+| `verification-before-completion` | `obra/superpowers` | `22f0b463` (v7.0.2) | acceptable | none; the skill dir only, not the plugin |
+| `testing-strategy` | `anthropics/knowledge-work-plugins` | `d9008407` | acceptable | broad trigger overlaps `tdd`; the skill only, not the plugin |
+| `pr-security-review` | `EricTechPro/super-board` | `d0b7d5a6` | with reservations | not in any release; wide `allowed-tools` (`git fetch:*`); injection surface from diffs |
+| `humanizer` | `blader/humanizer` | `0ef9fe5b` (v3.1.0 `SKILL.md` identical) | with reservations | `SKILL.md` only; not for AGENTS.md, specs or ADRs; Spanish unverified |
+| `vitest` | `antfu/skills` | `f63e9ec7` | with reservations | LLM-generated from a Vitest beta; mixes v3/v4/v5; no tags |
+| `playwright-best-practices` | `currents-dev/playwright-best-practices-skill` | `283d5cbc` | with reservations | partial read of example code; 762 KB; flaky-test advice may loosen gates |
+| `security-audit` | `cloudflare/security-audit-skill` | `c1c8a8c1` | with reservations | no tags; heavy; broad trigger; runs target code if a sandbox exists |
+| `ponytail`, `ponytail-review` | `DietrichGebert/ponytail` | `96608e07` | `ponytail` acceptable; `ponytail-review` with reservations | session-wide style; its output format clashes with fixed-format agents |
+| `mattpocock/skills` (14 audited) | `mattpocock/skills` | `4ae2317d` | acceptable to with reservations | `improve-codebase-architecture` loads unpinned CDN scripts; `implement-spec` and `to-tickets` write to the tracker; `setup-matt-pocock-skills` edits the repo |
+| `resolving-merge-conflicts` | `mattpocock/skills` | none | not auditable | retired upstream in 1.3.2; optional here |
+
+`impeccable` (`pbakaus/impeccable`) is not installed; a commented block in the manifest says why.
+It downloads a 22 MB binary on first run and makes network calls.
+It ships directives that override the agent and a live mode with `bypassPermissions`.
+Its audit is incomplete.
+Only `/ui-refine-loop` needs it.
+
+Token cost, measured with `check-skill.py --all` on a temp HOME holding only the 7 new skills:
+7 skills, about 659 tokens of name + description per request.
+The real `~/.claude/skills` measured 57 skills, about 1,940 tokens, before them.
+The optional four (`vitest`, `playwright-best-practices`, `security-audit`, `humanizer`) cost part of that;
+drop their manifest lines to save it.
+The checker also flags `playwright-best-practices` and `security-audit` for reference depth and missing `## Contents`; the skills load fine.
+
 ## Inventario de terceros
 
 Qué hay instalado de verdad en esta máquina (`~/.claude/plugins/installed_plugins.json`,
