@@ -118,3 +118,16 @@ OUT="$(HOME="${TMP}/full" PATH="${TMP}/nojq" "${TMP}/nojq/bash" "${CHECK}" 2>&1)
 [[ ${RC} -eq 1 ]] || fail "jq ausente debía salir 1 (salió ${RC})"
 grep -q "✗ jq" <<<"${OUT}" || fail "falta ✗ jq"
 echo "OK: herramienta ausente"
+
+# 9. impeccable es opt-in: presente o ausente no produce ✗ ni aviso, y no cambia el exit 0.
+fake_gh "${GOOD_SCOPES}"
+make_home impno "${REQUIRED[@]}" "${OPTIONAL[@]}"
+make_home impyes "${REQUIRED[@]}" "${OPTIONAL[@]}" impeccable
+for h in impno impyes; do
+  run "${h}"
+  [[ ${RC} -eq 0 ]] || fail "impeccable (${h}) no debe fallar (salió ${RC})"
+  ! grep -q "^✗" <<<"${OUT}" || fail "impeccable (${h}) no debe producir ✗"
+  ! grep -q "^!" <<<"${OUT}" || fail "impeccable (${h}) no debe producir avisos"
+  grep -q "0 optional missing" <<<"${OUT}" || fail "impeccable (${h}) no debe contar como opcional ausente"
+done
+echo "OK: impeccable opt-in sin fallo ni aviso"
