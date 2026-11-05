@@ -1,0 +1,6 @@
+# Los fragmentos de bash/.config/bash y scripts/lib se cargan con source: no llevan shebang.
+shell=bash
+source-path=SCRIPTDIR
+# SC1090: los source usan rutas dinámicas (variables) que shellcheck no puede resolver.
+# SC1091: los source apuntan a archivos del sistema o del usuario fuera del repo.
+disable=SC1090,SC1091

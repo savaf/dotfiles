@@ -24,6 +24,7 @@ echo "OK: xkb_merge"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 MISE_CONFIG="${ROOT_DIR}/mise/.config/mise/config.toml"
 # binario:herramienta:paquetes-del-sistema (nombres equivalentes en apt/dnf/pacman/brew)
+# shellcheck disable=SC2054 # la coma separa paquetes alternativos dentro del elemento
 MISE_TOOLS=(
   nvim:neovim:neovim
   lazygit:lazygit:lazygit

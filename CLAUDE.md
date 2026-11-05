@@ -41,6 +41,8 @@ repo entero.
   `functions`, `integrations`).
 - **Instalación / enlazado**: `scripts/bootstrap.sh` y los manifiestos `packages/*.txt`.
 
+- **Chequeos** (tests + shellcheck): `bash scripts/ci.sh`; es lo que corre el CI.
+
 ## Añadir un paquete Stow nuevo
 
 1. Crea `<tool>/` espejando la estructura de `$HOME` (p.ej. `<tool>/.config/<tool>/...`).

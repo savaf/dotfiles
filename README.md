@@ -1,5 +1,7 @@
 # Dotfiles
 
+[![CI](https://github.com/savaf/dotfiles/actions/workflows/ci.yml/badge.svg)](https://github.com/savaf/dotfiles/actions/workflows/ci.yml)
+
 Cross-platform dotfiles for **Ubuntu/WSL**, **Fedora/Bazzite**, **Arch/Omarchy** and **macOS**, organized as
 [GNU Stow](https://www.gnu.org/software/stow/) packages.
 
@@ -10,6 +12,7 @@ Cross-platform dotfiles for **Ubuntu/WSL**, **Fedora/Bazzite**, **Arch/Omarchy**
 - [Quick start (recommended)](#quick-start-recommended)
 - [Manual usage with Stow](#manual-usage-with-stow)
 - [Package lists](#package-lists)
+- [Checks](#checks)
 - [Notes](#notes)
 - [Setup guides](#setup-guides)
 
@@ -36,7 +39,8 @@ dotfiles/
 ├── vscode/         # settings.json (symlinked per-OS by a script)
 ├── wsl/            # .wslconfig (copied to the Windows profile on WSL)
 ├── packages/       # package lists (brew/apt/dnf/node/vscode extensions)
-├── scripts/        # bootstrap + install/sync helpers
+├── .github/        # GitHub Actions workflow (runs scripts/ci.sh)
+├── scripts/        # bootstrap + install/sync helpers + ci.sh
 │   ├── lib/        # shared utilities (log, os_detect, sudo keep-alive…)
 │   └── modules/    # one installable/optional step per file, sourced by bootstrap.sh
 ├── system/         # non-$HOME system files (/etc/…), installed by a script, not Stow
@@ -116,6 +120,20 @@ grep -v '^#' packages/pacman-cli.txt | xargs sudo pacman -S --needed  # Arch/Oma
 VS Code settings (`vscode/settings.json`) are symlinked to the OS-specific
 location by `scripts/sync-vscode-settings.sh`, and extensions are installed from
 `packages/vs-extensions.txt`. See [docs/vscode.md](docs/vscode.md).
+
+## Checks
+
+`scripts/ci.sh` is the single entry point for repo checks:
+
+- Runs every `scripts/test-*.sh`.
+- Runs `shellcheck` on every tracked `*.sh` (`scripts/bootstrap.sh` installs `shellcheck`).
+- Runs everything even after a failure, prints a summary, exits non-zero on any failure.
+
+```sh
+bash scripts/ci.sh
+```
+
+`.github/workflows/ci.yml` runs it on every push and pull request.
 
 ## Notes
 

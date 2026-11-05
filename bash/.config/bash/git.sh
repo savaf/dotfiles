@@ -165,7 +165,9 @@ alias gb='git branch'
 alias gba='git branch --all'
 alias gbd='git branch --delete'
 alias gbD='git branch --delete --force'
+# shellcheck disable=SC2142 # el $1 es de awk, dentro de comillas; no es un parámetro del alias
 alias gbgd='LANG=C git branch --no-color -vv | grep ": gone\]" | cut -c 3- | awk '"'"'{print $1}'"'"' | xargs git branch -d'
+# shellcheck disable=SC2142 # idem gbgd
 alias gbgD='LANG=C git branch --no-color -vv | grep ": gone\]" | cut -c 3- | awk '"'"'{print $1}'"'"' | xargs git branch -D'
 alias gbm='git branch --move'
 alias gbnm='git branch --no-merged'

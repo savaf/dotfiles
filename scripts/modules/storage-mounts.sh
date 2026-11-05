@@ -10,6 +10,7 @@ STORAGE_MOUNTS=(
 
 ensure_storage_mounts() {
   [[ "$(hostname)" == "andrea" ]] || return 0
+  # shellcheck disable=SC2015 # el bloque tras || solo hace log y return 0; no puede fallar
   exists blkid && exists mountpoint || { log "Storage: blkid/mountpoint no disponibles; se omite."; return 0; }
 
   local entry uuid mnt link

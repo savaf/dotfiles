@@ -130,6 +130,7 @@ done
 # tarball no detiene el registro de MCP y hace salir distinto de 0.
 fb="${work}/fakebin"; mkdir -p "${fb}"; calls="${work}/calls.log"; : > "${calls}"
 printf '#!/usr/bin/env bash\necho "npx $*" >> "%s"\n' "${calls}" > "${fb}/npx"
+# shellcheck disable=SC2016 # el fake de claude debe llevar $* y $2 literales
 printf '#!/usr/bin/env bash\necho "claude $*" >> "%s"\n[[ "$2" == get ]] && exit 1; exit 0\n' "${calls}" > "${fb}/claude"
 chmod +x "${fb}/npx" "${fb}/claude"
 hf="${work}/homefull"; mkdir -p "${hf}"
@@ -143,8 +144,8 @@ check "completa: el fallo del tarball hace salir distinto de 0" test "${RC}" -ne
 # Manifiesto real: líneas con tarball bien formadas; impeccable activa y fijada al tag skill-v4.8.0.
 lock="${repo}/packages/claude-skills.txt"
 real_ok() {
-  local n=0 r o p h x
-  while read -r r o p h x; do
+  local n=0 r p h x
+  while read -r r _ p h x; do
     case "${r}" in ''|'#'*) continue ;; esac
     [ -n "${p}" ] || continue
     n=$((n + 1))
@@ -158,4 +159,5 @@ check "packages/claude-skills.txt: las líneas con tarball están bien formadas"
 check "impeccable está activa en el manifiesto, fijada al tag skill-v4.8.0 (commit, ruta y hash auditados)" \
   grep -qx 'pbakaus/impeccable#414603bf14c7a344edb466bb1f85690c77ce8b7d impeccable \.claude/skills/impeccable 532aa98903b020071ea830f9a97b931e771fa42daea2308af6e4f9f572e65b8b' "${lock}"
 
+# shellcheck disable=SC2015 # solo imprime el resultado; ambas ramas son echo
 [ "${fails}" -eq 0 ] && echo "todo ok" || { echo "${fails} fallos"; exit 1; }

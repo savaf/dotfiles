@@ -218,6 +218,7 @@ ensure_mise_tools() {
 # respecto a lo instalado: la versión instalada se guarda en un marcador junto
 # a las fuentes. Acepta el nombre de la fuente como argumento (default
 # Monaspace) para poder añadir más Nerd Fonts con una línea.
+# shellcheck disable=SC2119,SC2120 # el argumento (fuente) es opcional; sin él usa Monaspace
 ensure_nerd_font() {
   local font="${1:-Monaspace}" NF_VERSION="v3.4.0"
   local font_dir="${HOME}/.local/share/fonts"
@@ -274,6 +275,7 @@ install_ubuntu() {
     # apt aborta la transacción entera si UN paquete no tiene candidato (p.ej.
     # renombrado/eliminado en una release nueva de Ubuntu): filtrar antes.
     local p candidate pkgs=() skipped=()
+    # shellcheck disable=SC2013 # las entradas del manifiesto no llevan espacios
     for p in $(grep -Ev '^\s*#|^\s*$' "${APT_CLI}"); do
       candidate="$(apt-cache policy "$p" 2>/dev/null | awk '/Candidate:/{print $2}')"
       if [[ -n "${candidate}" && "${candidate}" != "(none)" ]]; then
@@ -541,6 +543,7 @@ post_checks() {
   # Stow aún no enlazó ~/.config/mise: sin esto los shims de mise fallan ("No version is set").
   export MISE_GLOBAL_CONFIG_FILE="${ROOT_DIR}/mise/.config/mise/config.toml"
   exists zsh && zsh --version || echo "zsh: not found"
+  # shellcheck disable=SC2015 # el || true solo evita abortar si brew --version falla
   exists brew && brew --version || true
   exists fzf && fzf --version || echo "fzf: not found"
   exists zoxide && zoxide --version || echo "zoxide: not found"
