@@ -117,27 +117,40 @@ other repo is unknown.
 `guard-secrets.mjs` has two rule groups, each with an id for `AI_GUARD_DISABLE`:
 
 - `secret-read`: denies dotenv files (`.env`, `.env.local`), SSH private keys, `.npmrc`,
-  `credentials*`, `*service-account*.json` and `.pem`. `.env.example`, `.env.sample` and
+  `credentials*`, `*service-account*.json` and `*.pem`. `.env.example`, `.env.sample` and
   `.env.template` stay readable. Applies to `Read`, `Grep` and `Bash`.
   - `Bash`: every token of the command is checked, not only the one being read.
     `git add .env`, `ls .env` and `echo .env` are denied too (over-blocking by design).
   - `Bash` glob tokens are tested as patterns: `.e*` and `cat .env*` are denied.
-    A bare `*` or `*.json` is not, so `ls *` keeps working. `*.pem` is denied.
+    A glob needs two literal characters before its first wildcard (`.e*` is the one allowed
+    two-character prefix), so `ls *`, `ls s*`, `ls .*` and `*.json` keep working. `*.pem` is denied.
+    A single-character class such as `[e]` counts as a literal; `[!x]` and `[^x]` match one character.
+  - `:` separates tokens, so `git show HEAD:.env` and `git show :.env` are denied.
+  - `grep -r`, `grep -R`, `grep --recursive`, `rg`, `ag` and `ack` are denied when the target
+    directory (the cwd if none is given) holds a secret file at its top level, like `Grep`.
+    A single file or a clean subdirectory passes.
   - `Grep`: denied when `path` or `glob` names a secret file.
   - `Grep` over a directory is denied when its top level holds a secret file.
     Name the files to search, or search a subdirectory without secrets.
 - `key-literal`: denies writing a key with a known prefix (Anthropic, OpenAI, AWS, GitHub, Slack,
   Google, PEM private key). The reason and the post-write warning give line numbers, never the
   value. The warning reads `notebook_path` first, then `file_path`.
-  - A placeholder exempts the key only when the secret body after the prefix is `x` repeated,
-    or contains `your`, `example` or `placeholder`.
+  - A placeholder exempts the key only when the whole body after the prefix is markers:
+    `x`, `your`, `example`, `placeholder`, `-` and `_`. A real key that merely contains one is denied.
   - A real key that ends in `xxxx` is still denied.
 
-To check a variable without reading `.env`, call `env-check.sh KEY...` alone.
+`env-check.sh KEY...` is how to learn whether a variable is set without reading `.env`.
+It is exempt from `secret-read` and is not part of `key-literal`.
 The deny reason gives the helper's full path, next to the hook.
 The exemption applies only when the whole command is the helper (optionally with `bash`)
-plus variable names. Text before it, a pipe, chain, redirect or `${IFS}` makes it a normal
-command again.
+plus variable names, separated by spaces or tabs. Text before it, a pipe, chain, redirect,
+newline or `${IFS}` makes it a normal command again.
+A trailing `# comment` in `.env` is not part of the value, so `KEY= # note` is `empty`.
+
+Limits: the guard stops accidental reads, not deliberate evasion. It does not catch split quotes,
+variables, brace expansion, `python -c`, `source`, or the files `.netrc`, `.pgpass`,
+`.git-credentials` and `.envrc`. Against those, the real protection is not keeping the secret
+on the machine.
 
 `guard-worktree-path.mjs`:
 
@@ -165,7 +178,6 @@ command again.
 - Before deleting branches it writes `<git-common-dir>/cleanup-wt/<timestamp>.tsv` with
   `branch<TAB>sha`. Restore with `git branch <branch> <sha>`.
 - A branch whose worktree could not be removed is left out of the TSV and is not deleted.
-- Each `ok` line is printed after its action succeeds.
 - `AI_GUARD_DISABLE=cleanup-wt` turns it off, also in `--auto`.
 
 Tests: `bash scripts/test-hooks.sh` runs every hook test (`git-guardrails`,
