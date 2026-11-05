@@ -3,10 +3,29 @@
 # surface: review the repo before adding a new line here. Optional second column limits a repo
 # to some skills: `owner/repo skill-a,skill-b` (default: all). The CLI version is pinned in the script.
 # ponytail: pushes the agent toward minimal code (YAGNI) — fewer generated tokens
-DietrichGebert/ponytail
+DietrichGebert/ponytail#96608e078b2d5ea607c5c3b8b5a54d1c1fba6846
 # engineering workflow: todos los skills del repo (incluye grill-me, grill-with-docs, retro, pr)
 # Per repo, run /setup-matt-pocock-skills once (issue tracker + docs layout).
-mattpocock/skills
+mattpocock/skills#4ae2317ddb22b046e26455e4f9c9b3aaaf62212d
+# Dependencias de super-board (solo sus skills, nunca el plugin ni el tablero). `owner/repo#<sha>`
+# fija el commit auditado (la CLI acepta `#ref`; ver docs/claude-code.md). Actualizar = auditar de nuevo.
+# verification-before-completion: no declarar "hecho" sin evidencia (superpowers v7.0.2)
+obra/superpowers#22f0b463e7a5e579904dd6211a520321035526f7 verification-before-completion
+# testing-strategy: solo esta skill, no el plugin engineering completo
+anthropics/knowledge-work-plugins#d900840716eb262e1feb17c6f4406c9ce0e06bcf testing-strategy
+# pr-security-review: no hay release que la incluya, por eso va fijada a un commit de main
+EricTechPro/super-board#d0b7d5a6850614ca809477c1af43d5d7da408726 pr-security-review
+# Opcionales (check-skills.sh solo avisa si faltan; impeccable, más abajo, es requerida):
+# humanizer: la skill es la raíz del repo; la CLI copia el repo entero (14 archivos) y
+# install-claude-skills.sh deja solo SKILL.md (así lo pide la auditoría). Usar solo en prosa para humanos.
+blader/humanizer#0ef9fe5bc3572734fd3ae6c448fe00a30cd5dcf0 humanizer
+antfu/skills#f63e9ec7bc85f67364b6596c2d29da87e83ce445 vitest
+currents-dev/playwright-best-practices-skill#283d5cbc5d11aac1abda058b16ad22c317d54dc0 playwright-best-practices
+cloudflare/security-audit-skill#c1c8a8c1471069fb0e188eeaff69b8e8db6564a8 security-audit
+# impeccable: línea con dos columnas extra (`<ruta-en-el-repo> <sha256 del contenido>`). Esas líneas
+# NO van por la CLI (instalaría el espejo `.agents/`, otro hash): scripts/install-claude-skills.sh baja
+# el tarball del commit y solo instala si el hash coincide. Riesgos y verbos seguros: docs/claude-code.md.
+pbakaus/impeccable#414603bf14c7a344edb466bb1f85690c77ce8b7d impeccable .claude/skills/impeccable 532aa98903b020071ea830f9a97b931e771fa42daea2308af6e4f9f572e65b8b
 # Leonxlnx/taste-skill — DESACTIVADO (13 skills de diseño UI que se pisan entre sí). Solo para
 # trabajo de frontend; directorios en ~/.claude/skills-disabled/. Para recuperar: descomenta la
 # línea y corre scripts/install-claude-skills.sh, o `mv` uno solo.

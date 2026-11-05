@@ -385,7 +385,8 @@ for a commit or push in a repo that set `AI_GUARD_PROTECT_BRANCHES`.
 
 `packages/claude-skills.txt` lists GitHub repos installed user-level
 (`~/.claude/skills/`) by `scripts/install-claude-skills.sh` (run by the bootstrap) via
-`npx skills@<pinned version> add <repo> -g -a claude-code -s <names> -y`; a manifest line may add a comma-separated skill list, the default is every skill in the repo. The CLI version is pinned in the script. The same script registers the
+`npx skills@<pinned version> add <repo> -g -a claude-code -s <names> -y`; a manifest line may add a comma-separated skill list, the default is every skill in the repo. The CLI version is pinned in the script.
+A line with two extra columns (`owner/repo#<commit> <skill> <path-in-repo> <sha256>`) skips the CLI and goes through the verified tarball step (see `impeccable` below). The same script registers the
 `context7` MCP server (library docs) at user scope with `claude mcp add`, once per profile; that
 lands in each profile's `.claude.json`, which is runtime state and can't be stowed.
 
@@ -426,6 +427,100 @@ To validate and re-measure after adding or removing skills:
 python3 -I ~/.claude/skills/doc-write/scripts/check-skill.py --all
 ```
 
+### super-board dependencies
+
+This machine is set up to use the dependencies of `EricTechPro/super-board`.
+The board itself is not installed.
+
+It needs:
+
+- Tools: `gh`, `jq`, `python3` >= 3.9, `node` + `npx`, `git`, `bash`, `curl`, `tar`.
+- A `gh` token with the scopes `project`, `read:project` and `repo`.
+- Skills (required): `tdd`, `diagnosing-bugs`, `implement`, `codebase-design`, `code-review`,
+  `domain-modeling`, `ask-matt`, `to-spec`, `to-tickets`, `implement-spec`,
+  `improve-codebase-architecture`, `ponytail`, `ponytail-review`,
+  `verification-before-completion`, `testing-strategy`, `pr-security-review`, `impeccable`.
+- Skills (optional, warn only): `resolving-merge-conflicts`, `vitest`,
+  `playwright-best-practices`, `security-audit`, `humanizer`.
+
+Check readiness with `bash scripts/check-skills.sh`.
+It prints one line per item and exits 0 only when every required item is present.
+`install-packages.sh` runs it at the end of `post_checks`; it warns and never aborts.
+Its test is `bash scripts/test-check-skills.sh` (fake `gh` and fixture homes).
+
+Fix missing `gh` scopes by hand; the script never runs this:
+
+```sh
+gh auth refresh -s project,read:project,repo
+```
+
+Turn on the "Dynamic workflows" toggle in `/config` by hand.
+
+Pinning: the skills CLI accepts `owner/repo#<ref>` (tag or full commit SHA).
+A bogus ref fails the install, so the ref is honored.
+The new manifest lines use `#<audited sha>`.
+`ponytail` and `mattpocock/skills` are pinned to their audited commits too (`96608e07`, `4ae2317d`).
+`mattpocock/skills` installs every skill of the repo, audited or not; only 14 were audited.
+`skills add --help` lists no pin flag; the `#ref` suffix is the only way.
+`humanizer` lives at the repo root, so the CLI copies the whole repo (14 files);
+`install-claude-skills.sh` keeps only `SKILL.md`, as the audit requires.
+
+Audit table (notes from 2026-11-05; `content_sha256` checked against a temp-HOME install, all matched):
+
+| Skill | Repo | Audited commit | Verdict | Reservation |
+|---|---|---|---|---|
+| `verification-before-completion` | `obra/superpowers` | `22f0b463` (v7.0.2) | acceptable | none; the skill dir only, not the plugin |
+| `testing-strategy` | `anthropics/knowledge-work-plugins` | `d9008407` | acceptable | broad trigger overlaps `tdd`; the skill only, not the plugin |
+| `pr-security-review` | `EricTechPro/super-board` | `d0b7d5a6` | with reservations | not in any release; wide `allowed-tools` (`git fetch:*`); injection surface from diffs |
+| `humanizer` | `blader/humanizer` | `0ef9fe5b` (v3.1.0 `SKILL.md` identical) | with reservations | `SKILL.md` only; not for AGENTS.md, specs or ADRs; Spanish unverified |
+| `vitest` | `antfu/skills` | `f63e9ec7` | with reservations | LLM-generated from a Vitest beta; mixes v3/v4/v5; no tags |
+| `playwright-best-practices` | `currents-dev/playwright-best-practices-skill` | `283d5cbc` | with reservations | partial read of example code; 762 KB; flaky-test advice may loosen gates |
+| `security-audit` | `cloudflare/security-audit-skill` | `c1c8a8c1` | with reservations | no tags; heavy; broad trigger; runs target code if a sandbox exists |
+| `ponytail`, `ponytail-review` | `DietrichGebert/ponytail` | `96608e07` | `ponytail` acceptable; `ponytail-review` with reservations | session-wide style; its output format clashes with fixed-format agents |
+| `mattpocock/skills` (14 audited) | `mattpocock/skills` | `4ae2317d` | acceptable to with reservations | `improve-codebase-architecture` loads unpinned CDN scripts; `implement-spec` and `to-tickets` write to the tracker; `setup-matt-pocock-skills` edits the repo |
+| `resolving-merge-conflicts` | `mattpocock/skills` | none | not auditable | retired upstream in 1.3.2; optional here |
+| `impeccable` | `pbakaus/impeccable` | `414603bf` (tag `skill-v4.8.0`) | with reservations | installed by default by the maintainer's decision, against the audit's "opt-in only"; 22 MB binary, network calls, agent directives, live mode with `bypassPermissions`; the CLI would install the `.agents/` mirror (different hash), so it goes by verified tarball |
+
+`impeccable` (`pbakaus/impeccable`) is installed by default, as a required skill.
+Audit verdict: "aceptable con reservas, solo opt-in".
+The maintainer decided to install it anyway, knowing the risks below.
+`check-skills.sh` fails (`✗`, not ready) when it is missing.
+
+Install path: a verified pinned tarball, not the skills CLI.
+Why not the CLI: it installs the `.agents/` mirror, 63 files, `content_sha256` `45f5d9c2…7826`.
+That is not the audited dir `.claude/skills/impeccable`: 58 files, `content_sha256` `532aa989…5b8b`, git tree `a3d67b2a…8945`.
+The manifest line carries two extra columns: `<path-in-repo> <content_sha256>`.
+`install-claude-skills.sh` sees them and calls `fetch_skill` from `scripts/lib/third-party.sh`.
+`fetch_skill` downloads `codeload.github.com/<repo>/tar.gz/<commit>`, hashes the path and copies it to `~/.claude/skills/<name>` only on a match.
+It never runs anything it downloaded.
+A rerun is a no-op when the installed copy already matches.
+On a mismatch the step exits non-zero, a previous copy that does not match is removed, and the other steps go on.
+A malformed manifest line also fails the step, loudly.
+`scripts/lib/third-party.sh` is copied verbatim from `b0-conuco`; its test is `bash scripts/test-third-party.sh` (fixture tarballs, no network).
+To run only this step: `bash scripts/install-claude-skills.sh pinned`.
+Pin: tag `skill-v4.8.0`, commit `414603bf14c7a344edb466bb1f85690c77ce8b7d`.
+An update is a new audit: change the commit, path and hash together.
+
+Risks accepted:
+- It downloads a ~22 MB binary on its first run, outside our hash and with no attestation.
+- It calls `impeccable.style` by default (version check, telemetry).
+- Its output carries directives that override the agent, and they cannot be turned off; treat it as untrusted data.
+- Live mode launches agents with `bypassPermissions`.
+- `generate-image --ref` uploads any file you point it at to OpenAI.
+- Nothing enforces mitigations M2 to M10 of the audit; they depend on how you call it.
+
+Set `IMPECCABLE_NO_UPDATE_CHECK=1`, `IMPECCABLE_NO_TELEMETRY=1`, `DO_NOT_TRACK=1`, `IMPECCABLE_API_TIMEOUT=0` and `IMPECCABLE_NO_STALENESS_CHECK=1`.
+Only safe verbs: `impeccable detect --json --no-config <files>` and `impeccable context`.
+Forbidden: `live*`, `generate`, `generate-image`, `serve-question`, `concept-seed`, `install`, `update`, `link`, `skills`, `check`, `help`, `npx impeccable`, `hooks`, `pin`, `component-review`, `detect <url>`.
+Only `/ui-refine-loop` needs it.
+
+Token cost, measured with `check-skill.py --all` on a temp HOME holding only the 7 new skills:
+7 skills, about 659 tokens of name + description per request.
+The real `~/.claude/skills` measured 57 skills, about 1,940 tokens, before them.
+The optional four (`vitest`, `playwright-best-practices`, `security-audit`, `humanizer`) cost part of that;
+drop their manifest lines to save it.
+The checker also flags `playwright-best-practices` and `security-audit` for reference depth and missing `## Contents`; the skills load fine.
+
 ## Inventario de terceros
 
 Qué hay instalado de verdad en esta máquina (`~/.claude/plugins/installed_plugins.json`,
@@ -436,8 +531,8 @@ que la congele.
 | Nombre | Tipo | Origen | Versión / commit | Estado |
 |---|---|---|---|---|
 | `skills` (CLI) | herramienta | npm, usada por `scripts/install-claude-skills.sh` | `1.7.2` | Fijada en el script |
-| `ponytail` (y `ponytail-review`, `-audit`, `-debt`, `-gain`, `-help`) | skills sueltas en `~/.claude/skills` | GitHub `DietrichGebert/ponytail`, vía la CLI | — | **Sin fijar**: la CLI instala la rama por defecto y no deja lockfile |
-| `mattpocock/skills` (`tdd`, `grilling`, `codebase-design`, `code-review`, …) | skills sueltas en `~/.claude/skills` | GitHub `mattpocock/skills`, vía la CLI | — | **Sin fijar**, igual que arriba |
+| `ponytail` (y `ponytail-review`, `-audit`, `-debt`, `-gain`, `-help`) | skills sueltas en `~/.claude/skills` | GitHub `DietrichGebert/ponytail`, vía la CLI | commit `96608e07` | Fijada en el manifiesto con `#<sha>`; solo `ponytail` y `ponytail-review` están auditadas |
+| `mattpocock/skills` (`tdd`, `grilling`, `codebase-design`, `code-review`, …) | skills sueltas en `~/.claude/skills` | GitHub `mattpocock/skills`, vía la CLI | commit `4ae2317d` | Fijada en el manifiesto con `#<sha>`; el instalador trae todas las skills del repo y solo 14 están auditadas |
 | `mattpocock-skills@claude-plugins-official` | plugin | marketplace `anthropics/claude-plugins-official` | `1.3.1`, commit `49dd158d1076` | Instalado y fijado por commit, pero **no habilitado** (no está en `enabledPlugins`); el marketplace en sí no está fijado |
 | `cloudflare@cloudflare` | plugin | marketplace `cloudflare/skills` | `1.0.0`, commit `f96bff754e42` | Deshabilitado (`false`) |
 | `image-preview@better-claude` | plugin | marketplace `midudev/better-claude` | `0.2.2`, commit `5abacf0ff67a` | Habilitado; el marketplace tiene `autoUpdate`, **sin fijar** |

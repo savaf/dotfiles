@@ -547,6 +547,9 @@ post_checks() {
   exists eza && eza --version || echo "eza: not found"
   if exists bat; then bat --version; elif exists batcat; then batcat --version; else echo "bat/batcat: not found"; fi
   if exists nvim; then nvim --version >/dev/null || true; elif exists neovim; then neovim --version >/dev/null || true; else echo "neovim: not found"; fi
+  # Dependencias de super-board: informa, nunca aborta el bootstrap.
+  echo "[super-board]"
+  bash "${ROOT_DIR}/scripts/check-skills.sh" || echo "[setup] check-skills: faltan dependencias de super-board (ver arriba)."
 }
 
 main() {
