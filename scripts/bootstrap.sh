@@ -133,6 +133,7 @@ main() {
   install_wslconfig
 
   # Diagnóstico de arranque (solo Linux; avisos, nunca bloquea).
+  # shellcheck disable=SC2015 # el || true es intencional: boot-health nunca aborta el bootstrap
   [[ "${OS}" != "macos" ]] && bash "${SCRIPT_DIR}/boot-health.sh" || true
 
   report_coolercontrol_issues

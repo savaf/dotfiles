@@ -37,6 +37,7 @@ fi
 
 echo
 echo "== resumen"
-for n in "${PASSED[@]}"; do echo "✓ ${n}"; done
-for n in "${FAILED[@]}"; do echo "✗ ${n}"; done
+# ${arr[@]+...}: con set -u, bash < 4.4 falla al expandir un array vacío.
+for n in ${PASSED[@]+"${PASSED[@]}"}; do echo "✓ ${n}"; done
+for n in ${FAILED[@]+"${FAILED[@]}"}; do echo "✗ ${n}"; done
 [[ ${#FAILED[@]} -eq 0 ]]

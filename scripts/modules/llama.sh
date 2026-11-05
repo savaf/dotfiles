@@ -33,6 +33,7 @@ ensure_clef() {
     mkdir -p "${tmp}/x"
     for t in llama cudart-llama; do
       f="${t}-${LLAMA_CPP_VERSION}-bin-ubuntu-cuda-12.8-x64.tar.gz"
+      # shellcheck disable=SC2015 # la rama || es el manejo de error de toda la cadena, a propósito
       curl -fsSL -o "${tmp}/${f}" "${base}/${f}" \
         && echo "${LLAMA_CPP_SHA256[$t]}  ${tmp}/${f}" | sha256sum -c --quiet \
         && tar xzf "${tmp}/${f}" --strip-components=1 -C "${tmp}/x" \

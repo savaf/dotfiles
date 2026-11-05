@@ -126,7 +126,7 @@ location by `scripts/sync-vscode-settings.sh`, and extensions are installed from
 `scripts/ci.sh` is the single entry point for repo checks:
 
 - Runs every `scripts/test-*.sh`.
-- Runs `shellcheck` on every tracked `*.sh` (install `shellcheck` first).
+- Runs `shellcheck` on every tracked `*.sh` (`scripts/bootstrap.sh` installs `shellcheck`).
 - Runs everything even after a failure, prints a summary, exits non-zero on any failure.
 
 ```sh

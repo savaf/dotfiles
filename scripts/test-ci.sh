@@ -34,11 +34,15 @@ run() { # $1 repo; resto: entorno extra. Guarda OUT y RC.
 # 1. Todo verde: exit 0 y resumen.
 make_repo green
 add_test green test-a.sh 0
-run green
-[[ ${RC} -eq 0 ]] || fail "todo verde debía salir 0 (salió ${RC})"
-grep -q "✓ scripts/test-a.sh" <<<"${OUT}" || fail "falta ✓ del test"
-grep -q "✓ shellcheck" <<<"${OUT}" || fail "falta ✓ de shellcheck"
-echo "OK: todo verde"
+if command -v shellcheck >/dev/null 2>&1; then
+  run green
+  [[ ${RC} -eq 0 ]] || fail "todo verde debía salir 0 (salió ${RC})"
+  grep -q "✓ scripts/test-a.sh" <<<"${OUT}" || fail "falta ✓ del test"
+  grep -q "✓ shellcheck" <<<"${OUT}" || fail "falta ✓ de shellcheck"
+  echo "OK: todo verde"
+else
+  echo "SKIP: todo verde; no hay shellcheck real en el PATH"
+fi
 
 # 2. Un test falla: exit ≠0 y el siguiente igual se ejecuta.
 make_repo failing
@@ -48,6 +52,9 @@ run failing
 [[ ${RC} -ne 0 ]] || fail "test fallido debía salir ≠0"
 grep -q "✗ scripts/test-a.sh" <<<"${OUT}" || fail "falta ✗ del test fallido"
 grep -q "corrió test-b.sh" <<<"${OUT}" || fail "el fallo ocultó el test siguiente"
+if command -v shellcheck >/dev/null 2>&1; then
+  grep -q "✓ shellcheck" <<<"${OUT}" || fail "el test fallido ocultó shellcheck"
+fi
 echo "OK: test fallido no oculta los demás"
 
 # 3. Hallazgo de shellcheck: exit ≠0.
@@ -66,4 +73,5 @@ add_test nosc test-a.sh 0
 run nosc SHELLCHECK=shellcheck-no-existe
 [[ ${RC} -ne 0 ]] || fail "sin shellcheck debía salir ≠0"
 grep -qi "shellcheck no está instalado" <<<"${OUT}" || fail "falta mensaje de shellcheck ausente"
+grep -q "corrió test-a.sh" <<<"${OUT}" || fail "sin shellcheck no corrieron los tests"
 echo "OK: shellcheck ausente"

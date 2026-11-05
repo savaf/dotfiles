@@ -159,4 +159,5 @@ check "packages/claude-skills.txt: las líneas con tarball están bien formadas"
 check "impeccable está activa en el manifiesto, fijada al tag skill-v4.8.0 (commit, ruta y hash auditados)" \
   grep -qx 'pbakaus/impeccable#414603bf14c7a344edb466bb1f85690c77ce8b7d impeccable \.claude/skills/impeccable 532aa98903b020071ea830f9a97b931e771fa42daea2308af6e4f9f572e65b8b' "${lock}"
 
+# shellcheck disable=SC2015 # solo imprime el resultado; ambas ramas son echo
 [ "${fails}" -eq 0 ] && echo "todo ok" || { echo "${fails} fallos"; exit 1; }

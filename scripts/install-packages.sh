@@ -543,6 +543,7 @@ post_checks() {
   # Stow aún no enlazó ~/.config/mise: sin esto los shims de mise fallan ("No version is set").
   export MISE_GLOBAL_CONFIG_FILE="${ROOT_DIR}/mise/.config/mise/config.toml"
   exists zsh && zsh --version || echo "zsh: not found"
+  # shellcheck disable=SC2015 # el || true solo evita abortar si brew --version falla
   exists brew && brew --version || true
   exists fzf && fzf --version || echo "fzf: not found"
   exists zoxide && zoxide --version || echo "zoxide: not found"
