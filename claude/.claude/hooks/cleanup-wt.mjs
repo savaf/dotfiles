@@ -103,7 +103,7 @@ const refExists = (ref, cwd) => {
     }
 };
 
-function main() {
+function run() {
     if (isDisabled(process.env)) {
         return;
     }
@@ -160,7 +160,7 @@ function main() {
     }
 
     mkdirSync(stateDir, { recursive: true });
-    const failedWorktrees = new Set();
+    const failedBranches = new Set();
     const run = (a) => {
         try {
             if (a.action === 'wip-commit') {
@@ -173,15 +173,15 @@ function main() {
             }
             log(`ok  ${a.action} ${a.path ?? a.branch}`);
         } catch (e) {
-            failedWorktrees.add(a.branch);
+            failedBranches.add(a.branch);
             log(`skip ${a.action} ${a.path ?? a.branch}: ${String(e.stderr || e.message).trim()}`);
         }
     };
 
     // Primero los worktrees; el TSV solo lista ramas que se van a borrar de verdad.
     actions.filter((a) => a.action !== 'delete-branch').forEach(run);
-    const deletions = actions.filter((a) => a.action === 'delete-branch' && !failedWorktrees.has(a.branch));
-    const tsv = recoveryTsv(deletions, tipOf, failedWorktrees);
+    const deletions = actions.filter((a) => a.action === 'delete-branch' && !failedBranches.has(a.branch));
+    const tsv = recoveryTsv(deletions, tipOf, failedBranches);
     if (tsv) {
         const file = path.join(stateDir, `${new Date().toISOString().replace(/[:.]/g, '-')}.tsv`);
         writeFileSync(file, tsv);
@@ -201,7 +201,7 @@ const isMain = (() => {
 
 if (isMain) {
     try {
-        main();
+        run();
     } catch (e) {
         process.stderr.write(`[cleanup-wt] ${e.message}\n`);
     }
