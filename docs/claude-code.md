@@ -79,7 +79,7 @@ Three pieces, all versioned in `claude/.claude/` and linked by stow.
 
 | Hook | Event | What it does |
 |---|---|---|
-| `git-guardrails.mjs` | `PreToolUse` on `Bash` | Denies irreversible commands before they run |
+| `git-guardrails.mjs` | `PreToolUse` on `Bash` | Denies irreversible commands before they run, and commits or pushes to a protected branch |
 | `guard-protected-branch.mjs` | `PreToolUse` on `Write`/`Edit` | Blocks edits to repo files on a protected branch |
 | `load-agents-md.sh` | `SessionStart` | Injects the project's `AGENTS.md` when Claude Code would not load it |
 | `decision-shadow.mjs` | `UserPromptSubmit`, `PreToolUse` on `Agent` | Logs Decisions from the local engine in shadow mode; applies nothing (see `docs/decision-engine.md`) |
@@ -105,7 +105,13 @@ dangerous command is blocked the same as running one. Writing this very section 
 tripped it. Use the `Write` tool for that content. A safety hook should over-block rather than
 under-block, so this is not worth loosening.
 
-Tests: `node claude/.claude/hooks/git-guardrails.test.mjs`. Run it after touching a rule.
+Push to a protected branch is denied too: an explicit refspec (`origin main`, `HEAD:main`,
+`refs/heads/main`), also through `git -C <path> push`, and a push with no refspec made from the
+protected branch. With `-C` only an explicit refspec counts, because the current branch of the
+other repo is unknown.
+
+Tests: `bash scripts/test-hooks.sh` runs every hook test (`git-guardrails`,
+`guard-protected-branch`, `decision-shadow`). Run it after touching a rule. The repo has no CI.
 
 ### Per-project switches
 
@@ -113,7 +119,7 @@ Environment variables, set in a project's `.claude/settings.json` under `env`:
 
 | Variable | Effect |
 |---|---|
-| `AI_GUARD_PROTECT_BRANCHES` | Comma list of branches where commits and repo edits are blocked. Empty (default) = off |
+| `AI_GUARD_PROTECT_BRANCHES` | Comma list of branches where commits, pushes and repo edits are blocked. Empty (default) = off |
 | `AI_GUARD_ENABLE` | Comma list of POLICY rule ids to turn on. `all` enables every one |
 | `AI_GUARD_DISABLE` | Comma list of SAFETY rule ids to turn off |
 
@@ -301,7 +307,7 @@ Skill and agent descriptions land in the system prompt of every request. Measure
 
 The hooks cost nothing in tokens: they are shell, not prompt. `guard-protected-branch.mjs` exits
 before spawning git when no branch is protected, and `git-guardrails.mjs` only shells out to git
-for a commit in a repo that set `AI_GUARD_PROTECT_BRANCHES`.
+for a commit or push in a repo that set `AI_GUARD_PROTECT_BRANCHES`.
 
 ## Skills and MCP servers
 
