@@ -1,0 +1,7 @@
+ts	ticket	round	builder	checks	gate	findings	failure	action	minutes	tokens_in	tokens_out	cost_usd
+2026-11-01T10:00:00-04:00	t-01	1	b-01	pass	pass	0/0/1		merged	12	1000	200	0.50
+2026-11-01T11:00:00-04:00	t-02	1	b-02	fail	fail	0/2/0	test:cart	retry	20	3000	400	1.50
+2026-11-01T11:30:00-04:00	t-02	2	b-02	fail	fail	0/1/0	test:cart	restart	10	2000	300	1.00
+2026-11-01T12:00:00-04:00	t-02	3	b-02-r3	pass	pass	0/0/0		merged	15	2500	350	1.00
+2026-11-02T09:00:00-04:00	t-03	1	b-03	fail	fail	1/0/0	test:cart	stopped				
+2026-11-02T10:00:00-04:00	t-04	1	b-04	pass	fail	0/1/0	check-dispute	stopped				

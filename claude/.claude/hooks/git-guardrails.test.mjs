@@ -50,5 +50,21 @@ check('commit en feature con env', evaluate('git commit -m x', 'feat', { AI_GUAR
 check('git -C otro repo permitido', evaluate('git -C ../otro commit -m x', 'main', { AI_GUARD_PROTECT_BRANCHES: 'main' }), false);
 check('comando vacio deniega', evaluate('', null, {}), true);
 
+console.log('\n--- push a rama protegida (Conuco) ---');
+const prot = { AI_GUARD_PROTECT_BRANCHES: 'main' };
+check('push origin main', evaluate('git push origin main', 'feat', prot), true);
+check('push HEAD:main', evaluate('git push origin HEAD:main', 'feat', prot), true);
+check('push refs/heads/main', evaluate('git push origin feat:refs/heads/main', 'feat', prot), true);
+check('push sin refspec desde main', evaluate('git push', 'main', prot), true);
+check('push -u origin desde main', evaluate('git push -u origin', 'main', prot), true);
+check('push en 2o segmento', evaluate('npm test && git push origin main', 'feat', prot), true);
+check('push de rama de feature', evaluate('git push -u origin feat/x', 'feat/x', prot), false);
+check('push sin refspec desde feature', evaluate('git push', 'feat/x', prot), false);
+check('rama que contiene main en el nombre', evaluate('git push origin main-fix', 'main-fix', prot), false);
+check('push a main sin env', evaluate('git push origin main', 'feat', {}), false);
+check('git -C otro repo push a main', evaluate('git -C ../otro push origin main', 'feat', prot), true);
+check('git -C otro repo push de feature', evaluate('git -C ../otro push origin feat/x', 'main', prot), false);
+check('git -C otro repo sin refspec', evaluate('git -C ../otro push', 'main', prot), false);
+
 console.log(`\n${fail === 0 ? 'TODOS OK' : fail + ' FALLOS'}`);
 process.exit(fail ? 1 : 0);

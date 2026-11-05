@@ -12,8 +12,12 @@ Diff: `git -C <worktree> diff <base>...HEAD`. Ticket: `gh issue view <n> --json 
 Origin decisions: the resolution comments of the map tickets <list>.
 Previous findings this round should have fixed: <list, or "none: first review">.
 
-Verify each acceptance criterion, then prove the tests by mutation in a copy only:
-<copy path>, port <free port> changed in the playwright config and in the fixtures of the copy.
+Verify each acceptance criterion, then prove the tests by mutation.
+Mutation tool configured in the repo (Stryker, mutmut, PIT or other; look in the config files and
+the test scripts): run it on the files of the diff only. A surviving mutant is a finding. Report the
+command and the survivors.
+No tool configured: mutate by hand in a copy only. <copy path>, port <free port> changed in the
+playwright config and in the fixtures of the copy.
 Mutate: <one line per behaviour the ticket promises, e.g. drop the parameter, drop the aria attribute,
 shrink a control below 44 px, keep the stale list>.
 Every mutation must turn a test red; separate real assertion failures from incidental timeouts.
@@ -35,4 +39,4 @@ Read-only. Classify each finding blocker, issue or nit.
 
 ## Pass criterion
 
-0 blockers, 0 issues, each mutation red, frozen files intact (`git diff <CHECKS_SHA> HEAD -- <frozen set>` empty).
+0 blockers, 0 issues, no surviving mutant (tool run) or each manual mutation red, frozen files intact (`git diff <CHECKS_SHA> HEAD -- <frozen set>` empty).

@@ -11,7 +11,7 @@
 // Variables de entorno (definibles en el settings.json del proyecto):
 //   AI_GUARD_DISABLE=<id,id>  desactiva reglas SAFETY por id
 //   AI_GUARD_ENABLE=<id,id>   activa reglas POLICY por id ("all" = todas)
-//   AI_GUARD_PROTECT_BRANCHES=main,master  ramas donde `git commit` se bloquea
+//   AI_GUARD_PROTECT_BRANCHES=main,master  ramas donde `git commit` y `git push` se bloquean
 
 import { execSync } from 'node:child_process';
 import { readFileSync, realpathSync } from 'node:fs';
@@ -216,6 +216,38 @@ export const isCommitOnProtected = (command, branch, env) =>
     protectedBranches(env).includes(branch) &&
     segments(command).some(isBareCommit);
 
+// Conuco: un agente nunca empuja a una rama protegida. Cubre el refspec
+// explícito (`origin main`, `HEAD:main`, `refs/heads/main`), también con
+// `git -C <ruta>`, y el push sin refspec hecho desde la rama protegida.
+const GIT_PUSH = /git\s+(-C\s+\S+\s+)?push(?:\s|$)/;
+
+export const isPushToProtected = (command, branch, env) => {
+    const branches = protectedBranches(env);
+    if (!branches.length) {
+        return false;
+    }
+    return segments(command).some((segment) => {
+        const match = segment.match(GIT_PUSH);
+        if (!match) {
+            return false;
+        }
+        const args = segment
+            .slice(match.index + match[0].length)
+            .split(/\s+/)
+            .filter((t) => t && !t.startsWith('-'));
+        const targets = args
+            .slice(1)
+            .map((ref) => ref.split(':').pop().replace(/^refs\/heads\//, ''));
+        if (targets.some((t) => branches.includes(t))) {
+            return true;
+        }
+        // Sin refspec, git empuja la rama actual. Con -C la rama actual es la
+        // de otro repo y no la conocemos: solo cuenta el refspec explícito.
+        const otherRepo = Boolean(match[1]);
+        return !otherRepo && targets.length === 0 && Boolean(branch) && branches.includes(branch);
+    });
+};
+
 export function evaluate(command, branch, env = process.env) {
     if (typeof command !== 'string' || !command.trim()) {
         return 'Unable to parse command from tool input; denying for safety.';
@@ -227,9 +259,12 @@ export function evaluate(command, branch, env = process.env) {
     if (isCommitOnProtected(command, branch, env)) {
         return `Cannot commit on protected branch "${branch}". Create a feature branch first.`;
     }
+    if (isPushToProtected(command, branch, env)) {
+        return 'Cannot push to a protected branch. Push your feature branch and open a PR.';
+    }
 }
 
-// Se ejecuta a traves de un symlink (stow), asi que comparamos rutas reales:
+// Se ejecuta a traves de un symlink, asi que comparamos rutas reales:
 // Node resuelve el symlink en import.meta.url pero no en process.argv[1].
 const isMain = (() => {
     try {
@@ -254,9 +289,9 @@ if (isMain) {
             const cmd = typeof command === 'string' ? command : '';
             const destructive = checkDestructive(cmd);
             // Solo pagamos el subproceso de git si hay ramas protegidas y el
-            // comando es un commit: en la mayoría de sesiones no se ejecuta.
+            // comando es un commit o un push: en la mayoría de sesiones no se ejecuta.
             const branch =
-                !destructive && protectedBranches().length && GIT_COMMIT.test(cmd)
+                !destructive && protectedBranches().length && (GIT_COMMIT.test(cmd) || GIT_PUSH.test(cmd))
                     ? execSync('git branch --show-current', {
                           encoding: 'utf8',
                           timeout: 2000,
