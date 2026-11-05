@@ -1,5 +1,6 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { evaluate, evaluatePost } from './guard-secrets.mjs';
 
@@ -88,6 +89,11 @@ check('glob .git*', bash('ls .git*'), false);
 check('cat .env.ex*', bash('cat .env.ex*'), false);
 check('env-check simple', bash('bash ~/.claude/hooks/env-check.sh API_KEY DB_URL'), false);
 check('env-check con pipe se deniega si toca .env', bash('bash env-check.sh API_KEY | cat .env'), true);
+check('env-check tras ${IFS} se deniega', bash('cat${IFS}.env;env-check.sh KEY'), true);
+check('env-check tras sustitucion se deniega', bash('$(cat .env)env-check.sh KEY'), true);
+check('env-check con ruta absoluta pasa', bash('bash /home/u/.claude-b0/hooks/env-check.sh KEY1 KEY2'), false);
+const helper = String(bash('cat .env')).match(/(\/\S*env-check\.sh)/)?.[1];
+check('el motivo trae la ruta del helper, existente', Boolean(helper && existsSync(helper)), true);
 
 console.log('\n--- AI_GUARD_DISABLE ---');
 check('secret-read desactivado', read('/p/.env', { AI_GUARD_DISABLE: 'secret-read' }), false);

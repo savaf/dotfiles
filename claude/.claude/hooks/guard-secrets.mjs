@@ -15,6 +15,7 @@
 // Falla abierto: un error del propio hook nunca bloquea trabajo ajeno.
 
 import { readdirSync, readFileSync, realpathSync } from 'node:fs';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const deny = (reason) =>
@@ -79,12 +80,16 @@ export const globHitsSecret = (token) => {
     }
 };
 
-// Una sola llamada al helper, solo con nombres de variable como argumentos.
-const ENV_CHECK = /^(?:bash\s+)?\S*env-check\.sh(?:\s+[A-Za-z_][A-Za-z0-9_]*)+$/;
+// Una sola llamada al helper, solo con nombres de variable como argumentos. La ruta previa admite
+// solo caracteres de ruta: ningun separador, sustitucion ni variable puede colar otra lectura.
+const ENV_CHECK = /^(?:bash\s+)?[\w.\/~-]*env-check\.sh(?:\s+[A-Za-z_][A-Za-z0-9_]*)+$/;
+
+// Junto al hook, donde viva (~/.claude, ~/.claude-b0...): argv[1] conserva la ruta del symlink de stow.
+const HELPER = path.join(path.dirname(path.resolve(process.argv[1] || fileURLToPath(import.meta.url))), 'env-check.sh');
 
 const REASON = (what) =>
     `secret-read: ${what} may hold secrets and cannot be read. ` +
-    'Use env-check.sh KEY to see whether a variable is set, or read the .example file.';
+    `Use \`bash ${HELPER} KEY\` to see whether a variable is set, or read the .example file.`;
 
 function checkRead(toolName, input) {
     if (toolName === 'Read') {
@@ -115,7 +120,7 @@ function checkRead(toolName, input) {
         if (ENV_CHECK.test(command)) {
             return;
         }
-        const hit = command.split(/[\s<>|;&()]+/).find((t) => t && (/[*?[]/.test(t) ? globHitsSecret(t) : isSecretPath(t)));
+        const hit = command.split(/[\s<>|;&()${}`]+/).find((t) => t && (/[*?[]/.test(t) ? globHitsSecret(t) : isSecretPath(t)));
         return hit ? REASON(hit.replace(/^['"]|['"]$/g, '')) : undefined;
     }
 }
