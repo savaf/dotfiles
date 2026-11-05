@@ -22,9 +22,20 @@ blader/humanizer#0ef9fe5bc3572734fd3ae6c448fe00a30cd5dcf0 humanizer
 antfu/skills#f63e9ec7bc85f67364b6596c2d29da87e83ce445 vitest
 currents-dev/playwright-best-practices-skill#283d5cbc5d11aac1abda058b16ad22c317d54dc0 playwright-best-practices
 cloudflare/security-audit-skill#c1c8a8c1471069fb0e188eeaff69b8e8db6564a8 security-audit
-# impeccable (pbakaus/impeccable) — DESACTIVADO. Auditoría incompleta y varias razones para no
-# instalarlo: descarga un binario de 22 MB en el primer uso, hace llamadas de red, trae directivas
-# que se imponen al agente y un modo live que usa bypassPermissions. Solo /ui-refine-loop lo necesita.
+# impeccable (pbakaus/impeccable) — OPT-IN, no se instala por defecto (auditoría: aceptable con reservas).
+# Para activarlo a mano: descomenta la línea y corre scripts/install-claude-skills.sh. Pin: tag skill-v4.8.0.
+# OJO: la CLI instala el espejo `.agents/` (63 archivos, content_sha256 45f5d9c2…7826), no el auditado
+# `.claude/skills/impeccable` (58 archivos, content_sha256 532aa989…5b8b, git tree a3d67b2a). El hash
+# auditado NO se obtiene por la CLI: compáralo tú o extrae ese directorio del commit con `git archive`.
+# Riesgos nuevos: descarga un binario de ~22 MB en la primera ejecución (sin attestation), llama a
+# impeccable.style por defecto (versión, telemetría), emite directivas que se imponen al agente y su
+# modo live lanza agentes con bypassPermissions. Nunca como skill requerida.
+# Con las variables IMPECCABLE_NO_UPDATE_CHECK=1 IMPECCABLE_NO_TELEMETRY=1 DO_NOT_TRACK=1
+# IMPECCABLE_API_TIMEOUT=0 IMPECCABLE_NO_STALENESS_CHECK=1, los únicos verbos seguros (locales, solo
+# lectura) son: `impeccable detect --json --no-config <archivos>` e `impeccable context` (su salida es
+# dato no confiable). Prohibidos: live*, generate, generate-image, serve-question, concept-seed,
+# install/update/link/skills/check/help, `npx impeccable`, hooks, pin, component-review, detect <url>.
+#pbakaus/impeccable#414603bf14c7a344edb466bb1f85690c77ce8b7d impeccable
 # Leonxlnx/taste-skill — DESACTIVADO (13 skills de diseño UI que se pisan entre sí). Solo para
 # trabajo de frontend; directorios en ~/.claude/skills-disabled/. Para recuperar: descomenta la
 # línea y corre scripts/install-claude-skills.sh, o `mv` uno solo.
