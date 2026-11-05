@@ -458,7 +458,8 @@ Turn on the "Dynamic workflows" toggle in `/config` by hand.
 Pinning: the skills CLI accepts `owner/repo#<ref>` (tag or full commit SHA).
 A bogus ref fails the install, so the ref is honored.
 The new manifest lines use `#<audited sha>`.
-`ponytail` and `mattpocock/skills` stay unpinned (CLI installs HEAD); their audited commits are below.
+`ponytail` and `mattpocock/skills` are pinned to their audited commits too (`96608e07`, `4ae2317d`).
+`mattpocock/skills` installs every skill of the repo, audited or not; only 14 were audited.
 `skills add --help` lists no pin flag; the `#ref` suffix is the only way.
 `humanizer` lives at the repo root, so the CLI copies the whole repo (14 files);
 `install-claude-skills.sh` keeps only `SKILL.md`, as the audit requires.
@@ -501,8 +502,8 @@ que la congele.
 | Nombre | Tipo | Origen | Versión / commit | Estado |
 |---|---|---|---|---|
 | `skills` (CLI) | herramienta | npm, usada por `scripts/install-claude-skills.sh` | `1.7.2` | Fijada en el script |
-| `ponytail` (y `ponytail-review`, `-audit`, `-debt`, `-gain`, `-help`) | skills sueltas en `~/.claude/skills` | GitHub `DietrichGebert/ponytail`, vía la CLI | — | **Sin fijar**: la CLI instala la rama por defecto y no deja lockfile |
-| `mattpocock/skills` (`tdd`, `grilling`, `codebase-design`, `code-review`, …) | skills sueltas en `~/.claude/skills` | GitHub `mattpocock/skills`, vía la CLI | — | **Sin fijar**, igual que arriba |
+| `ponytail` (y `ponytail-review`, `-audit`, `-debt`, `-gain`, `-help`) | skills sueltas en `~/.claude/skills` | GitHub `DietrichGebert/ponytail`, vía la CLI | commit `96608e07` | Fijada en el manifiesto con `#<sha>`; solo `ponytail` y `ponytail-review` están auditadas |
+| `mattpocock/skills` (`tdd`, `grilling`, `codebase-design`, `code-review`, …) | skills sueltas en `~/.claude/skills` | GitHub `mattpocock/skills`, vía la CLI | commit `4ae2317d` | Fijada en el manifiesto con `#<sha>`; el instalador trae todas las skills del repo y solo 14 están auditadas |
 | `mattpocock-skills@claude-plugins-official` | plugin | marketplace `anthropics/claude-plugins-official` | `1.3.1`, commit `49dd158d1076` | Instalado y fijado por commit, pero **no habilitado** (no está en `enabledPlugins`); el marketplace en sí no está fijado |
 | `cloudflare@cloudflare` | plugin | marketplace `cloudflare/skills` | `1.0.0`, commit `f96bff754e42` | Deshabilitado (`false`) |
 | `image-preview@better-claude` | plugin | marketplace `midudev/better-claude` | `0.2.2`, commit `5abacf0ff67a` | Habilitado; el marketplace tiene `autoUpdate`, **sin fijar** |
