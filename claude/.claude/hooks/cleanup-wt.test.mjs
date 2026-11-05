@@ -1,4 +1,4 @@
-import { baseMoved, planCleanup, recoveryTsv } from './cleanup-wt.mjs';
+import { baseMoved, isDisabled, planCleanup, recoveryTsv } from './cleanup-wt.mjs';
 
 let fail = 0;
 const check = (label, actual, expected) => {
@@ -68,6 +68,24 @@ const tsv = recoveryTsv(
 );
 check('una fila por rama borrada con su sha', tsv.trim() === 'feat/a\tabc123', true);
 check('sin ramas borradas no hay filas', recoveryTsv([], () => 'x').trim(), false);
+
+const failedTsv = recoveryTsv(
+    [
+        { action: 'delete-branch', branch: 'feat/ok' },
+        { action: 'delete-branch', branch: 'feat/locked' },
+    ],
+    (b) => `sha-${b}`,
+    new Set(['feat/locked']),
+);
+check('rama con worktree que no se pudo quitar: sin fila', failedTsv.includes('feat/locked'), false);
+check('la otra rama sigue en el TSV', failedTsv.trim() === 'feat/ok\tsha-feat/ok', true);
+check('todo fallido: TSV vacio', recoveryTsv([{ action: 'delete-branch', branch: 'x' }], () => 's', new Set(['x'])), false);
+
+console.log('\n--- AI_GUARD_DISABLE ---');
+check('id cleanup-wt desactiva', isDisabled({ AI_GUARD_DISABLE: 'cleanup-wt' }), true);
+check('entre otros ids', isDisabled({ AI_GUARD_DISABLE: 'rm-rf, cleanup-wt' }), true);
+check('otro id no desactiva', isDisabled({ AI_GUARD_DISABLE: 'rm-rf' }), false);
+check('sin variable no desactiva', isDisabled({}), false);
 
 console.log('\n--- cuando correr ---');
 check('primera vez corre', baseMoved(undefined, 'sha1'), true);
