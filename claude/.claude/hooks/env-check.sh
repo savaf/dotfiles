@@ -12,7 +12,13 @@ for key in "$@"; do
     value="${!key}"
   elif [ -f .env ] && line="$(grep -E "^[[:space:]]*(export[[:space:]]+)?${key}=" .env | tail -n1)"; then
     value="${line#*=}"
-    value="${value%\"}"; value="${value#\"}"; value="${value%\'}"; value="${value#\'}"
+    value="${value#"${value%%[![:space:]]*}"}"
+    case "$value" in
+      \"*) value="${value#\"}"; value="${value%%\"*}" ;;
+      \'*) value="${value#\'}"; value="${value%%\'*}" ;;
+      \#*) value="" ;;
+      *) value="${value%%[[:space:]]#*}"; value="${value%"${value##*[![:space:]]}"}" ;;
+    esac
   else
     echo "$key: missing"
     continue

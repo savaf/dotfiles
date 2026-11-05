@@ -57,19 +57,43 @@ export const isSecretPath = (p) => {
 };
 
 // Nombres de ejemplo contra los que se prueba un glob: si puede expandirse a uno, se deniega.
-const SAMPLES = ['.env', '.env.local', '.env.production', 'id_rsa', 'id_ed25519', '.npmrc', 'credentials', 'credentials.json', 'service-account.json', 'server.pem'];
+const SAMPLES = ['.env', '.env.local', '.env.production', 'id_rsa', 'id_ed25519', '.npmrc', 'credentials', 'credentials.json', 'credentials.yml', 'credentials.yaml', 'service-account.json', 'server.pem'];
 
-const globToRegExp = (g) =>
-    new RegExp(
-        '^' +
-            g.replace(/[.+^${}()|\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.') +
-            '$',
-    );
+// `[!x]` y `[^x]` son clases negadas de la shell; el resto de la clase pasa tal cual.
+const globToRegExp = (g) => {
+    let re = '';
+    for (let i = 0; i < g.length; i++) {
+        const c = g[i];
+        if (c === '*') {
+            re += '.*';
+        } else if (c === '?') {
+            re += '.';
+        } else if (c === '[') {
+            const end = g.indexOf(']', i + 2);
+            if (end < 0) {
+                re += '\\[';
+                continue;
+            }
+            const body = g.slice(i + 1, end).replace(/^[!^]/, '^').replace(/\\/g, '\\\\');
+            re += `[${body}]`;
+            i = end;
+        } else {
+            re += c.replace(/[.+^${}()|\\\]]/g, '\\$&');
+        }
+    }
+    return new RegExp(`^${re}$`);
+};
 
-// `*` o `*.json` solos no cuentan (romperian `ls *`): hace falta un literal al inicio, o `.pem` al final.
+// Un glob se deniega solo si trae al menos dos caracteres literales antes del primer comodin
+// (`s*`, `.n*`, `.*` no); `.e` es el unico prefijo de dos que se acepta (dotenv). `[e]` cuenta
+// como literal. `*.pem` solo tambien se deniega.
 export const globHitsSecret = (token) => {
     const base = token.replace(/^['"]|['"]$/g, '').split('/').pop();
-    if (!/[*?[]/.test(base) || (/^[*?[]/.test(base) && !base.endsWith('.pem'))) {
+    if (!/[*?[]/.test(base)) {
+        return false;
+    }
+    const prefix = base.replace(/\[([^\]!^])\]/g, '$1').match(/^[^*?[]*/)[0];
+    if (prefix.length < 3 && prefix !== '.e' && !(prefix === '' && base.endsWith('.pem'))) {
         return false;
     }
     try {
@@ -82,7 +106,7 @@ export const globHitsSecret = (token) => {
 
 // Una sola llamada al helper, solo con nombres de variable como argumentos. La ruta previa admite
 // solo caracteres de ruta: ningun separador, sustitucion ni variable puede colar otra lectura.
-const ENV_CHECK = /^(?:bash\s+)?[\w.\/~-]*env-check\.sh(?:\s+[A-Za-z_][A-Za-z0-9_]*)+$/;
+const ENV_CHECK = /^(?:bash[ \t]+)?[\w.\/~-]*env-check\.sh(?:[ \t]+[A-Za-z_][A-Za-z0-9_]*)+$/;
 
 // Junto al hook, donde viva (~/.claude, ~/.claude-b0...): argv[1] conserva la ruta del symlink de stow.
 const HELPER = path.join(path.dirname(path.resolve(process.argv[1] || fileURLToPath(import.meta.url))), 'env-check.sh');
@@ -90,6 +114,46 @@ const HELPER = path.join(path.dirname(path.resolve(process.argv[1] || fileURLToP
 const REASON = (what) =>
     `secret-read: ${what} may hold secrets and cannot be read. ` +
     `Use \`bash ${HELPER} KEY\` to see whether a variable is set, or read the .example file.`;
+
+// Regla: un directorio con un secreto en su primer nivel no se busca entero.
+function searchDirReason(tool, dir) {
+    try {
+        const secret = readdirSync(dir).find(isSecretPath);
+        if (secret) {
+            return (
+                `secret-read: ${dir} holds ${secret} at its top level, so ${tool} over the whole directory is blocked. ` +
+                'Name the files to search (path to a file, or a subdirectory without secrets).'
+            );
+        }
+    } catch {
+        // No es un directorio legible (archivo o ruta inexistente): nada que revisar.
+    }
+}
+
+const SEARCHERS = new Set(['grep', 'egrep', 'fgrep', 'rg', 'ag', 'ack']);
+
+// `grep -r`, `rg`, `ag`, `ack` recorren el directorio objetivo (o el cwd si no hay operando).
+function recursiveSearchReason(command) {
+    for (const segment of command.split(/[;&|\n]+/)) {
+        const [cmd, ...args] = segment.trim().split(/\s+/);
+        const name = String(cmd).split('/').pop();
+        if (!SEARCHERS.has(name)) {
+            continue;
+        }
+        const isGrep = name.endsWith('grep');
+        if (isGrep && !args.some((a) => /^-[A-Za-z]*[rR]/.test(a) || a === '--recursive')) {
+            continue;
+        }
+        // El primer operando es el patron; el resto son destinos.
+        const targets = args.filter((a) => !a.startsWith('-')).slice(1).map((a) => a.replace(/^['"]|['"]$/g, ''));
+        for (const dir of targets.length ? targets : [process.cwd()]) {
+            const reason = searchDirReason(name, dir);
+            if (reason) {
+                return reason;
+            }
+        }
+    }
+}
 
 function checkRead(toolName, input) {
     if (toolName === 'Read') {
@@ -100,27 +164,18 @@ function checkRead(toolName, input) {
         if (hit) {
             return REASON(hit);
         }
-        // Regla: un directorio con un secreto en su primer nivel no se busca entero.
-        const dir = input.path || process.cwd();
-        try {
-            const secret = readdirSync(dir).find(isSecretPath);
-            if (secret) {
-                return (
-                    `secret-read: ${dir} holds ${secret} at its top level, so Grep over the whole directory is blocked. ` +
-                    'Name the files to search (path to a file, or a subdirectory without secrets).'
-                );
-            }
-        } catch {
-            // No es un directorio legible (archivo o ruta inexistente): nada que revisar.
-        }
-        return undefined;
+        return searchDirReason('Grep', input.path || process.cwd());
     }
     if (toolName === 'Bash') {
         const command = String(input.command || '').trim();
         if (ENV_CHECK.test(command)) {
             return;
         }
-        const hit = command.split(/[\s<>|;&()${}`]+/).find((t) => t && (/[*?[]/.test(t) ? globHitsSecret(t) : isSecretPath(t)));
+        const dirReason = recursiveSearchReason(command);
+        if (dirReason) {
+            return dirReason;
+        }
+        const hit = command.split(/[\s<>|;&()${}`:]+/).find((t) => t && (/[*?[]/.test(t) ? globHitsSecret(t) : isSecretPath(t)));
         return hit ? REASON(hit.replace(/^['"]|['"]$/g, '')) : undefined;
     }
 }
@@ -137,9 +192,9 @@ const KEY_PATTERNS = [
     /-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----/,
 ];
 const KNOWN_PREFIX = /^(?:sk-ant-|sk-proj-|sk-|AKIA|gh[pousr]_|github_pat_|xox[baprs]-|AIza)/;
-// Marcador obvio de ejemplo: se mira solo el cuerpo tras el prefijo, no todo el match, para que
-// una clave real que acaba en `xxxx` siga bloqueada. Sin cuerpo (clave PEM) nunca es marcador.
-const isPlaceholderBody = (body) => /^x+$/i.test(body) || /your|example|placeholder/i.test(body);
+// Marcador obvio de ejemplo: el cuerpo tras el prefijo (no todo el match) debe ser solo marcadores
+// (`x`, `your`, `example`, `placeholder`, `-`, `_`); una clave real que los contenga sigue bloqueada. Sin cuerpo (clave PEM) nunca es marcador.
+const isPlaceholderBody = (body) => body.replace(/x|your|example|placeholder|[-_]/gi, '') === '';
 
 const hasKey = (line) =>
     KEY_PATTERNS.some((re) => {
