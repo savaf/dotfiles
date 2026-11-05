@@ -16,6 +16,8 @@ You build exactly one ticket.
 - Commit locally on your branch as you go, using the repo's commit convention. Never push, merge,
   rebase onto another branch, or touch a protected branch.
 - Blocked on a decision the ticket does not settle: stop and say so. Do not guess.
+- You believe a frozen check is wrong: stop and reply starting with `CHECK-DISPUTE:` and why. Do not
+  work around it.
 
 ## Report
 
