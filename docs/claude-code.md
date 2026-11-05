@@ -117,18 +117,33 @@ other repo is unknown.
 `guard-secrets.mjs` has two rule groups, each with an id for `AI_GUARD_DISABLE`:
 
 - `secret-read`: denies dotenv files (`.env`, `.env.local`), SSH private keys, `.npmrc`,
-  `credentials`, service-account JSON and `.pem`. `.env.example`, `.env.sample` and
+  `credentials*`, `*service-account*.json` and `.pem`. `.env.example`, `.env.sample` and
   `.env.template` stay readable. Applies to `Read`, `Grep` and `Bash`.
+  - `Bash`: every token of the command is checked, not only the one being read.
+    `git add .env`, `ls .env` and `echo .env` are denied too (over-blocking by design).
+  - `Bash` glob tokens are tested as patterns: `.e*` and `cat .env*` are denied.
+    A bare `*` or `*.json` is not, so `ls *` keeps working. `*.pem` is denied.
+  - `Grep`: denied when `path` or `glob` names a secret file.
+  - `Grep` over a directory is denied when its top level holds a secret file.
+    Name the files to search, or search a subdirectory without secrets.
 - `key-literal`: denies writing a key with a known prefix (Anthropic, OpenAI, AWS, GitHub, Slack,
-  Google, PEM private key). Placeholders (`xxxx`, `YOUR_KEY`, `example`) pass. The reason and the
-  post-write warning give line numbers, never the value.
+  Google, PEM private key). The reason and the post-write warning give line numbers, never the
+  value. The warning reads `notebook_path` first, then `file_path`.
+  - A placeholder exempts the key only when the secret body after the prefix is `x` repeated,
+    or contains `your`, `example` or `placeholder`.
+  - A real key that ends in `xxxx` is still denied.
 
-To check a variable without reading `.env`, call `env-check.sh KEY...` alone. A pipe, chain or
-redirect next to it makes it a normal command again.
+To check a variable without reading `.env`, call `env-check.sh KEY...` alone.
+The deny reason gives the helper's full path, next to the hook.
+The exemption applies only when the whole command is the helper (optionally with `bash`)
+plus variable names. Text before it, a pipe, chain, redirect or `${IFS}` makes it a normal
+command again.
 
-`guard-worktree-path.mjs` honours `cd X &&` and `git -C X`, and lets through targets it cannot
-resolve (`$VAR`, `$(...)`). `/horde` creates worktrees with `herdr worktree create`, so this guard
-does not affect it.
+`guard-worktree-path.mjs`:
+
+- Honours `cd X &&` and `git -C X`.
+- Lets through targets it cannot resolve (`$VAR`, `$(...)`).
+- Does not affect `/horde`, which creates worktrees with `herdr worktree create`.
 
 `cleanup-wt.mjs` modes:
 
@@ -138,7 +153,10 @@ does not affect it.
 | `cleanup-wt.mjs --apply` | Runs the plan |
 | `cleanup-wt.mjs --auto` | What `SessionStart` runs: applies only if a base branch tip moved since the last session. Messages go to stderr |
 | `cleanup-wt.mjs --post-merge` | Applies every time. Use it after merging a ticket |
+| `cleanup-wt.mjs --base <branch>` | Adds `<branch>` as a base, next to the default ones. Combines with the modes above |
 
+- Base branches: `main`, `master`, each branch in `AI_GUARD_PROTECT_BRANCHES` and `--base`.
+  Only those that exist locally count.
 - A branch counts as merged only when its tip is an ancestor of a base and differs from the base
   tip. A fresh branch with no commits, a fast-forward merge and a squash merge are all kept.
 - Never touches a base branch, the main worktree or the worktree it runs in.
@@ -146,6 +164,9 @@ does not affect it.
   removed and its branch kept.
 - Before deleting branches it writes `<git-common-dir>/cleanup-wt/<timestamp>.tsv` with
   `branch<TAB>sha`. Restore with `git branch <branch> <sha>`.
+- A branch whose worktree could not be removed is left out of the TSV and is not deleted.
+- Each `ok` line is printed after its action succeeds.
+- `AI_GUARD_DISABLE=cleanup-wt` turns it off, also in `--auto`.
 
 Tests: `bash scripts/test-hooks.sh` runs every hook test (`git-guardrails`,
 `guard-protected-branch`, `guard-secrets`, `guard-worktree-path`, `cleanup-wt`, `decision-shadow`).
@@ -157,9 +178,9 @@ Environment variables, set in a project's `.claude/settings.json` under `env`:
 
 | Variable | Effect |
 |---|---|
-| `AI_GUARD_PROTECT_BRANCHES` | Comma list of branches where commits, pushes and repo edits are blocked. Empty (default) = off |
+| `AI_GUARD_PROTECT_BRANCHES` | Comma list of branches where commits, pushes and repo edits are blocked, and which `cleanup-wt` treats as base branches (never deleted, merges counted against them). Empty (default) = off |
 | `AI_GUARD_ENABLE` | Comma list of POLICY rule ids to turn on. `all` enables every one |
-| `AI_GUARD_DISABLE` | Comma list of SAFETY rule ids to turn off, plus `secret-read`, `key-literal` and `worktree-path` |
+| `AI_GUARD_DISABLE` | Comma list of SAFETY rule ids to turn off, plus `secret-read`, `key-literal`, `worktree-path` and `cleanup-wt` |
 | `AI_GUARD_WORKTREE_DIRS` | Comma list of extra directories where `git worktree add` is allowed (relative to the repo) |
 
 The default is permissive on workflow, strict on data loss. A solo repo where committing to the

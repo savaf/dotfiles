@@ -9,7 +9,9 @@
 //   POLICY  opt-in. Convenciones de equipo, no seguridad universal.
 //
 // Variables de entorno (definibles en el settings.json del proyecto):
-//   AI_GUARD_DISABLE=<id,id>  desactiva reglas SAFETY por id
+//   AI_GUARD_DISABLE=<id,id>  desactiva reglas SAFETY por id, y los ids de otros hooks:
+//                             secret-read y key-literal (guard-secrets),
+//                             worktree-path (guard-worktree-path), cleanup-wt (cleanup-wt)
 //   AI_GUARD_ENABLE=<id,id>   activa reglas POLICY por id ("all" = todas)
 //   AI_GUARD_PROTECT_BRANCHES=main,master  ramas donde `git commit` y `git push` se bloquean
 
