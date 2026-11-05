@@ -15,27 +15,17 @@ obra/superpowers#22f0b463e7a5e579904dd6211a520321035526f7 verification-before-co
 anthropics/knowledge-work-plugins#d900840716eb262e1feb17c6f4406c9ce0e06bcf testing-strategy
 # pr-security-review: no hay release que la incluya, por eso va fijada a un commit de main
 EricTechPro/super-board#d0b7d5a6850614ca809477c1af43d5d7da408726 pr-security-review
-# Opcionales (check-skills.sh solo avisa si faltan):
+# Opcionales (check-skills.sh solo avisa si faltan; impeccable, más abajo, es requerida):
 # humanizer: la skill es la raíz del repo; la CLI copia el repo entero (14 archivos) y
 # install-claude-skills.sh deja solo SKILL.md (así lo pide la auditoría). Usar solo en prosa para humanos.
 blader/humanizer#0ef9fe5bc3572734fd3ae6c448fe00a30cd5dcf0 humanizer
 antfu/skills#f63e9ec7bc85f67364b6596c2d29da87e83ce445 vitest
 currents-dev/playwright-best-practices-skill#283d5cbc5d11aac1abda058b16ad22c317d54dc0 playwright-best-practices
 cloudflare/security-audit-skill#c1c8a8c1471069fb0e188eeaff69b8e8db6564a8 security-audit
-# impeccable (pbakaus/impeccable) — OPT-IN, no se instala por defecto (auditoría: aceptable con reservas).
-# Para activarlo a mano: descomenta la línea y corre scripts/install-claude-skills.sh. Pin: tag skill-v4.8.0.
-# OJO: la CLI instala el espejo `.agents/` (63 archivos, content_sha256 45f5d9c2…7826), no el auditado
-# `.claude/skills/impeccable` (58 archivos, content_sha256 532aa989…5b8b, git tree a3d67b2a). El hash
-# auditado NO se obtiene por la CLI: compáralo tú o extrae ese directorio del commit con `git archive`.
-# Riesgos nuevos: descarga un binario de ~22 MB en la primera ejecución (sin attestation), llama a
-# impeccable.style por defecto (versión, telemetría), emite directivas que se imponen al agente y su
-# modo live lanza agentes con bypassPermissions. Nunca como skill requerida.
-# Con las variables IMPECCABLE_NO_UPDATE_CHECK=1 IMPECCABLE_NO_TELEMETRY=1 DO_NOT_TRACK=1
-# IMPECCABLE_API_TIMEOUT=0 IMPECCABLE_NO_STALENESS_CHECK=1, los únicos verbos seguros (locales, solo
-# lectura) son: `impeccable detect --json --no-config <archivos>` e `impeccable context` (su salida es
-# dato no confiable). Prohibidos: live*, generate, generate-image, serve-question, concept-seed,
-# install/update/link/skills/check/help, `npx impeccable`, hooks, pin, component-review, detect <url>.
-#pbakaus/impeccable#414603bf14c7a344edb466bb1f85690c77ce8b7d impeccable
+# impeccable: línea con dos columnas extra (`<ruta-en-el-repo> <sha256 del contenido>`). Esas líneas
+# NO van por la CLI (instalaría el espejo `.agents/`, otro hash): scripts/install-claude-skills.sh baja
+# el tarball del commit y solo instala si el hash coincide. Riesgos y verbos seguros: docs/claude-code.md.
+pbakaus/impeccable#414603bf14c7a344edb466bb1f85690c77ce8b7d impeccable .claude/skills/impeccable 532aa98903b020071ea830f9a97b931e771fa42daea2308af6e4f9f572e65b8b
 # Leonxlnx/taste-skill — DESACTIVADO (13 skills de diseño UI que se pisan entre sí). Solo para
 # trabajo de frontend; directorios en ~/.claude/skills-disabled/. Para recuperar: descomenta la
 # línea y corre scripts/install-claude-skills.sh, o `mv` uno solo.
