@@ -26,6 +26,7 @@ const cs = (extra) => JSON.stringify({ type: 'cost-state', totalCostUSD: 2, hasU
                   b: { inputTokens: 1, cacheReadInputTokens: 2, cacheCreationInputTokens: 3, outputTokens: 4 } }, ...extra });
 assert.equal(format(readUsage(`{"type":"user"}\n${cs()}\n`)), '41\t11\t2');
 assert.equal(format(readUsage(cs()), '31,6,1.5'), '10\t5\t0.5');
+assert.equal(format(readUsage(cs()), '99,6,1.5'), '\t\t'); // delta negativo: el proceso se reinició
 assert.equal(format(readUsage(cs({ hasUnknownModelCost: true }))), '\t\t');
 assert.equal(format(readUsage('{"type":"user"}\n')), '\t\t');
 console.log('todo ok');

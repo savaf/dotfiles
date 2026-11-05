@@ -56,7 +56,7 @@ node ~/.claude/skills/horde/scripts/usage.mjs <transcript>                      
 node ~/.claude/skills/horde/scripts/usage.mjs <transcript> --minus "<in>,<out>,<cost>"       # after: this round only
 ```
 
-Output is `tokens_in<TAB>tokens_out<TAB>cost_usd`, empty when the transcript has no reliable `cost-state` record (an internal Claude Code record, not a documented one; the script never estimates). Summing per-message `usage` is wrong: each `message.id` repeats once per content block.
+Output is `tokens_in<TAB>tokens_out<TAB>cost_usd`, empty when the transcript has no reliable `cost-state` record (an internal Claude Code record, not a documented one; the script never estimates). The numbers hold only while the builder's `claude` process stays alive between the base and the end reading: after a `--resume` the cost restarts while tokens keep adding up. If the pane's claude was restarted or resumed in that round, leave all three fields empty. Summing per-message `usage` is wrong: each `message.id` repeats once per content block.
 
 ## Plateau restart
 

@@ -4,6 +4,9 @@
 // Imprime "tokens_in<TAB>tokens_out<TAB>cost_usd". Vacío si el transcript no trae un
 // registro `cost-state` confiable (falta, o hasUnknownModelCost). Nunca estima.
 // `cost-state` no está documentado: es un registro interno de Claude Code y puede cambiar.
+// Solo vale si el proceso de claude de la sesión siguió vivo entre la base y la lectura: tras un
+// `--resume` los tokens siguen acumulando pero el costo se reinicia (comprobado con una corrida
+// real). Un delta negativo se descarta; un reinicio que no lo produzca no se puede detectar.
 import { readFileSync } from 'node:fs';
 
 export const readUsage = (text) => {
@@ -39,11 +42,12 @@ export const format = (usage, base = '') => {
         return '\t\t';
     }
     const [bIn, bOut, bCost] = base.split(',').map((v) => (v === '' || v === undefined ? 0 : Number(v)));
-    return [
+    const delta = [
         usage.tokensIn - (bIn || 0),
         usage.tokensOut - (bOut || 0),
         Math.round((usage.costUsd - (bCost || 0)) * 1e6) / 1e6,
-    ].join('\t');
+    ];
+    return delta.some((d) => d < 0) ? '\t\t' : delta.join('\t');
 };
 
 if (import.meta.url === `file://${process.argv[1]}`) {
