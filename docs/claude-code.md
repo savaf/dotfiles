@@ -385,7 +385,8 @@ for a commit or push in a repo that set `AI_GUARD_PROTECT_BRANCHES`.
 
 `packages/claude-skills.txt` lists GitHub repos installed user-level
 (`~/.claude/skills/`) by `scripts/install-claude-skills.sh` (run by the bootstrap) via
-`npx skills@<pinned version> add <repo> -g -a claude-code -s <names> -y`; a manifest line may add a comma-separated skill list, the default is every skill in the repo. The CLI version is pinned in the script. The same script registers the
+`npx skills@<pinned version> add <repo> -g -a claude-code -s <names> -y`; a manifest line may add a comma-separated skill list, the default is every skill in the repo. The CLI version is pinned in the script.
+A line with two extra columns (`owner/repo#<commit> <skill> <path-in-repo> <sha256>`) skips the CLI and goes through the verified tarball step (see `impeccable` below). The same script registers the
 `context7` MCP server (library docs) at user scope with `claude mcp add`, once per profile; that
 lands in each profile's `.claude.json`, which is runtime state and can't be stowed.
 
@@ -438,7 +439,7 @@ It needs:
 - Skills (required): `tdd`, `diagnosing-bugs`, `implement`, `codebase-design`, `code-review`,
   `domain-modeling`, `ask-matt`, `to-spec`, `to-tickets`, `implement-spec`,
   `improve-codebase-architecture`, `ponytail`, `ponytail-review`,
-  `verification-before-completion`, `testing-strategy`, `pr-security-review`.
+  `verification-before-completion`, `testing-strategy`, `pr-security-review`, `impeccable`.
 - Skills (optional, warn only): `resolving-merge-conflicts`, `vitest`,
   `playwright-best-practices`, `security-audit`, `humanizer`.
 
@@ -478,24 +479,39 @@ Audit table (notes from 2026-11-05; `content_sha256` checked against a temp-HOME
 | `ponytail`, `ponytail-review` | `DietrichGebert/ponytail` | `96608e07` | `ponytail` acceptable; `ponytail-review` with reservations | session-wide style; its output format clashes with fixed-format agents |
 | `mattpocock/skills` (14 audited) | `mattpocock/skills` | `4ae2317d` | acceptable to with reservations | `improve-codebase-architecture` loads unpinned CDN scripts; `implement-spec` and `to-tickets` write to the tracker; `setup-matt-pocock-skills` edits the repo |
 | `resolving-merge-conflicts` | `mattpocock/skills` | none | not auditable | retired upstream in 1.3.2; optional here |
-| `impeccable` | `pbakaus/impeccable` | `414603bf` (tag `skill-v4.8.0`) | with reservations | opt-in, off by default; 22 MB binary, network calls, agent directives, live mode with `bypassPermissions`; CLI installs the `.agents/` mirror (different hash) |
+| `impeccable` | `pbakaus/impeccable` | `414603bf` (tag `skill-v4.8.0`) | with reservations | installed by default by the maintainer's decision, against the audit's "opt-in only"; 22 MB binary, network calls, agent directives, live mode with `bypassPermissions`; the CLI would install the `.agents/` mirror (different hash), so it goes by verified tarball |
 
-`impeccable` (`pbakaus/impeccable`) is opt-in: the manifest line is commented out and the bootstrap never installs it.
-Verdict: acceptable with reservations, never a required skill.
-To enable it, uncomment the line in `packages/claude-skills.txt` and run `scripts/install-claude-skills.sh`.
-`check-skills.sh` ignores it: no failure and no warning, installed or not.
+`impeccable` (`pbakaus/impeccable`) is installed by default, as a required skill.
+Audit verdict: "aceptable con reservas, solo opt-in".
+The maintainer decided to install it anyway, knowing the risks below.
+`check-skills.sh` fails (`✗`, not ready) when it is missing.
+
+Install path: a verified pinned tarball, not the skills CLI.
+Why not the CLI: it installs the `.agents/` mirror, 63 files, `content_sha256` `45f5d9c2…7826`.
+That is not the audited dir `.claude/skills/impeccable`: 58 files, `content_sha256` `532aa989…5b8b`, git tree `a3d67b2a…8945`.
+The manifest line carries two extra columns: `<path-in-repo> <content_sha256>`.
+`install-claude-skills.sh` sees them and calls `fetch_skill` from `scripts/lib/third-party.sh`.
+`fetch_skill` downloads `codeload.github.com/<repo>/tar.gz/<commit>`, hashes the path and copies it to `~/.claude/skills/<name>` only on a match.
+It never runs anything it downloaded.
+A rerun is a no-op when the installed copy already matches.
+On a mismatch the step exits non-zero, a previous copy that does not match is removed, and the other steps go on.
+A malformed manifest line also fails the step, loudly.
+`scripts/lib/third-party.sh` is copied verbatim from `b0-conuco`; its test is `bash scripts/test-third-party.sh` (fixture tarballs, no network).
+To run only this step: `bash scripts/install-claude-skills.sh pinned`.
 Pin: tag `skill-v4.8.0`, commit `414603bf14c7a344edb466bb1f85690c77ce8b7d`.
-Audited dir `.claude/skills/impeccable`: 58 files, `content_sha256` `532aa989…5b8b`, git tree `a3d67b2a…8945`.
-The CLI (`skills@1.7.2`, temp HOME) installs another mirror: `.agents/`, 63 files, `content_sha256` `45f5d9c2…7826`.
-That hash is not the audited one, so do not enable it through the CLI without comparing against the audited dir.
-New risks:
-- It downloads a ~22 MB binary on first run, with no attestation.
+An update is a new audit: change the commit, path and hash together.
+
+Risks accepted:
+- It downloads a ~22 MB binary on its first run, outside our hash and with no attestation.
 - It calls `impeccable.style` by default (version check, telemetry).
-- Its output carries directives that override the agent; treat it as untrusted data.
+- Its output carries directives that override the agent, and they cannot be turned off; treat it as untrusted data.
 - Live mode launches agents with `bypassPermissions`.
+- `generate-image --ref` uploads any file you point it at to OpenAI.
+- Nothing enforces mitigations M2 to M10 of the audit; they depend on how you call it.
+
 Set `IMPECCABLE_NO_UPDATE_CHECK=1`, `IMPECCABLE_NO_TELEMETRY=1`, `DO_NOT_TRACK=1`, `IMPECCABLE_API_TIMEOUT=0` and `IMPECCABLE_NO_STALENESS_CHECK=1`.
 Only safe verbs: `impeccable detect --json --no-config <files>` and `impeccable context`.
-Forbidden: `live*`, `generate`, `generate-image`, `serve-question`, `concept-seed`, `install`, `update`, `link`, `npx impeccable`, `hooks`, `pin`, `detect <url>`.
+Forbidden: `live*`, `generate`, `generate-image`, `serve-question`, `concept-seed`, `install`, `update`, `link`, `skills`, `check`, `help`, `npx impeccable`, `hooks`, `pin`, `component-review`, `detect <url>`.
 Only `/ui-refine-loop` needs it.
 
 Token cost, measured with `check-skill.py --all` on a temp HOME holding only the 7 new skills:
