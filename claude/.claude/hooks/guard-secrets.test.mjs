@@ -120,10 +120,14 @@ check('Bash que escribe la clave', bash(`echo "${github}" >> notes.txt`), true);
 check('el motivo no contiene la clave', String(write(`k=${anthropic}`)).includes(anthropic), false);
 check('el motivo trae el numero de linea', /line 2/.test(String(write(`a\nk=${anthropic}`))), true);
 
+check('clave real que termina en xxxx', write('k=' + 'ghp_' + 'aB3dE5gH7jK9mN1pQ3sT5vW7yZ9bD1fH3jL5' + 'xxxx'), true);
+
 console.log('\n--- key-literal: deben pasar ---');
 check('placeholder con x', write('KEY=sk-' + 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'), false);
 check('placeholder YOUR_KEY_HERE', write('KEY=YOUR_KEY_HERE'), false);
 check('AKIA de ejemplo marcado', write(`# example: ${'AKIA' + 'XXXXXXXXXXXXXXXX'}`), false);
+check('cuerpo solo de x en minuscula', write('k=' + 'ghp_' + 'x'.repeat(36)), false);
+check('cuerpo con example', write('k=' + 'sk-' + 'example'.repeat(5)), false);
 check('texto normal', write('const x = 1;'), false);
 check('key-literal desactivado', write(anthropic, { AI_GUARD_DISABLE: 'key-literal' }), false);
 check('secret-read desactivado no afecta key-literal', write(anthropic, { AI_GUARD_DISABLE: 'secret-read' }), true);
@@ -140,6 +144,10 @@ check('el aviso no trae la clave', String(evaluatePost('Write', { file_path: wit
 check('archivo limpio no avisa', evaluatePost('Write', { file_path: clean }), false);
 check('archivo inexistente no rompe', evaluatePost('Write', { file_path: path.join(dir, 'nope') }), false);
 check('post respeta key-literal desactivado', evaluatePost('Write', { file_path: withKey }, { AI_GUARD_DISABLE: 'key-literal' }), false);
+const nb = path.join(dir, 'n.ipynb');
+writeFileSync(nb, `{"k": "${anthropic}"}\n`);
+check('avisa con notebook_path', evaluatePost('NotebookEdit', { notebook_path: nb }), true);
+check('el aviso de notebook da solo la linea', /line 1/.test(String(evaluatePost('NotebookEdit', { notebook_path: nb }))) && !String(evaluatePost('NotebookEdit', { notebook_path: nb })).includes(anthropic), true);
 rmSync(dir, { recursive: true });
 
 console.log(`\n${fail === 0 ? 'TODOS OK' : fail + ' FALLOS'}`);

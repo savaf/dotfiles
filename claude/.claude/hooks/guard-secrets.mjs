@@ -136,13 +136,15 @@ const KEY_PATTERNS = [
     /\bAIza[0-9A-Za-z_-]{35}\b/,
     /-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----/,
 ];
-// Marcadores obvios de ejemplo: no son claves vivas.
-const PLACEHOLDER = /x{4,}|your|example|placeholder/i;
+const KNOWN_PREFIX = /^(?:sk-ant-|sk-proj-|sk-|AKIA|gh[pousr]_|github_pat_|xox[baprs]-|AIza)/;
+// Marcador obvio de ejemplo: se mira solo el cuerpo tras el prefijo, no todo el match, para que
+// una clave real que acaba en `xxxx` siga bloqueada. Sin cuerpo (clave PEM) nunca es marcador.
+const isPlaceholderBody = (body) => /^x+$/i.test(body) || /your|example|placeholder/i.test(body);
 
 const hasKey = (line) =>
     KEY_PATTERNS.some((re) => {
         const m = line.match(re);
-        return m && !PLACEHOLDER.test(m[0]);
+        return m && !isPlaceholderBody(m[0].replace(KNOWN_PREFIX, '') || '-');
     });
 
 export const keyLines = (text) =>
@@ -187,13 +189,14 @@ export function evaluate(toolName, input, env = process.env) {
 
 // PostToolUse: avisa si el archivo escrito ya trae una clave.
 export function evaluatePost(toolName, input, env = process.env) {
-    if (disabled('key-literal', env) || !input?.file_path) {
+    const file = input?.notebook_path || input?.file_path;
+    if (disabled('key-literal', env) || !file) {
         return;
     }
     try {
-        const lines = keyLines(readFileSync(input.file_path, 'utf8'));
+        const lines = keyLines(readFileSync(file, 'utf8'));
         if (lines.length) {
-            return `key-literal: ${input.file_path} holds a possible API key on ${lineWord(lines)}. Remove it and rotate the key.`;
+            return `key-literal: ${file} holds a possible API key on ${lineWord(lines)}. Remove it and rotate the key.`;
         }
     } catch {
         // Archivo ilegible o inexistente: nada que avisar.
