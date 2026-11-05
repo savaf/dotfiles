@@ -354,6 +354,102 @@ To validate and re-measure after adding or removing skills:
 python3 -I ~/.claude/skills/doc-write/scripts/check-skill.py --all
 ```
 
+## Inventario de terceros
+
+Qué hay instalado de verdad en esta máquina (`~/.claude/plugins/installed_plugins.json`,
+`known_marketplaces.json`, `settings.json` y `packages/claude-skills.txt`) y de dónde viene.
+**Sin fijar** = la versión instalada depende de cuándo se instaló o se actualizó; no hay commit
+que la congele.
+
+| Nombre | Tipo | Origen | Versión / commit | Estado |
+|---|---|---|---|---|
+| `skills` (CLI) | herramienta | npm, usada por `scripts/install-claude-skills.sh` | `1.7.2` | Fijada en el script |
+| `ponytail` (y `ponytail-review`, `-audit`, `-debt`, `-gain`, `-help`) | skills sueltas en `~/.claude/skills` | GitHub `DietrichGebert/ponytail`, vía la CLI | — | **Sin fijar**: la CLI instala la rama por defecto y no deja lockfile |
+| `mattpocock/skills` (`tdd`, `grilling`, `codebase-design`, `code-review`, …) | skills sueltas en `~/.claude/skills` | GitHub `mattpocock/skills`, vía la CLI | — | **Sin fijar**, igual que arriba |
+| `mattpocock-skills@claude-plugins-official` | plugin | marketplace `anthropics/claude-plugins-official` | `1.3.1`, commit `49dd158d1076` | Instalado y fijado por commit, pero **no habilitado** (no está en `enabledPlugins`); el marketplace en sí no está fijado |
+| `cloudflare@cloudflare` | plugin | marketplace `cloudflare/skills` | `1.0.0`, commit `f96bff754e42` | Deshabilitado (`false`) |
+| `image-preview@better-claude` | plugin | marketplace `midudev/better-claude` | `0.2.2`, commit `5abacf0ff67a` | Habilitado; el marketplace tiene `autoUpdate`, **sin fijar** |
+| `quick-peek@better-claude` | plugin | marketplace `midudev/better-claude` | `0.2.0`, commit `5abacf0ff67a` | Habilitado; **sin fijar**, igual que arriba |
+| `teamclaude-status@dotfiles-mods` | plugin propio | `claude-mods/` de este repo (directorio local) | `0.3.0` | Propio; versionado con este repo |
+| `replay-theater@dotfiles-mods` | plugin propio | `claude-mods/` de este repo (directorio local) | `0.1.0` | Propio; versionado con este repo |
+| `design`, `engineering`, `productivity`, `figma`, `humanizer`, `brightdata-plugin` (`@synced`) | plugins de la cuenta | sincronizados por la cuenta de claude.ai; no hay marketplace local | — | Deshabilitados (`false`); sin origen ni versión que verificar |
+| `context7` | servidor MCP | `https://mcp.context7.com/mcp` (HTTP remoto) | — | Remoto: no hay versión que fijar |
+
+Las skills de `mattpocock/skills` y `ponytail` son las que más pesan: son instrucciones que se
+inyectan al agente y hoy se actualizan sin revisión. Para fijarlas hay que clonar el repo a un
+commit revisado e instalarlo desde ahí, o vendorizar las skills usadas en `claude/.claude/skills/`.
+No se ha hecho.
+
+## Modo CI
+
+Claude Code sin interfaz para un builder o un reviewer. Los flags de abajo están verificados con
+`claude --help` en la versión 2.1.316.
+
+```sh
+claude -p "<prompt>" \
+  --output-format json \
+  --max-budget-usd 2 \
+  --permission-mode dontAsk \
+  --allowedTools "Bash(git *) Bash(npm test) Edit Write Read"
+```
+
+| Flag | Para qué |
+|---|---|
+| `-p`, `--print` | Responde y sale. Los demás flags de esta tabla, salvo `--bare` y `--permission-mode`, solo funcionan con `-p` |
+| `--output-format json` | Un único objeto de resultado al final (`text` es el valor por defecto; `stream-json` emite eventos) |
+| `--max-budget-usd <monto>` | Tope de gasto de la corrida; la corta al llegar |
+| `--resume <id>`, `-r` | Continúa una conversación por **id de sesión** o nombre, no por ruta de transcript. Úsalo para una segunda ronda del mismo builder |
+| `--permission-mode <modo>` | `acceptEdits`, `auto`, `bypassPermissions`, `manual`, `dontAsk`, `plan`. En CI sin humano, `dontAsk` niega lo que no esté permitido en vez de preguntar |
+| `--allowedTools` | Lista (separada por coma o espacio) de herramientas permitidas, p. ej. `"Bash(git *) Edit"`. Es la lista blanca del builder |
+| `--no-session-persistence` | No guarda la sesión en disco: no se puede reanudar ni leer su transcript. Solo con `-p` |
+| `--bare` | Ver abajo |
+
+**No existe `--max-turns`** en 2.1.316 (no aparece en `claude --help`). El único tope de una corrida
+es `--max-budget-usd`.
+
+### `--bare`
+
+Modo mínimo: no lee `CLAUDE.md`, ni skills de `~/.claude`, ni plugins, ni **hooks**, ni auto-memoria,
+ni keychain. La autenticación es solo `ANTHROPIC_API_KEY` o `apiKeyHelper` vía `--settings`; OAuth y
+keychain nunca se leen. Todo lo demás se pasa explícito:
+
+```sh
+claude -p "<prompt>" --bare \
+  --settings ci-settings.json \
+  --agents ci-agents.json \
+  --append-system-prompt "$(cat conventions.md)" \
+  --output-format json --max-budget-usd 2 --permission-mode dontAsk
+```
+
+- `--settings <archivo-o-json>`: permisos, `env` (p. ej. `AI_GUARD_PROTECT_BRANCHES`) y `apiKeyHelper`.
+- `--agents <json-o-archivo>`: con `-p`, la ruta de un archivo con las definiciones de agentes.
+- `--append-system-prompt`: las convenciones del repo (lo que en una sesión normal traería `CLAUDE.md`).
+
+**`--bare` apaga los hooks.** `git-guardrails.mjs` y `guard-protected-branch.mjs` no corren: en CI
+la protección de `main` tiene que venir de fuera (rama protegida en el remoto, runner sin
+credenciales de push a `main`) o hay que correr sin `--bare`.
+
+### Salida JSON y las columnas de `results.tsv`
+
+Campos reales del objeto `type: "result"` (comprobado con una corrida real): `subtype`, `is_error`,
+`result`, `session_id`, `duration_ms`, `duration_api_ms`, `num_turns`, `total_cost_usd`, `usage`
+(`input_tokens`, `cache_creation_input_tokens`, `cache_read_input_tokens`, `output_tokens`),
+`modelUsage` (lo mismo por modelo), `permission_denials`, `stop_reason`, `terminal_reason`.
+
+| Columna de `results.tsv` | Campo |
+|---|---|
+| `minutes` | `duration_ms / 60000` |
+| `tokens_in` | `usage.input_tokens + usage.cache_creation_input_tokens + usage.cache_read_input_tokens` |
+| `tokens_out` | `usage.output_tokens` |
+| `cost_usd` | `total_cost_usd` |
+
+Los valores son de **esa** invocación. Con `--resume` el `session_id` se mantiene, pero el objeto
+describe solo la ronda nueva (comprobado: `num_turns` y `output_tokens` de la segunda llamada no
+suman la primera), así que no hace falta restar una base. En un panel de herdr no hay JSON: ahí `horde` saca tokens y costo
+del registro `cost-state` del transcript (`skills/horde/scripts/usage.mjs`), un registro interno no
+documentado que solo es válido mientras el proceso de `claude` siga vivo; tras un `--resume`
+interactivo el costo se reinicia y los tokens no.
+
 ## Auditing token usage
 
 - `/usage` — session cost broken down by model, subagents, skills, MCP.
