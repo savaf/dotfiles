@@ -5,7 +5,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 HOOKS_DIR="${ROOT_DIR}/claude/.claude/hooks"
 
-for t in git-guardrails guard-protected-branch guard-secrets decision-shadow; do
+for t in git-guardrails guard-protected-branch guard-secrets guard-worktree-path cleanup-wt decision-shadow; do
   echo "== ${t}"
   node "${HOOKS_DIR}/${t}.test.mjs"
 done
