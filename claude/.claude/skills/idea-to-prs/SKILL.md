@@ -54,7 +54,7 @@ Run `horde` with these additions:
 - Logic-heavy tickets get frozen checks approved by the user; UI tickets are covered by the ticket's e2e criteria.
 - Stack the UI tickets: each branch starts from the previous one.
 - Verify every builder yourself (typecheck, lint, tests, diff free of the plan), then dispatch fresh reviewers with the prompts in `references/review-prompts.md`.
-- A surviving mutant is a finding; a reviewer's mutation proof is the pass criterion.
+- A surviving mutant is a finding; a reviewer's mutation proof is the pass criterion. Run the repo's mutation tool on the diff's files when it has one; otherwise mutate by hand in a copy.
 - Rounds: three. Extend a round only with concrete findings, and log the extension.
 
 Gate: a ticket passes when checks are green, frozen files are intact, and the reviewers report 0 blockers and 0 issues.

@@ -4,7 +4,7 @@ Each line came from a failure in a real run (a seven-ticket dashboard across two
 
 ## Tests that discriminate
 
-- A reviewer proves a test by mutating a **copy** of the worktree and watching it go red. A surviving mutant is a finding.
+- A repo with a mutation tool configured (Stryker, mutmut, PIT or other): the reviewer runs it on the files of the diff, and a surviving mutant is a finding. Without one, the reviewer proves a test by mutating a **copy** of the worktree by hand and watching it go red. A surviving mutant is a finding either way.
 - A test of a failure waits for the failure signal before asserting. A test that passed 3 of 8 runs without the fix proves nothing; run `--repeat-each=8` with the fix removed and expect 8 failures.
 - Anchor regexes in frozen checks to what they mean. `/IS NULL/` matched `ris.deleted_at IS NULL`, and `OR` matched `ORDER BY`.
 - Measure overflow with `document.body.scrollWidth` and each control's `boundingBox` at 320 and 375 px. `documentElement.scrollWidth` cannot fail when `body` has `overflow-x: clip`.
