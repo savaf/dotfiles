@@ -81,6 +81,10 @@ Three pieces, all versioned in `claude/.claude/` and linked by stow.
 |---|---|---|
 | `git-guardrails.mjs` | `PreToolUse` on `Bash` | Denies irreversible commands before they run, and commits or pushes to a protected branch |
 | `guard-protected-branch.mjs` | `PreToolUse` on `Write`/`Edit` | Blocks edits to repo files on a protected branch |
+| `guard-secrets.mjs` | `PreToolUse` on `Bash`/`Read`/`Grep`/`Write`/`Edit`/`MultiEdit`/`NotebookEdit`, `PostToolUse` on the write tools | Blocks reading secret files and writing live-looking API keys; warns when a key is already on disk |
+| `guard-worktree-path.mjs` | `PreToolUse` on `Bash` | Denies `git worktree add\|move` whose target is outside `<repo>/.claude/worktrees/` |
+| `cleanup-wt.mjs` | `SessionStart` (`startup`, `resume`) | Removes worktrees and local branches already merged into the base branch |
+| `env-check.sh` | called by Claude through `Bash` | Prints `present`, `empty` or `missing` per variable, never the value |
 | `load-agents-md.sh` | `SessionStart` | Injects the project's `AGENTS.md` when Claude Code would not load it |
 | `decision-shadow.mjs` | `UserPromptSubmit`, `PreToolUse` on `Agent` | Logs Decisions from the local engine in shadow mode; applies nothing (see `docs/decision-engine.md`) |
 
@@ -110,8 +114,42 @@ Push to a protected branch is denied too: an explicit refspec (`origin main`, `H
 protected branch. With `-C` only an explicit refspec counts, because the current branch of the
 other repo is unknown.
 
+`guard-secrets.mjs` has two rule groups, each with an id for `AI_GUARD_DISABLE`:
+
+- `secret-read`: denies dotenv files (`.env`, `.env.local`), SSH private keys, `.npmrc`,
+  `credentials`, service-account JSON and `.pem`. `.env.example`, `.env.sample` and
+  `.env.template` stay readable. Applies to `Read`, `Grep` and `Bash`.
+- `key-literal`: denies writing a key with a known prefix (Anthropic, OpenAI, AWS, GitHub, Slack,
+  Google, PEM private key). Placeholders (`xxxx`, `YOUR_KEY`, `example`) pass. The reason and the
+  post-write warning give line numbers, never the value.
+
+To check a variable without reading `.env`, call `env-check.sh KEY...` alone. A pipe, chain or
+redirect next to it makes it a normal command again.
+
+`guard-worktree-path.mjs` honours `cd X &&` and `git -C X`, and lets through targets it cannot
+resolve (`$VAR`, `$(...)`). `/horde` creates worktrees with `herdr worktree create`, so this guard
+does not affect it.
+
+`cleanup-wt.mjs` modes:
+
+| Command | Effect |
+|---|---|
+| `cleanup-wt.mjs` | Dry run: prints the plan, changes nothing |
+| `cleanup-wt.mjs --apply` | Runs the plan |
+| `cleanup-wt.mjs --auto` | What `SessionStart` runs: applies only if a base branch tip moved since the last session. Messages go to stderr |
+| `cleanup-wt.mjs --post-merge` | Applies every time. Use it after merging a ticket |
+
+- A branch counts as merged only when its tip is an ancestor of a base and differs from the base
+  tip. A fresh branch with no commits, a fast-forward merge and a squash merge are all kept.
+- Never touches a base branch, the main worktree or the worktree it runs in.
+- A dirty worktree on a merged branch gets a `wip: cleanup-wt autosave` commit; its worktree is
+  removed and its branch kept.
+- Before deleting branches it writes `<git-common-dir>/cleanup-wt/<timestamp>.tsv` with
+  `branch<TAB>sha`. Restore with `git branch <branch> <sha>`.
+
 Tests: `bash scripts/test-hooks.sh` runs every hook test (`git-guardrails`,
-`guard-protected-branch`, `decision-shadow`). Run it after touching a rule. The repo has no CI.
+`guard-protected-branch`, `guard-secrets`, `guard-worktree-path`, `cleanup-wt`, `decision-shadow`).
+Run it after touching a rule. The repo has no CI.
 
 ### Per-project switches
 
@@ -121,7 +159,8 @@ Environment variables, set in a project's `.claude/settings.json` under `env`:
 |---|---|
 | `AI_GUARD_PROTECT_BRANCHES` | Comma list of branches where commits, pushes and repo edits are blocked. Empty (default) = off |
 | `AI_GUARD_ENABLE` | Comma list of POLICY rule ids to turn on. `all` enables every one |
-| `AI_GUARD_DISABLE` | Comma list of SAFETY rule ids to turn off |
+| `AI_GUARD_DISABLE` | Comma list of SAFETY rule ids to turn off, plus `secret-read`, `key-literal` and `worktree-path` |
+| `AI_GUARD_WORKTREE_DIRS` | Comma list of extra directories where `git worktree add` is allowed (relative to the repo) |
 
 The default is permissive on workflow, strict on data loss. A solo repo where committing to the
 default branch is normal (this one) needs no config. A shared repo with a PR workflow sets
@@ -427,7 +466,9 @@ claude -p "<prompt>" --bare \
 
 **`--bare` apaga los hooks.** `git-guardrails.mjs` y `guard-protected-branch.mjs` no corren: en CI
 la protección de `main` tiene que venir de fuera (rama protegida en el remoto, runner sin
-credenciales de push a `main`) o hay que correr sin `--bare`.
+credenciales de push a `main`) o hay que correr sin `--bare`. Lo mismo vale para `guard-secrets.mjs`,
+`guard-worktree-path.mjs` y `cleanup-wt.mjs`: en CI los secretos se protegen con permisos del
+runner, no con el hook.
 
 ### Salida JSON y las columnas de `results.tsv`
 

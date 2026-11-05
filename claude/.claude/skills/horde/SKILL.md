@@ -164,6 +164,7 @@ Per ticket, one line: ticket, branch, path, checks result, review rounds, gate p
 - Run `node ~/.claude/skills/horde/scripts/report.mjs` and paste its numbers. Its "Fallas en 2 o más tickets" list is where failures repeat across tickets. They are candidates for the repo's `AGENTS.md`; propose the line, never add it yourself.
 - Mention tickets whose panes stayed open (failed, disputed, stopped).
 - Cleanup after the user merges: `herdr worktree remove --workspace <id>`, then `git branch -d <branch>`.
+- Leftover merged worktrees and branches: `node ~/.claude/hooks/cleanup-wt.mjs` shows the plan, `--post-merge` applies it. `SessionStart` runs it anyway when a base tip moved.
 
 ## Never
 
