@@ -8,7 +8,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SKILLS_LIST="${SKILLS_LIST:-${ROOT_DIR}/packages/claude-skills.txt}"
 # Pinned: an unpinned CLI runs whatever is latest on every bootstrap. Bump on purpose, then re-review.
-SKILLS_CLI="skills@1.7.2"
+SKILLS_CLI="skills@1.7.6"
 
 # shellcheck source=lib/third-party.sh
 . "${ROOT_DIR}/scripts/lib/third-party.sh"

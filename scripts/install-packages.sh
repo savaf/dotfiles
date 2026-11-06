@@ -220,7 +220,7 @@ ensure_mise_tools() {
 # Monaspace) para poder añadir más Nerd Fonts con una línea.
 # shellcheck disable=SC2119,SC2120 # el argumento (fuente) es opcional; sin él usa Monaspace
 ensure_nerd_font() {
-  local font="${1:-Monaspace}" NF_VERSION="v3.4.0"
+  local font="${1:-Monaspace}" NF_VERSION="v3.5.1"
   local font_dir="${HOME}/.local/share/fonts"
   local version_file="${font_dir}/.nerd-font-${font}.version" installed=""
 

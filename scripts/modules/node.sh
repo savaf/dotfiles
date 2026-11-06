@@ -10,7 +10,7 @@ ensure_node() {
   if [[ ! -s "${NVM_DIR}/nvm.sh" ]]; then
     log "Instalando nvm…"
     mkdir -p "${NVM_DIR}"
-    curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash || true
+    curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.41.0/install.sh | bash || true
   fi
   # shellcheck disable=SC1091
   [[ -s "${NVM_DIR}/nvm.sh" ]] && . "${NVM_DIR}/nvm.sh"
