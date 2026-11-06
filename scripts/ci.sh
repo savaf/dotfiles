@@ -25,7 +25,7 @@ done
 
 echo "== shellcheck"
 if ! command -v "${SHELLCHECK}" >/dev/null 2>&1; then
-  echo "shellcheck no está instalado: instálalo (apt/dnf/pacman/brew install shellcheck)." >&2
+  echo "shellcheck no está instalado: instálalo (apt/pacman/brew install shellcheck)." >&2
   FAILED+=("shellcheck (no instalado)")
 else
   files=()

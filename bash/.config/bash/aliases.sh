@@ -50,7 +50,7 @@ alias l.='eza -al --color=always --group-directories-first ../' # ls on the PARE
 alias l..='eza -al --color=always --group-directories-first ../../' # ls on directory 2 levels up
 alias l...='eza -al --color=always --group-directories-first ../../../' # ls on directory 3 levels up
 
-# BAT (better cat) — usa el binario que exista (bat en macOS/Fedora/Arch, batcat en Ubuntu)
+# BAT (better cat) — usa el binario que exista (bat en macOS/Arch, batcat en Ubuntu)
 if command -v bat >/dev/null 2>&1; then
   alias cat='bat -p'
 elif command -v batcat >/dev/null 2>&1; then

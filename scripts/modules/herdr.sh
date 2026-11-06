@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# El instalador oficial funciona igual en Ubuntu/WSL, Fedora/Bazzite, Arch/Omarchy
+# El instalador oficial funciona igual en Ubuntu/WSL, Arch/Omarchy
 # y macOS, así que no hace falta bifurcar por OS. Se actualiza con `herdr update`.
 # En Omarchy `exists herdr` lo cumpliría el paquete pacman (repo omarchy, desfasado):
 # quitarlo con `sudo pacman -R herdr`. Ver docs/herdr.md.
