@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Uso: sync-config <live> <repo>
+# Si <live> dejó de ser symlink (Omarchy lo reemplazó con temporal + mv), trae su contenido a <repo>
+# y restaura el symlink relativo. Idempotente: no hace nada si <live> ya es symlink o no existe.
+# Un .json inválido no se copia (se avisa y el archivo suelto queda como está).
+live="${1:?uso: sync-config <live> <repo>}"
+repo="${2:?uso: sync-config <live> <repo>}"
+
+[[ -L "${live}" || ! -e "${live}" ]] && exit 0
+
+if [[ "${live}" == *.json ]] && ! jq empty "${live}" 2>/dev/null; then
+  echo "sync-config: ${live} no es JSON válido; no se copia al repo" >&2
+  exit 1
+fi
+
+tmp="$(mktemp "${repo}.XXXXXX")"
+trap 'rm -f "${tmp}"' EXIT
+cat "${live}" >"${tmp}"
+chmod 644 "${tmp}"
+mv "${tmp}" "${repo}"
+
+link="$(dirname "${live}")/.$(basename "${live}").link"
+ln -s "$(realpath -m --relative-to="$(dirname "${live}")" "${repo}")" "${link}"
+mv -T "${link}" "${live}"
