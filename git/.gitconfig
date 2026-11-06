@@ -1,6 +1,13 @@
 [user]
 	name = Sinver Aguilo
 	email = 10409334+savaf@users.noreply.github.com
+	signingkey = ~/.ssh/github.pub
+
+[gpg]
+	format = ssh
+
+[commit]
+	gpgsign = true
 
 [init]
 	defaultBranch = main
