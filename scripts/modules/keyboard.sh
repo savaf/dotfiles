@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Remapea Caps Lock → Escape en GNOME (Ubuntu/Fedora de escritorio). No-op en
+# Remapea Caps Lock → Escape en GNOME (Ubuntu de escritorio). No-op en
 # WSL (lo gestiona Windows) y en cualquier sesión sin gsettings.
 
 # Fusiona caps:escape en el array xkb-options actual, preservando lo existente.

@@ -3,7 +3,7 @@
 #
 # Only where there is an NVIDIA GPU: on CPU Clef-Flash takes ~9 s per Decision,
 # so on macOS or without NVIDIA nothing is installed and the hook fails open.
-# One path on Linux (Arch, Ubuntu/WSL2, Bazzite): the pinned release's CUDA
+# One path on Linux (Arch, Ubuntu/WSL2): the pinned release's CUDA
 # tarball, in $HOME, no root. The GGUF (6.5 GB) is separate:
 # scripts/download-clef-model.sh.
 

@@ -4,7 +4,7 @@
 a persistent server that keeps sessions, panes, and running agents alive
 across client disconnects. The config lives in
 [`herdr/.config/herdr/config.toml`](../herdr/.config/herdr/config.toml) and is
-stowed to `~/.config/herdr/config.toml`. Not in the Ubuntu, Fedora, or
+stowed to `~/.config/herdr/config.toml`. Not in the Ubuntu or
 macOS package managers — `scripts/bootstrap.sh` (`ensure_herdr`) installs it via
 `herdr.dev/install.sh` there. Same on Arch/Omarchy: one install in `~/.local/bin`,
 not the `herdr` pacman package (see [Updating herdr](#updating-herdr)).

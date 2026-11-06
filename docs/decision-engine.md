@@ -90,7 +90,7 @@ scripts/download-clef-model.sh   # resumes if interrupted; HF_TOKEN speeds it up
 | Setup | Status |
 |---|---|
 | Ubuntu/WSL2 with NVIDIA | Installed and tested end to end |
-| Arch/Omarchy, Bazzite with NVIDIA | Same tarball and units; untested |
+| Arch/Omarchy with NVIDIA | Same tarball and units; untested |
 | macOS, Linux without NVIDIA | Nothing installed; fail open |
 
 - On CPU Clef-Flash is just as accurate but takes ~9 s per Decision, so it is not installed without a GPU.

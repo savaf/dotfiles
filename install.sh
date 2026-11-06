@@ -34,12 +34,8 @@ ensure_git() {
       xcode-select --install || true
       die "Termina la instalación de las Command Line Tools de Xcode y vuelve a ejecutar este instalador."
     fi
-  elif exists rpm-ostree && [[ -e /run/ostree-booted ]]; then
-    die "Sistema inmutable (Bazzite/ostree): instala git con 'rpm-ostree install git', reinicia y vuelve a ejecutar."
   elif exists apt-get; then
     as_root apt-get update && as_root apt-get install -y git
-  elif exists dnf; then
-    as_root dnf install -y git
   elif exists pacman; then
     as_root pacman -S --needed --noconfirm git
   else
