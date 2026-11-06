@@ -276,6 +276,24 @@ ventana. Un clic ejecuta `omarchy-launch-terminal herdr`, que adjunta la sesión
 - Test: `scripts/test-herdr-attention.sh` (con `herdr` falso en el PATH). Mostrar el widget en vivo
   requiere recargar la barra, que hace el integrador.
 
+## 14. Reproductor de música propio (`savaf.media`)
+
+Copia del plugin `omarchy.media` en `omarchy/.config/omarchy/plugins/savaf.media/` (el id sigue la
+convención `<usuario>.media` de `omarchy plugin clone`). La barra usa la copia en lugar del original:
+`shell.json` apunta a `savaf.media` en `bar.layout.center`, y lleva `omarchy.media` en `disabledPlugins` y
+`savaf.media` en `cloneSourceRestores`, que es lo que escribe `omarchy plugin clone` (se replicó a mano,
+sin ejecutarlo). La carpeta queda enlazada en `~/.config/omarchy/plugins/` con Stow.
+
+- Cambios sobre el original (`BarWidget.qml`): ancho máximo de la etiqueta 180 -> 320 px, y botones
+  visibles anterior / play-pausa / siguiente (en barra vertical solo play-pausa). Se conservan la rueda
+  (anterior/siguiente), el clic medio (siguiente), el clic derecho (popup con carátula) y el clic izquierdo
+  sobre la etiqueta (play/pausa).
+- **La copia no recibe las actualizaciones del original.** Tras actualizar Omarchy, compara con
+  `diff -ru /usr/share/omarchy/shell/plugins/services/media omarchy/.config/omarchy/plugins/savaf.media`
+  y porta a mano lo que interese. Para volver al original: `omarchy plugin enable omarchy.media`.
+- Validación: `omarchy plugin validate omarchy/.config/omarchy/plugins/savaf.media` (solo lectura). Verlo en
+  la barra con música real requiere recargar el shell, que hace el integrador.
+
 ## Notes
 
 - **Omarchy reescribe algunos ficheros que stow enlaza.** `omarchy-shell-config` (detrás de

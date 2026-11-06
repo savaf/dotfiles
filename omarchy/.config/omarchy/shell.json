@@ -57,7 +57,7 @@
           "id": "omarchy.weather"
         },
         {
-          "id": "omarchy.media"
+          "id": "savaf.media"
         },
         {
           "id": "omarchy.system-update"
@@ -116,9 +116,11 @@
     }
   ],
   "disabledPlugins": [
-    "omarchy.lock"
+    "omarchy.lock",
+    "omarchy.media"
   ],
   "cloneSourceRestores": [
-    "io.github.sirjul1337.lock-explorer"
+    "io.github.sirjul1337.lock-explorer",
+    "savaf.media"
   ]
 }
