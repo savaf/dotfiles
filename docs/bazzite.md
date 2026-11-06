@@ -19,14 +19,16 @@ Bazzite ships `git` and `stow` in the base image. On classic Fedora:
 sudo dnf install -y git stow
 ```
 
-Then clone:
+Then clone (HTTPS, no SSH keys needed yet):
 
 ```sh
-git clone git@github.com:savaf/dotfiles.git ~/dotfiles
+git clone https://github.com/savaf/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 ```
 
-> First time using git here? Set up SSH first — see [git-and-ssh.md](git-and-ssh.md).
+> Shortcut: `curl -fsSL https://raw.githubusercontent.com/savaf/dotfiles/main/install.sh | bash`
+> does steps 2–3 in one go (installs git if missing, clones, runs the bootstrap).
+> Switch `origin` to SSH later — see [git-and-ssh.md](git-and-ssh.md).
 
 ## 3. Run the bootstrap
 
