@@ -233,6 +233,22 @@ estado de la conexión y los dispositivos de la tailnet. Archivos entre máquina
 `bar.layout.right` en `omarchy/.config/omarchy/shell.json` (de nuevo con el vigilante activo o
 revisando `git diff`).
 
+## 11. Aviso de agentes de herdr en la barra
+
+Widget de comando `herdr-attention` en `bar.layout.centerEnd` de `shell.json`: muestra `herdr N` con los
+agentes bloqueados (`blocked`) o terminados (`done`), con el detalle en el tooltip, y no muestra nada si
+no hay ninguno (o si herdr no responde). Sirve para enterarse aunque herdr (`hw`) esté tapado por otra
+ventana. Un clic ejecuta `omarchy-launch-terminal herdr`, que adjunta la sesión persistente.
+
+- Script: `omarchy/.config/omarchy/bar/scripts/herdr-attention`. Ejecuta `herdr agent list` (solo lectura)
+  y filtra `result.agents[].agent_status` con `jq`. Estados de herdr: `idle`, `working`, `blocked`, `done`,
+  `unknown`.
+- `interval` 10 s: un `herdr` + un `jq` cada 10 s, sin demonio.
+- Convive con el toast `[ui.toast] delivery = "system"` (`docs/herdr.md`); este es un indicador
+  persistente, el toast avisa una vez.
+- Test: `scripts/test-herdr-attention.sh` (con `herdr` falso en el PATH). Mostrar el widget en vivo
+  requiere recargar la barra, que hace el integrador.
+
 ## Notes
 
 - **Omarchy reescribe algunos ficheros que stow enlaza.** `omarchy-shell-config` (detrás de
