@@ -1,8 +1,8 @@
 {
-  // Apaga/enciende todo el RGB de un tirón. Va bajo "Style" porque es donde
-  // Omarchy pone los toggles de apariencia (cf. style.bar.transparency).
+  // Apaga/enciende todo el RGB de un tirón. Va bajo "Appearance" porque es donde
+  // Omarchy pone los toggles de apariencia (cf. appearance.top-bar.background.*).
   // El ✓ aparece cuando está apagado.
-  "style.rgb": {
+  "appearance.rgb": {
     "icon": "󰌵",
     "label": "RGB",
     "aliases": ["rgb", "lights", "luces"],
@@ -20,5 +20,15 @@
     "aliases": ["windows", "dualboot", "bootwindows"],
     "description": "Arranca Windows una vez, sin tocar el orden de arranque",
     "action": "$HOME/.local/bin/reboot-windows"
+  },
+
+  // Va bajo "System". Abre los workspaces de trabajo (`hw`, función de zsh
+  // definida en zsh/.config/zsh/functions.zsh) en una terminal nueva. Sin atajo.
+  "system.hw": {
+    "icon": "󰆍",
+    "label": "Work workspaces",
+    "aliases": ["work", "workspaces", "herdr"],
+    "description": "Abre los workspaces de trabajo (hw) en una terminal nueva",
+    "action": "omarchy-launch-terminal zsh -ic hw"
   }
 }

@@ -261,7 +261,7 @@ hyprctl devices -j | jq -r '.keyboards[] | "\(.name)\t\(.layout)\t\(.active_keym
   El paquete stow `omarchy` aporta dos: `openrgb` y `claude`.
 - RGB: el paquete stow `omarchy` instala `~/.local/bin/rgb`, que apaga todo el RGB
   del PC o lo devuelve al color accent del tema activo.
-  - `rgb toggle` (por defecto) alterna. Es lo que invoca la fila **Style → RGB** del
+  - `rgb toggle` (por defecto) alterna. Es lo que invoca la fila **Appearance → RGB** del
     menú, declarada en `~/.config/omarchy/extensions/omarchy-menu.jsonc`.
   - `rgb off` y `rgb on` fuerzan un estado; `rgb theme` reaplica el tema salvo que lo
     hayas apagado a mano.
@@ -288,6 +288,15 @@ hyprctl devices -j | jq -r '.keyboards[] | "\(.name)\t\(.layout)\t\(.active_keym
   tema están en el `case` de la función `accent()` de `rgb`. El módulo `i2c-dev`
   (RGB de RAM/placa por SMBus) lo persiste el bootstrap en
   `/etc/modules-load.d/i2c-dev.conf`.
+- Menú: la extensión `~/.config/omarchy/extensions/omarchy-menu.jsonc` añade
+  **Appearance → RGB** (`appearance.rgb`, alias antiguo `style`) y **System → Work
+  workspaces** (`system.hw`), que abre `hw` en una terminal nueva con
+  `omarchy-launch-terminal zsh -ic hw` (`hw` es una función de zsh, de ahí el `-ic`).
+  Sin atajo de teclado.
+- Branding: los archivos de `~/.config/omarchy/branding/` son enlaces al repo, así que
+  `omarchy branding about|screensaver text|image` escribe en el archivo versionado
+  (se ve en `git diff`). **`omarchy branding reset` lo pisa** con el logo por defecto de
+  Omarchy: revisa el diff o restaura con git después.
 - Refrigeración y Kraken (CoolerControl): `coolercontrol` (en `arch-apps.txt`)
   controla el AIO NZXT Kraken —bomba, ventiladores y **pantalla LCD**— vía su
   daemon `coolercontrold`, que el bootstrap habilita (`systemctl enable --now`).
