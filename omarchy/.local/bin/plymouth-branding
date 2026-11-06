@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Pantalla de arranque (Plymouth) con el hostname de la máquina y los colores del tema activo.
+# Uso: plymouth-branding preview   # genera el logo y una imagen de previsualización, sin tocar el sistema
+#      plymouth-branding apply     # igual, y aplica con `omarchy plymouth set` (pide sudo)
+#      plymouth-branding reset     # vuelve al arranque por defecto de Omarchy (pide sudo)
+# Variables: PLYMOUTH_TEXT (texto en vez del hostname), PLYMOUTH_FONT (archivo de fuente).
+
+cmd="${1:-preview}"
+theme_colors="${HOME}/.local/state/omarchy/current/theme/colors.toml"
+out_dir="${HOME}/.local/state/omarchy/branding"
+logo="${out_dir}/plymouth-logo.png"
+preview="${out_dir}/plymouth-preview.png"
+
+read_color() { # $1 clave del colors.toml
+  sed -n "s/^$1 *= *\"\(#[0-9a-fA-F]\{6\}\)\".*/\1/p" "${theme_colors}" | head -n1
+}
+
+if [[ "${cmd}" == "reset" ]]; then
+  exec omarchy plymouth reset
+fi
+[[ "${cmd}" == "preview" || "${cmd}" == "apply" ]] || { echo "uso: plymouth-branding preview|apply|reset" >&2; exit 1; }
+
+bg="$(read_color background)"
+fg="$(read_color foreground)"
+[[ -n "${bg}" && -n "${fg}" ]] || { echo "plymouth-branding: no pude leer background/foreground de ${theme_colors}" >&2; exit 1; }
+
+host="$(hostname)"
+text="${PLYMOUTH_TEXT:-${host%%.*}}"
+text="${text^^}"
+font="${PLYMOUTH_FONT:-$(fc-match -f '%{file}' 'monospace:bold')}"
+
+mkdir -p "${out_dir}"
+# Lienzo de 800x188 (el tamaño del logo de Omarchy), texto centrado y transparente de fondo.
+magick -background none -fill "${fg}" -font "${font}" -pointsize 120 "label:${text}" \
+  -trim +repage -resize '760x150>' -gravity center -background none -extent 800x188 "${logo}"
+omarchy plymouth preview "${bg}" "${fg}" "${logo}" "${preview}"
+echo "logo:        ${logo}"
+echo "previsualización: ${preview}"
+
+if [[ "${cmd}" == "apply" ]]; then
+  omarchy plymouth set "${bg}" "${fg}" "${logo}"
+  echo "aplicado ${text} con fondo ${bg} y texto ${fg}; se ve en el próximo arranque."
+fi
