@@ -214,6 +214,25 @@ estado de la conexión y los dispositivos de la tailnet. Archivos entre máquina
 `bar.layout.right` en `omarchy/.config/omarchy/shell.json` (de nuevo con el vigilante activo o
 revisando `git diff`).
 
+## 11. Marca por hostname (About y fastfetch)
+
+Cada máquina muestra su hostname en letras grandes: `about.andrea.txt` y `about.songbird.txt` en
+`omarchy/.config/omarchy/branding/` (wordmarks de `omarchy ascii`, partidos en dos líneas para caber en
+la caja de 54x26 de About). El portátil se asume `songbird` (sin confirmar con `hostname`).
+
+- `~/.local/bin/branding-select` enlaza `~/.config/omarchy/branding/about.txt` al About del hostname
+  actual. Corre desde el bootstrap y desde `hypr/autostart.lua`. Un About suelto previo se respalda en
+  `about.txt.bak`; un hostname sin archivo avisa por stderr y no toca nada.
+- `omarchy branding about text|image` escribe a través del enlace, o sea en el archivo versionado
+  (se ve en `git diff`). `omarchy branding about reset` copia el genérico sobre el archivo versionado:
+  es destructivo, revisa `git diff` después.
+- `omarchy/.config/fastfetch/config.jsonc` es copia de la global (`/etc/fastfetch`) y lee `about.txt`,
+  así que sigue a la máquina. Al existir una config propia, `omarchy launch about` deja de ajustar la
+  ventana y de animar el logo (lo trata como configuración personalizada).
+- El screensaver (`screensaver.txt`) es común y no cambia.
+- Nuevo equipo: añade `about.<hostname>.txt` (máx. 54 columnas x 26 filas; `scripts/test-branding.sh` lo
+  comprueba).
+
 ## Notes
 
 - **Omarchy reescribe algunos ficheros que stow enlaza.** `omarchy-shell-config` (detrás de
