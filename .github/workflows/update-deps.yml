@@ -1,0 +1,65 @@
+name: Update deps
+
+# Cada lunes abre (o reescribe) dos PRs con las versiones fijadas al día: deps/tools y
+# deps/skills. Nada se mergea solo. Ver docs/shell-and-dotfiles.md ("Updating pinned dependencies").
+on:
+  schedule:
+    - cron: '0 9 * * 1' # lunes 09:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: update-deps
+  cancel-in-progress: false
+
+jobs:
+  tools:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
+        with:
+          install: false
+          cache: false
+      - name: Update pinned tools
+        env:
+          CHANGES_FILE: ${{ runner.temp }}/deps-changes.md
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MISE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          bash scripts/update-deps.sh tools
+          # Los avisos (fuentes caídas) no fallan el job: se copian a anotaciones.
+          sed -n '/^## Avisos/,$p' "$CHANGES_FILE" | grep '^- ' | sed 's/^- /::warning::/' || true
+      - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ secrets.DEPS_BOT_TOKEN }}
+          branch: deps/tools
+          title: 'deps: actualiza herramientas fijadas'
+          commit-message: 'deps: actualiza herramientas fijadas'
+          body-path: ${{ runner.temp }}/deps-changes.md
+          delete-branch: true
+
+  skills:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Update pinned skills
+        env:
+          CHANGES_FILE: ${{ runner.temp }}/deps-changes.md
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MISE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          bash scripts/update-deps.sh skills
+          sed -n '/^## Avisos/,$p' "$CHANGES_FILE" | grep '^- ' | sed 's/^- /::warning::/' || true
+      - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ secrets.DEPS_BOT_TOKEN }}
+          branch: deps/skills
+          title: 'deps: actualiza skills (auditar)'
+          commit-message: 'deps: actualiza skills (auditar)'
+          body-path: ${{ runner.temp }}/deps-changes.md
+          delete-branch: true

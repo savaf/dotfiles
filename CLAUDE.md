@@ -27,6 +27,7 @@ repo entero.
 | Claude Code (settings, agentes, skills, hooks) | `docs/claude-code.md` |
 | Motor de decisiones (Clef-Flash, llama.cpp, Modo sombra) | `docs/decision-engine.md` (inglés) + `GLOSSARY.md` |
 | Node.js | `docs/nodejs.md` |
+| Actualizar dependencias fijadas (workflow semanal, `scripts/update-deps.sh`) | `docs/shell-and-dotfiles.md` |
 | Discos `Games` / `LIBRARY`, fstab o montajes | `docs/storage.md` |
 | CoolerControl (perfiles de temperatura, API, modo Rendimiento con Steam) | `docs/coolercontrol-api.md` (inglés) |
 | Setup de una plataforma concreta | `docs/{ubuntu-wsl,bazzite,omarchy,macos-setup}.md` |
