@@ -33,6 +33,14 @@
       ],
       "centerEnd": [
         {
+          "id": "herdr-attention",
+          "type": "command",
+          "exec": "~/.config/omarchy/bar/scripts/herdr-attention",
+          "interval": 10,
+          "tooltip": "Agentes de herdr",
+          "onClick": "omarchy-launch-terminal herdr"
+        },
+        {
           "id": "omarchy.elsewhen",
           "cities": [
             {

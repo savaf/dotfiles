@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Widget de barra: agentes de herdr bloqueados o terminados (Waybar-JSON). Vacío si no hay ninguno
+# o si herdr no responde, para que el widget desaparezca de la barra.
+# Formato de `herdr agent list`: {"result":{"agents":[{"agent_status":"blocked|done|working|idle|unknown",
+# "name":..., "display_agent":..., "agent":...}]}}.
+list="$(herdr agent list 2>/dev/null)" || exit 0
+
+jq -c '
+  [.result.agents[]? | select(.agent_status == "blocked" or .agent_status == "done")] as $a
+  | if ($a | length) == 0 then empty
+    else {
+      text: "herdr \($a | length)",
+      tooltip: ($a | map("\(.agent_status): \(.name // .display_agent // .agent // "agente")") | join("\n")),
+      class: "attention"
+    } end' <<<"${list}" 2>/dev/null || true
