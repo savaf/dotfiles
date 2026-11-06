@@ -149,6 +149,9 @@ replaces the symlink with a regular file, so the repo stops receiving the change
 next `stow` aborts with a conflict. Known cases on Omarchy: `~/.config/omarchy/shell.json`
 (any `omarchy bar …` command) and `~/.config/hypr/monitors.lua` (the quattro upgrade).
 
+On Omarchy the installer enables a systemd user watcher that re-syncs `shell.json` and
+`monitors.lua` with the repo when this happens; see section 12 of [`omarchy.md`](omarchy.md).
+
 Find every package file that is no longer a link to the repo:
 
 ```sh

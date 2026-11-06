@@ -144,6 +144,163 @@ Verificación:
 hyprctl devices -j | jq -r '.keyboards[] | "\(.name)\t\(.layout)\t\(.active_keymap)"'
 ```
 
+## 8. Bitwarden al iniciar sesión
+
+`omarchy/.config/hypr/autostart.lua` lanza `bitwarden-desktop` con
+`o.launch_on_start`. El `~/.config/autostart/bitwarden.desktop` que crea la
+propia app **no se versiona** (la app lo reescribe).
+
+**Paso manual, una vez por máquina**: en Bitwarden, Ajustes → Opciones, desmarca
+"Iniciar al abrir sesión" (`openAtLogin`) y borra
+`~/.config/autostart/bitwarden.desktop` si sigue ahí. Si no, Bitwarden arranca
+dos veces (Hyprland y XDG autostart).
+
+**Minimizado en la bandeja**: no hay bandera de línea de comandos (el wrapper
+`/usr/bin/bitwarden-desktop` solo pasa `$@` a Electron). Es un ajuste de la app:
+Ajustes → Opciones, activa "Mostrar icono de bandeja" y luego "Iniciar en la
+bandeja" (`startToTray`, requiere lo primero). Sin él, la ventana flotante se abre
+en cada inicio. Comprobado por lectura del paquete; no se ha lanzado para probarlo.
+
+## 9. Layouts de workspace, dock y ventana cuadrada
+
+- **Layout**: `dwindle` en todos los workspaces (default de Omarchy, sin tocar). El workspace 1
+  de cada monitor es **flotante** y se declara en `hypr/looknfeel.lua` con `o.workspace_mode`.
+  Omarchy numera en bloques de diez por monitor, así que el primero de cada uno es 1, 11 y 21
+  (se declaran los tres). En los workspaces flotantes se muestran el dock y las barras de título.
+- **Convivencia con el estado local**: `~/.local/state/omarchy/workspace-layouts/<id>.lua`
+  (lo que escribe `omarchy-hyprland-workspace-layout-toggle`, p. ej. `11.lua`) se carga después
+  y llama a la misma función; repetir un id con el mismo modo es inocuo. Para que `o.workspace_mode`
+  exista al cargar `looknfeel.lua`, el archivo hace `require("default.hypr.workspace-modes")`.
+- **Dock**: abajo y siempre visible (`dock` en `shell.json`). Si molesta: `omarchy dock autohide on`.
+  Atajos de Omarchy sin cambios: `SUPER+L` (layout), `SUPER+ALT+L`, `SUPER+M` (minimizar).
+- **Ratio 1:1 (ventana única cuadrada y centrada)**: `layout.single_window_aspect_ratio = {1, 1}`
+  solo si `/etc/hostname` es `andrea` (ultrawide 3840x1080). El ThinkPad no lo activa. El toggle de
+  sesión de Omarchy (`omarchy-hyprland-window-single-square-aspect-toggle`) vive en
+  `~/.local/state/omarchy/toggles/hypr/` y no se versiona.
+- **No versionado**: `~/.local/state/omarchy/workspace-layouts/*.lua`, `toggles/hypr/*.lua` y
+  `monitor-workspaces` (qué bloque tiene cada monitor) son estado por máquina.
+- Test: `scripts/test-hypr-looknfeel.sh` (sintaxis y condición por hostname con stubs).
+
+## 10. Tailscale
+
+Solo conectividad entre ANDREA y el ThinkPad, más Taildrop. Servidor de coordinación oficial
+de Tailscale (cuenta personal gratuita), sin Headscale. Sin exit node ni Tailscale SSH: el SSH
+sigue por llaves (`docs/git-and-ssh.md`). `tailscale` **no** está en `packages/*.txt`: lo
+instala el propio Omarchy.
+
+**Paso manual, una vez por máquina**:
+
+```bash
+omarchy install service tailscale
+```
+
+El script instala el paquete `tailscale` por pacman, activa `tailscaled`, ejecuta
+`tailscale up --accept-routes` (abre el login en el navegador), te configura como operador,
+activa el servicio de usuario de Taildrop (recibe en `~/Downloads`), añade el plugin de la
+barra e instala la webapp de administración.
+
+**Aviso con el vigilante de sincronización**: el script reescribe
+`~/.config/omarchy/shell.json` con `mv`, lo que sustituye el symlink de stow por un fichero
+real. Ejecútalo con el vigilante (`sync-config`, units en `omarchy/.config/systemd/user/`) ya
+activo, o revisa `git diff` justo después. El repo ya trae el widget en la barra
+(`omarchy.tailscale` tras `omarchy.network`, refresco por defecto de 30 s), así que el diff
+debería quedar vacío o casi.
+
+**El widget** (`omarchy.tailscale`) solo necesita la CLI de Tailscale y `wl-copy`: muestra el
+estado de la conexión y los dispositivos de la tailnet. Archivos entre máquinas:
+`omarchy tailscale send` y `omarchy tailscale receive`.
+
+**Quitarlo**: `omarchy remove service tailscale`, y borra el bloque `omarchy.tailscale` de
+`bar.layout.right` en `omarchy/.config/omarchy/shell.json` (de nuevo con el vigilante activo o
+revisando `git diff`).
+
+## 11. Marca por hostname (About y fastfetch)
+
+Cada máquina muestra su hostname en letras grandes: `about.andrea.txt` y `about.songbird.txt` en
+`omarchy/.config/omarchy/branding/` (wordmarks de `omarchy ascii`, partidos en dos líneas para caber en
+la caja de 54x26 de About). El portátil se asume `songbird` (sin confirmar con `hostname`).
+
+- `~/.local/bin/branding-select` enlaza `~/.config/omarchy/branding/about.txt` al About del hostname
+  actual. Corre desde el bootstrap y desde `hypr/autostart.lua`. Un About suelto previo se respalda en
+  `about.txt.bak` (si ya existe, el suelto va a `about.txt.<marca de tiempo>.bak` sin pisarlo); un hostname sin archivo avisa por stderr y no toca nada.
+- `omarchy branding about text|image` escribe a través del enlace, o sea en el archivo versionado
+  (se ve en `git diff`). `omarchy branding about reset` copia el genérico sobre el archivo versionado:
+  es destructivo, revisa `git diff` después.
+- `omarchy/.config/fastfetch/config.jsonc` es copia de la global (`/etc/fastfetch`) y lee `about.txt`,
+  así que sigue a la máquina. Al existir una config propia, `omarchy launch about` deja de ajustar la
+  ventana y de animar el logo (lo trata como configuración personalizada).
+- El screensaver (`screensaver.txt`) es común y no cambia.
+- La lógica de hostname vive en dos sitios: este selector y el chequeo del ratio 1:1 en `hypr/looknfeel.lua`; una máquina nueva toca ambos.
+- Nuevo equipo: añade `about.<hostname>.txt` (máx. 54 columnas x 26 filas; `scripts/test-branding.sh` lo
+  comprueba).
+
+**Pantalla de arranque (Plymouth).** Toca el sistema y pide `sudo`, así que no se aplica sola: en cada
+máquina corre `plymouth-branding preview` (genera el logo en pixel art con el verde de Omarchy y tu hostname, y una imagen en
+`~/.local/state/omarchy/branding/plymouth-preview.png`, sin tocar el sistema) y, si te gusta,
+`plymouth-branding apply`. Usa el fondo y el texto del tema activo. Para volver al valor por defecto:
+`plymouth-branding reset`. Se ve en el próximo arranque.
+
+## 12. Vigilante de `shell.json` y `monitors.lua`
+
+Omarchy reescribe esos dos archivos con temporal + `mv` y rompe el symlink de stow (ver Notes).
+Un observador de systemd de usuario lo repara solo, sin commit: el cambio queda como `git diff`.
+
+- **Piezas** (paquete `omarchy/`): `sync-config-omarchy.path` (vigila `~/.config/omarchy`) y
+  `sync-config-hypr.path` (vigila `~/.config/hypr`) disparan `sync-config.service` (oneshot), que
+  corre `~/.local/bin/sync-config-watch`. Ese wrapper llama a `sync-config` para
+  `shell.json` y `monitors.lua`: si dejaron de ser symlink copia su contenido al repo (un `.json`
+  inválido no se copia y se avisa en el journal) y restaura el symlink relativo. El repo se deduce
+  del propio script (symlink de stow), no hay ruta fija.
+- **Activación**: `ensure_sync_config_watcher` (`scripts/modules/sync-config-watcher.sh`) la hace
+  el bootstrap tras el stow, solo en Omarchy: `daemon-reload` y `enable --now` de las dos `.path`.
+  Idempotente. En otros sistemas no se toca systemd.
+- **`stow -R` no lo dispara de forma dañina**: `sync-config` no hace nada si el archivo falta
+  (fase unstow) o ya es symlink (fase restow), así que las ráfagas de eventos son no-ops;
+  `StartLimitIntervalSec=0` evita que systemd corte la `.path` por tantas activaciones. El
+  script no es interactivo, así que el `mv -i` del alias no interviene.
+- **Cubre solo** `~/.config/omarchy/shell.json` y `~/.config/hypr/monitors.lua`. Otro archivo
+  enlazado que Omarchy reescriba hay que añadirlo a `sync-config-watch`.
+- **Ver / desactivar**: `systemctl --user status sync-config-omarchy.path sync-config-hypr.path`,
+  `journalctl --user -u sync-config.service`; apagar con
+  `systemctl --user disable --now sync-config-omarchy.path sync-config-hypr.path`. Sin él,
+  sigue valiendo la reparación manual de `docs/shell-and-dotfiles.md`.
+- Test: `scripts/test-sync-config-watcher.sh` (wrapper, unidades con `systemd-analyze verify` e
+  instalador con `systemctl` falso).
+
+## 13. Aviso de agentes de herdr en la barra
+
+Widget de comando `herdr-attention` en `bar.layout.centerEnd` de `shell.json`: muestra `herdr N` con los
+agentes bloqueados (`blocked`) o terminados (`done`), con el detalle en el tooltip, y no muestra nada si
+no hay ninguno (o si herdr no responde). Sirve para enterarse aunque herdr (`hw`) esté tapado por otra
+ventana. Un clic ejecuta `omarchy-launch-terminal herdr`, que adjunta la sesión persistente.
+
+- Script: `omarchy/.config/omarchy/bar/scripts/herdr-attention`. Ejecuta `herdr agent list` (solo lectura)
+  y filtra `result.agents[].agent_status` con `jq`. Estados de herdr: `idle`, `working`, `blocked`, `done`,
+  `unknown`.
+- `interval` 10 s: un `herdr` + un `jq` cada 10 s, sin demonio.
+- Convive con el toast `[ui.toast] delivery = "system"` (`docs/herdr.md`); este es un indicador
+  persistente, el toast avisa una vez.
+- Test: `scripts/test-herdr-attention.sh` (con `herdr` falso en el PATH). Mostrar el widget en vivo
+  requiere recargar la barra, que hace el integrador.
+
+## 14. Reproductor de música propio (`savaf.media`)
+
+Copia del plugin `omarchy.media` en `omarchy/.config/omarchy/plugins/savaf.media/` (el id sigue la
+convención `<usuario>.media` de `omarchy plugin clone`). La barra usa la copia en lugar del original:
+`shell.json` apunta a `savaf.media` en `bar.layout.center`, y lleva `omarchy.media` en `disabledPlugins` y
+`savaf.media` en `cloneSourceRestores`, que es lo que escribe `omarchy plugin clone` (se replicó a mano,
+sin ejecutarlo). La carpeta queda enlazada en `~/.config/omarchy/plugins/` con Stow.
+
+- Cambios sobre el original (`BarWidget.qml`): ancho máximo de la etiqueta 180 -> 320 px, y botones
+  visibles anterior / play-pausa / siguiente (en barra vertical solo play-pausa). Se conservan la rueda
+  (anterior/siguiente), el clic medio (siguiente), el clic derecho (popup con carátula) y el clic izquierdo
+  sobre la etiqueta (play/pausa).
+- **La copia no recibe las actualizaciones del original.** Tras actualizar Omarchy, compara con
+  `diff -ru /usr/share/omarchy/shell/plugins/services/media omarchy/.config/omarchy/plugins/savaf.media`
+  y porta a mano lo que interese. Para volver al original: `omarchy plugin enable omarchy.media`.
+- Validación: `omarchy plugin validate omarchy/.config/omarchy/plugins/savaf.media` (solo lectura). Verlo en
+  la barra con música real requiere recargar el shell, que hace el integrador.
+
 ## Notes
 
 - **Omarchy reescribe algunos ficheros que stow enlaza.** `omarchy-shell-config` (detrás de
@@ -261,7 +418,7 @@ hyprctl devices -j | jq -r '.keyboards[] | "\(.name)\t\(.layout)\t\(.active_keym
   El paquete stow `omarchy` aporta dos: `openrgb` y `claude`.
 - RGB: el paquete stow `omarchy` instala `~/.local/bin/rgb`, que apaga todo el RGB
   del PC o lo devuelve al color accent del tema activo.
-  - `rgb toggle` (por defecto) alterna. Es lo que invoca la fila **Style → RGB** del
+  - `rgb toggle` (por defecto) alterna. Es lo que invoca la fila **Appearance → RGB** del
     menú, declarada en `~/.config/omarchy/extensions/omarchy-menu.jsonc`.
   - `rgb off` y `rgb on` fuerzan un estado; `rgb theme` reaplica el tema salvo que lo
     hayas apagado a mano.
@@ -288,6 +445,15 @@ hyprctl devices -j | jq -r '.keyboards[] | "\(.name)\t\(.layout)\t\(.active_keym
   tema están en el `case` de la función `accent()` de `rgb`. El módulo `i2c-dev`
   (RGB de RAM/placa por SMBus) lo persiste el bootstrap en
   `/etc/modules-load.d/i2c-dev.conf`.
+- Menú: la extensión `~/.config/omarchy/extensions/omarchy-menu.jsonc` añade
+  **Appearance → RGB** (`appearance.rgb`, alias antiguo `style`) y **System → Work
+  workspaces** (`system.hw`), que abre `hw` en una terminal nueva con
+  `omarchy-launch-terminal zsh -ic hw` (`hw` es una función de zsh, de ahí el `-ic`).
+  Sin atajo de teclado.
+- Branding: los archivos de `~/.config/omarchy/branding/` son enlaces al repo, así que
+  `omarchy branding about|screensaver text|image` escribe en el archivo versionado
+  (se ve en `git diff`). **`omarchy branding reset` lo pisa** con el logo por defecto de
+  Omarchy: revisa el diff o restaura con git después.
 - Refrigeración y Kraken (CoolerControl): `coolercontrol` (en `arch-apps.txt`)
   controla el AIO NZXT Kraken —bomba, ventiladores y **pantalla LCD**— vía su
   daemon `coolercontrold`, que el bootstrap habilita (`systemctl enable --now`).

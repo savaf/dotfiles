@@ -1,0 +1,9 @@
+[Unit]
+Description=Vigila ~/.config/omarchy por reemplazos de archivos enlazados al repo
+
+[Path]
+PathChanged=%h/.config/omarchy
+Unit=sync-config.service
+
+[Install]
+WantedBy=paths.target

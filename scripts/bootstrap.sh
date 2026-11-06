@@ -85,9 +85,12 @@ main() {
   ensure_stow
   ensure_herdr
   stow_packages
+  # Marca por hostname (About): enlaza about.<hostname>.txt; avisa y sigue si no hay.
+  [[ "${OS}" == "omarchy" ]] && { "${ROOT_DIR}/omarchy/.local/bin/branding-select" || true; }
   link_claude_profiles
   ensure_clef
   ensure_coolercontrol_mode_watcher
+  ensure_sync_config_watcher
   ensure_storage_mounts
 
   # Node antes del sync para que Mason pueda instalar el LSP de TypeScript.

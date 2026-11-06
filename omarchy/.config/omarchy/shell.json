@@ -1,30 +1,52 @@
 {
   "bar": {
-    "centerAnchor": "omarchy.clock",
+    "background": "none",
     "layout": {
       "center": [
         {
-          "id": "omarchy.indicators"
-        },
-        {
           "birthYear": 1996,
-          "format": "ddd d MMM HH:mm",
+          "format": "ddd d MMM h:mm AP",
           "formatAlt": "d MMMM 'W'ww yyyy",
           "id": "omarchy.clock",
           "lifeExpectancy": 70,
           "verticalFormat": "HH\n—\nmm"
-        },
+        }
+      ],
+      "centerBegin": [
         {
-          "id": "omarchy.keyboard-layout"
+          "id": "omarchy.indicators"
+        }
+      ],
+      "centerEnd": [
+        {
+          "cities": [
+            {
+              "name": "Santo Domingo",
+              "zone": "America/Santo_Domingo"
+            },
+            {
+              "name": "New Jersey",
+              "zone": "America/New_York"
+            }
+          ],
+          "id": "omarchy.elsewhen"
         },
         {
           "id": "omarchy.weather"
         },
         {
-          "id": "omarchy.media"
+          "id": "savaf.media"
         },
         {
           "id": "omarchy.system-update"
+        },
+        {
+          "exec": "~/.config/omarchy/bar/scripts/herdr-attention",
+          "id": "herdr-attention",
+          "interval": 10,
+          "onClick": "omarchy-launch-terminal herdr",
+          "tooltip": "Agentes de herdr",
+          "type": "command"
         }
       ],
       "left": [
@@ -37,16 +59,25 @@
       ],
       "right": [
         {
-          "id": "omarchy.agents"
+          "id": "omarchy.tray"
         },
         {
-          "id": "omarchy.tray"
+          "id": "superwhisper.panel"
+        },
+        {
+          "id": "omarchy.keyboard-layout"
+        },
+        {
+          "id": "omarchy.agents"
         },
         {
           "id": "omarchy.bluetooth"
         },
         {
           "id": "omarchy.network"
+        },
+        {
+          "id": "omarchy.tailscale"
         },
         {
           "id": "omarchy.audio"
@@ -60,8 +91,26 @@
         }
       ]
     },
-    "position": "top",
-    "transparent": true
+    "position": "top"
+  },
+  "cloneSourceRestores": [
+    "io.github.sirjul1337.lock-explorer",
+    "savaf.media"
+  ],
+  "disabledPlugins": [
+    "omarchy.lock",
+    "omarchy.media"
+  ],
+  "dock": {
+    "pinned": [
+      "org.gnome.Nautilus",
+      "brave-browser",
+      "foot",
+      "obsidian",
+      "Discord",
+      "steam"
+    ],
+    "position": "bottom"
   },
   "idle": {
     "lock": 300,
@@ -69,15 +118,9 @@
   },
   "plugins": [
     {
-      "id": "io.github.sirjul1337.lock-explorer",
-      "design": "sheet"
+      "design": "sheet",
+      "id": "io.github.sirjul1337.lock-explorer"
     }
   ],
-  "version": 1,
-  "disabledPlugins": [
-    "omarchy.lock"
-  ],
-  "cloneSourceRestores": [
-    "io.github.sirjul1337.lock-explorer"
-  ]
+  "version": 1
 }
