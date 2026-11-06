@@ -181,6 +181,39 @@ en cada inicio. Comprobado por lectura del paquete; no se ha lanzado para probar
   `monitor-workspaces` (qué bloque tiene cada monitor) son estado por máquina.
 - Test: `scripts/test-hypr-looknfeel.sh` (sintaxis y condición por hostname con stubs).
 
+## 10. Tailscale
+
+Solo conectividad entre ANDREA y el ThinkPad, más Taildrop. Servidor de coordinación oficial
+de Tailscale (cuenta personal gratuita), sin Headscale. Sin exit node ni Tailscale SSH: el SSH
+sigue por llaves (`docs/git-and-ssh.md`). `tailscale` **no** está en `packages/*.txt`: lo
+instala el propio Omarchy.
+
+**Paso manual, una vez por máquina**:
+
+```bash
+omarchy install service tailscale
+```
+
+El script instala el paquete `tailscale` por pacman, activa `tailscaled`, ejecuta
+`tailscale up --accept-routes` (abre el login en el navegador), te configura como operador,
+activa el servicio de usuario de Taildrop (recibe en `~/Downloads`), añade el plugin de la
+barra e instala la webapp de administración.
+
+**Aviso con el vigilante de sincronización**: el script reescribe
+`~/.config/omarchy/shell.json` con `mv`, lo que sustituye el symlink de stow por un fichero
+real. Ejecútalo con el vigilante (`sync-config`, units en `omarchy/.config/systemd/user/`) ya
+activo, o revisa `git diff` justo después. El repo ya trae el widget en la barra
+(`omarchy.tailscale` tras `omarchy.network`, refresco por defecto de 30 s), así que el diff
+debería quedar vacío o casi.
+
+**El widget** (`omarchy.tailscale`) solo necesita la CLI de Tailscale y `wl-copy`: muestra el
+estado de la conexión y los dispositivos de la tailnet. Archivos entre máquinas:
+`omarchy tailscale send` y `omarchy tailscale receive`.
+
+**Quitarlo**: `omarchy remove service tailscale`, y borra el bloque `omarchy.tailscale` de
+`bar.layout.right` en `omarchy/.config/omarchy/shell.json` (de nuevo con el vigilante activo o
+revisando `git diff`).
+
 ## Notes
 
 - **Omarchy reescribe algunos ficheros que stow enlaza.** `omarchy-shell-config` (detrás de
