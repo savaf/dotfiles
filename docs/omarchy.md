@@ -144,6 +144,26 @@ Verificación:
 hyprctl devices -j | jq -r '.keyboards[] | "\(.name)\t\(.layout)\t\(.active_keymap)"'
 ```
 
+## 8. Layouts de workspace, dock y ventana cuadrada
+
+- **Layout**: `dwindle` en todos los workspaces (default de Omarchy, sin tocar). El workspace 1
+  de cada monitor es **flotante** y se declara en `hypr/looknfeel.lua` con `o.workspace_mode`.
+  Omarchy numera en bloques de diez por monitor, así que el primero de cada uno es 1, 11 y 21
+  (se declaran los tres). En los workspaces flotantes se muestran el dock y las barras de título.
+- **Convivencia con el estado local**: `~/.local/state/omarchy/workspace-layouts/<id>.lua`
+  (lo que escribe `omarchy-hyprland-workspace-layout-toggle`, p. ej. `11.lua`) se carga después
+  y llama a la misma función; repetir un id con el mismo modo es inocuo. Para que `o.workspace_mode`
+  exista al cargar `looknfeel.lua`, el archivo hace `require("default.hypr.workspace-modes")`.
+- **Dock**: abajo y siempre visible (`dock` en `shell.json`). Si molesta: `omarchy dock autohide on`.
+  Atajos de Omarchy sin cambios: `SUPER+L` (layout), `SUPER+ALT+L`, `SUPER+M` (minimizar).
+- **Ratio 1:1 (ventana única cuadrada y centrada)**: `layout.single_window_aspect_ratio = {1, 1}`
+  solo si `/etc/hostname` es `andrea` (ultrawide 3840x1080). El ThinkPad no lo activa. El toggle de
+  sesión de Omarchy (`omarchy-hyprland-window-single-square-aspect-toggle`) vive en
+  `~/.local/state/omarchy/toggles/hypr/` y no se versiona.
+- **No versionado**: `~/.local/state/omarchy/workspace-layouts/*.lua`, `toggles/hypr/*.lua` y
+  `monitor-workspaces` (qué bloque tiene cada monitor) son estado por máquina.
+- Test: `scripts/test-hypr-looknfeel.sh` (sintaxis y condición por hostname con stubs).
+
 ## Notes
 
 - **Omarchy reescribe algunos ficheros que stow enlaza.** `omarchy-shell-config` (detrás de
