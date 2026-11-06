@@ -50,3 +50,25 @@ cat ~/.ssh/id_ed25519.pub      # copy this
 ```sh
 ssh -T git@github.com
 ```
+
+## Bitwarden SSH agent (Omarchy)
+
+Las llaves SSH viven solo en el vault de Bitwarden; nunca en disco. El agente del
+escritorio (`pacman -S bitwarden`, binario `bitwarden-desktop`) crea el socket
+`$HOME/.bitwarden-ssh-agent.sock`.
+
+- **`SSH_AUTH_SOCK`**: una sola definición, en `omarchy/.config/uwsm/env`
+  (→ `~/.config/uwsm/env`), para que la vean también las apps gráficas. No la
+  redefinas en `.bashrc`/`.zshrc`: una ruta distinta pisa la correcta.
+- **Autostart**: `omarchy/.config/hypr/autostart.lua` lanza `bitwarden-desktop`.
+  Hyprland usa la config Lua; un `autostart.conf` se ignora.
+- **`~/.ssh/config`** (paquete `ssh`): cada `Host` apunta a la llave **pública**
+  con `IdentitiesOnly yes`, así el agente ofrece solo esa llave.
+- **Llaves públicas**: exporta `github.pub` desde Bitwarden (campo *Public key*) a
+  `ssh/.ssh/github.pub` y commitéala. Nunca commitees una llave privada.
+- **Firma de commits**: `git/.gitconfig` usa `gpg.format = ssh` con
+  `~/.ssh/github.pub`. Registra la misma llave en GitHub como *Signing key*.
+  Cada commit pide aprobación en Bitwarden (abierto y desbloqueado).
+- Tras el bootstrap, cierra sesión y vuelve a entrar para que uwsm cargue el env.
+
+Comprobar: `echo $SSH_AUTH_SOCK`, `ssh-add -L`, `ssh -T git@github.com`.
