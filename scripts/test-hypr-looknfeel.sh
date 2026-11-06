@@ -6,10 +6,18 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FILE="${ROOT_DIR}/omarchy/.config/hypr/looknfeel.lua"
 
-luac -p "${FILE}"
+# Lua suelto o versionado (Debian/Ubuntu instalan lua5.4 y luac5.4). Sin Lua se omite, como mise en test-bootstrap.
+LUA="$(command -v lua || command -v lua5.4 || true)"
+LUAC="$(command -v luac || command -v luac5.4 || true)"
+if [[ -z "${LUA}" || -z "${LUAC}" ]]; then
+  echo "SKIP: lua/luac no instalado; no se comprueba looknfeel.lua"
+  exit 0
+fi
+
+"${LUAC}" -p "${FILE}"
 
 run() { # $1 hostname → imprime "modes=<ids> ratio=<r>"
-  lua - "${FILE}" "$1" <<'LUA'
+  "${LUA}" - "${FILE}" "$1" <<'LUA'
 local file, host = arg[1], arg[2]
 local modes, ratio = {}, "none"
 o = {
