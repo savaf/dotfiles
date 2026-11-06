@@ -233,6 +233,33 @@ la caja de 54x26 de About). El portátil se asume `songbird` (sin confirmar con 
 - Nuevo equipo: añade `about.<hostname>.txt` (máx. 54 columnas x 26 filas; `scripts/test-branding.sh` lo
   comprueba).
 
+## 12. Vigilante de `shell.json` y `monitors.lua`
+
+Omarchy reescribe esos dos archivos con temporal + `mv` y rompe el symlink de stow (ver Notes).
+Un observador de systemd de usuario lo repara solo, sin commit: el cambio queda como `git diff`.
+
+- **Piezas** (paquete `omarchy/`): `sync-config-omarchy.path` (vigila `~/.config/omarchy`) y
+  `sync-config-hypr.path` (vigila `~/.config/hypr`) disparan `sync-config.service` (oneshot), que
+  corre `~/.local/bin/sync-config-watch`. Ese wrapper llama a `sync-config` para
+  `shell.json` y `monitors.lua`: si dejaron de ser symlink copia su contenido al repo (un `.json`
+  inválido no se copia y se avisa en el journal) y restaura el symlink relativo. El repo se deduce
+  del propio script (symlink de stow), no hay ruta fija.
+- **Activación**: `ensure_sync_config_watcher` (`scripts/modules/sync-config-watcher.sh`) la hace
+  el bootstrap tras el stow, solo en Omarchy: `daemon-reload` y `enable --now` de las dos `.path`.
+  Idempotente. En otros sistemas no se toca systemd.
+- **`stow -R` no lo dispara de forma dañina**: `sync-config` no hace nada si el archivo falta
+  (fase unstow) o ya es symlink (fase restow), así que las ráfagas de eventos son no-ops;
+  `StartLimitIntervalSec=0` evita que systemd corte la `.path` por tantas activaciones. El
+  script no es interactivo, así que el `mv -i` del alias no interviene.
+- **Cubre solo** `~/.config/omarchy/shell.json` y `~/.config/hypr/monitors.lua`. Otro archivo
+  enlazado que Omarchy reescriba hay que añadirlo a `sync-config-watch`.
+- **Ver / desactivar**: `systemctl --user status sync-config-omarchy.path sync-config-hypr.path`,
+  `journalctl --user -u sync-config.service`; apagar con
+  `systemctl --user disable --now sync-config-omarchy.path sync-config-hypr.path`. Sin él,
+  sigue valiendo la reparación manual de `docs/shell-and-dotfiles.md`.
+- Test: `scripts/test-sync-config-watcher.sh` (wrapper, unidades con `systemd-analyze verify` e
+  instalador con `systemctl` falso).
+
 ## Notes
 
 - **Omarchy reescribe algunos ficheros que stow enlaza.** `omarchy-shell-config` (detrás de

@@ -90,6 +90,7 @@ main() {
   link_claude_profiles
   ensure_clef
   ensure_coolercontrol_mode_watcher
+  ensure_sync_config_watcher
   ensure_storage_mounts
 
   # Node antes del sync para que Mason pueda instalar el LSP de TypeScript.

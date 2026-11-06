@@ -1,0 +1,9 @@
+[Unit]
+Description=Trae al repo los archivos de Omarchy que dejaron de ser symlink (shell.json, monitors.lua)
+# Un stow -R toca ~/.config/hypr muchas veces seguidas: sin esto systemd cortaría el .path.
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+# Corre no interactivo y sin autocommit: el cambio queda como pendiente en git.
+ExecStart=%h/.local/bin/sync-config-watch

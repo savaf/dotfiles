@@ -1,0 +1,9 @@
+[Unit]
+Description=Vigila ~/.config/hypr por reemplazos de archivos enlazados al repo
+
+[Path]
+PathChanged=%h/.config/hypr
+Unit=sync-config.service
+
+[Install]
+WantedBy=paths.target
