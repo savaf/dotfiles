@@ -3,7 +3,7 @@
 # de Omarchy.
 #
 # Uso: rgb [toggle|off|on|theme]
-#   toggle  alterna; es lo que invoca la entrada "Style > RGB" del menú (por defecto)
+#   toggle  alterna; es lo que invoca la entrada "Appearance > RGB" del menú (por defecto)
 #   off     apaga los LEDs
 #   on      vuelve al color del tema actual
 #   theme   como `on`, pero no hace nada si lo dejaste apagado a mano; lo invoca

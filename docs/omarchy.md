@@ -144,7 +144,7 @@ Verificación:
 hyprctl devices -j | jq -r '.keyboards[] | "\(.name)\t\(.layout)\t\(.active_keymap)"'
 ```
 
-## 8. Marca por hostname (About y fastfetch)
+## 10. Marca por hostname (About y fastfetch)
 
 Cada máquina muestra su hostname en letras grandes: `about.andrea.txt` y `about.songbird.txt` en
 `omarchy/.config/omarchy/branding/` (wordmarks de `omarchy ascii`, partidos en dos líneas para caber en
@@ -162,6 +162,43 @@ la caja de 54x26 de About). El portátil se asume `songbird` (sin confirmar con 
 - El screensaver (`screensaver.txt`) es común y no cambia.
 - Nuevo equipo: añade `about.<hostname>.txt` (máx. 54 columnas x 26 filas; `scripts/test-branding.sh` lo
   comprueba).
+
+## 8. Bitwarden al iniciar sesión
+
+`omarchy/.config/hypr/autostart.lua` lanza `bitwarden-desktop` con
+`o.launch_on_start`. El `~/.config/autostart/bitwarden.desktop` que crea la
+propia app **no se versiona** (la app lo reescribe).
+
+**Paso manual, una vez por máquina**: en Bitwarden, Ajustes → Opciones, desmarca
+"Iniciar al abrir sesión" (`openAtLogin`) y borra
+`~/.config/autostart/bitwarden.desktop` si sigue ahí. Si no, Bitwarden arranca
+dos veces (Hyprland y XDG autostart).
+
+**Minimizado en la bandeja**: no hay bandera de línea de comandos (el wrapper
+`/usr/bin/bitwarden-desktop` solo pasa `$@` a Electron). Es un ajuste de la app:
+Ajustes → Opciones, activa "Mostrar icono de bandeja" y luego "Iniciar en la
+bandeja" (`startToTray`, requiere lo primero). Sin él, la ventana flotante se abre
+en cada inicio. Comprobado por lectura del paquete; no se ha lanzado para probarlo.
+
+## 9. Layouts de workspace, dock y ventana cuadrada
+
+- **Layout**: `dwindle` en todos los workspaces (default de Omarchy, sin tocar). El workspace 1
+  de cada monitor es **flotante** y se declara en `hypr/looknfeel.lua` con `o.workspace_mode`.
+  Omarchy numera en bloques de diez por monitor, así que el primero de cada uno es 1, 11 y 21
+  (se declaran los tres). En los workspaces flotantes se muestran el dock y las barras de título.
+- **Convivencia con el estado local**: `~/.local/state/omarchy/workspace-layouts/<id>.lua`
+  (lo que escribe `omarchy-hyprland-workspace-layout-toggle`, p. ej. `11.lua`) se carga después
+  y llama a la misma función; repetir un id con el mismo modo es inocuo. Para que `o.workspace_mode`
+  exista al cargar `looknfeel.lua`, el archivo hace `require("default.hypr.workspace-modes")`.
+- **Dock**: abajo y siempre visible (`dock` en `shell.json`). Si molesta: `omarchy dock autohide on`.
+  Atajos de Omarchy sin cambios: `SUPER+L` (layout), `SUPER+ALT+L`, `SUPER+M` (minimizar).
+- **Ratio 1:1 (ventana única cuadrada y centrada)**: `layout.single_window_aspect_ratio = {1, 1}`
+  solo si `/etc/hostname` es `andrea` (ultrawide 3840x1080). El ThinkPad no lo activa. El toggle de
+  sesión de Omarchy (`omarchy-hyprland-window-single-square-aspect-toggle`) vive en
+  `~/.local/state/omarchy/toggles/hypr/` y no se versiona.
+- **No versionado**: `~/.local/state/omarchy/workspace-layouts/*.lua`, `toggles/hypr/*.lua` y
+  `monitor-workspaces` (qué bloque tiene cada monitor) son estado por máquina.
+- Test: `scripts/test-hypr-looknfeel.sh` (sintaxis y condición por hostname con stubs).
 
 ## Notes
 
@@ -280,7 +317,7 @@ la caja de 54x26 de About). El portátil se asume `songbird` (sin confirmar con 
   El paquete stow `omarchy` aporta dos: `openrgb` y `claude`.
 - RGB: el paquete stow `omarchy` instala `~/.local/bin/rgb`, que apaga todo el RGB
   del PC o lo devuelve al color accent del tema activo.
-  - `rgb toggle` (por defecto) alterna. Es lo que invoca la fila **Style → RGB** del
+  - `rgb toggle` (por defecto) alterna. Es lo que invoca la fila **Appearance → RGB** del
     menú, declarada en `~/.config/omarchy/extensions/omarchy-menu.jsonc`.
   - `rgb off` y `rgb on` fuerzan un estado; `rgb theme` reaplica el tema salvo que lo
     hayas apagado a mano.
@@ -307,6 +344,15 @@ la caja de 54x26 de About). El portátil se asume `songbird` (sin confirmar con 
   tema están en el `case` de la función `accent()` de `rgb`. El módulo `i2c-dev`
   (RGB de RAM/placa por SMBus) lo persiste el bootstrap en
   `/etc/modules-load.d/i2c-dev.conf`.
+- Menú: la extensión `~/.config/omarchy/extensions/omarchy-menu.jsonc` añade
+  **Appearance → RGB** (`appearance.rgb`, alias antiguo `style`) y **System → Work
+  workspaces** (`system.hw`), que abre `hw` en una terminal nueva con
+  `omarchy-launch-terminal zsh -ic hw` (`hw` es una función de zsh, de ahí el `-ic`).
+  Sin atajo de teclado.
+- Branding: los archivos de `~/.config/omarchy/branding/` son enlaces al repo, así que
+  `omarchy branding about|screensaver text|image` escribe en el archivo versionado
+  (se ve en `git diff`). **`omarchy branding reset` lo pisa** con el logo por defecto de
+  Omarchy: revisa el diff o restaura con git después.
 - Refrigeración y Kraken (CoolerControl): `coolercontrol` (en `arch-apps.txt`)
   controla el AIO NZXT Kraken —bomba, ventiladores y **pantalla LCD**— vía su
   daemon `coolercontrold`, que el bootstrap habilita (`systemctl enable --now`).
