@@ -1,19 +1,15 @@
 {
-  "version": 1,
-  "idle": {
-    "lock": 300,
-    "screensaver": 150
-  },
   "bar": {
-    "position": "top",
     "background": "none",
     "layout": {
-      "left": [
+      "center": [
         {
-          "id": "omarchy.menu"
-        },
-        {
-          "id": "omarchy.workspaces"
+          "birthYear": 1996,
+          "format": "ddd d MMM h:mm AP",
+          "formatAlt": "d MMMM 'W'ww yyyy",
+          "id": "omarchy.clock",
+          "lifeExpectancy": 70,
+          "verticalFormat": "HH\n—\nmm"
         }
       ],
       "centerBegin": [
@@ -21,19 +17,8 @@
           "id": "omarchy.indicators"
         }
       ],
-      "center": [
-        {
-          "id": "omarchy.clock",
-          "birthYear": 1996,
-          "format": "ddd d MMM h:mm AP",
-          "formatAlt": "d MMMM 'W'ww yyyy",
-          "lifeExpectancy": 70,
-          "verticalFormat": "HH\n—\nmm"
-        }
-      ],
       "centerEnd": [
         {
-          "id": "omarchy.elsewhen",
           "cities": [
             {
               "name": "Santo Domingo",
@@ -43,7 +28,8 @@
               "name": "New Jersey",
               "zone": "America/New_York"
             }
-          ]
+          ],
+          "id": "omarchy.elsewhen"
         },
         {
           "id": "omarchy.weather"
@@ -55,12 +41,20 @@
           "id": "omarchy.system-update"
         },
         {
-          "id": "herdr-attention",
-          "type": "command",
           "exec": "~/.config/omarchy/bar/scripts/herdr-attention",
+          "id": "herdr-attention",
           "interval": 10,
+          "onClick": "omarchy-launch-terminal herdr",
           "tooltip": "Agentes de herdr",
-          "onClick": "omarchy-launch-terminal herdr"
+          "type": "command"
+        }
+      ],
+      "left": [
+        {
+          "id": "omarchy.menu"
+        },
+        {
+          "id": "omarchy.workspaces"
         }
       ],
       "right": [
@@ -96,10 +90,18 @@
           "showPercentage": true
         }
       ]
-    }
+    },
+    "position": "top"
   },
+  "cloneSourceRestores": [
+    "io.github.sirjul1337.lock-explorer",
+    "savaf.media"
+  ],
+  "disabledPlugins": [
+    "omarchy.lock",
+    "omarchy.media"
+  ],
   "dock": {
-    "position": "bottom",
     "pinned": [
       "org.gnome.Nautilus",
       "brave-browser",
@@ -107,20 +109,18 @@
       "obsidian",
       "Discord",
       "steam"
-    ]
+    ],
+    "position": "bottom"
+  },
+  "idle": {
+    "lock": 300,
+    "screensaver": 150
   },
   "plugins": [
     {
-      "id": "io.github.sirjul1337.lock-explorer",
-      "design": "sheet"
+      "design": "sheet",
+      "id": "io.github.sirjul1337.lock-explorer"
     }
   ],
-  "disabledPlugins": [
-    "omarchy.lock",
-    "omarchy.media"
-  ],
-  "cloneSourceRestores": [
-    "io.github.sirjul1337.lock-explorer",
-    "savaf.media"
-  ]
+  "version": 1
 }
