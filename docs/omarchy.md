@@ -144,6 +144,23 @@ Verificación:
 hyprctl devices -j | jq -r '.keyboards[] | "\(.name)\t\(.layout)\t\(.active_keymap)"'
 ```
 
+## 8. Bitwarden al iniciar sesión
+
+`omarchy/.config/hypr/autostart.lua` lanza `bitwarden-desktop` con
+`o.launch_on_start`. El `~/.config/autostart/bitwarden.desktop` que crea la
+propia app **no se versiona** (la app lo reescribe).
+
+**Paso manual, una vez por máquina**: en Bitwarden, Ajustes → Opciones, desmarca
+"Iniciar al abrir sesión" (`openAtLogin`) y borra
+`~/.config/autostart/bitwarden.desktop` si sigue ahí. Si no, Bitwarden arranca
+dos veces (Hyprland y XDG autostart).
+
+**Minimizado en la bandeja**: no hay bandera de línea de comandos (el wrapper
+`/usr/bin/bitwarden-desktop` solo pasa `$@` a Electron). Es un ajuste de la app:
+Ajustes → Opciones, activa "Mostrar icono de bandeja" y luego "Iniciar en la
+bandeja" (`startToTray`, requiere lo primero). Sin él, la ventana flotante se abre
+en cada inicio. Comprobado por lectura del paquete; no se ha lanzado para probarlo.
+
 ## Notes
 
 - **Omarchy reescribe algunos ficheros que stow enlaza.** `omarchy-shell-config` (detrás de
