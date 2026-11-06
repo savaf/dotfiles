@@ -222,7 +222,7 @@ la caja de 54x26 de About). El portátil se asume `songbird` (sin confirmar con 
 
 - `~/.local/bin/branding-select` enlaza `~/.config/omarchy/branding/about.txt` al About del hostname
   actual. Corre desde el bootstrap y desde `hypr/autostart.lua`. Un About suelto previo se respalda en
-  `about.txt.bak`; un hostname sin archivo avisa por stderr y no toca nada.
+  `about.txt.bak` (si ya existe, el suelto va a `about.txt.<marca de tiempo>.bak` sin pisarlo); un hostname sin archivo avisa por stderr y no toca nada.
 - `omarchy branding about text|image` escribe a través del enlace, o sea en el archivo versionado
   (se ve en `git diff`). `omarchy branding about reset` copia el genérico sobre el archivo versionado:
   es destructivo, revisa `git diff` después.
@@ -230,6 +230,7 @@ la caja de 54x26 de About). El portátil se asume `songbird` (sin confirmar con 
   así que sigue a la máquina. Al existir una config propia, `omarchy launch about` deja de ajustar la
   ventana y de animar el logo (lo trata como configuración personalizada).
 - El screensaver (`screensaver.txt`) es común y no cambia.
+- La lógica de hostname vive en dos sitios: este selector y el chequeo del ratio 1:1 en `hypr/looknfeel.lua`; una máquina nueva toca ambos.
 - Nuevo equipo: añade `about.<hostname>.txt` (máx. 54 columnas x 26 filas; `scripts/test-branding.sh` lo
   comprueba).
 
