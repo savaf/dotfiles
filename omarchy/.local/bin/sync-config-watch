@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
+# Sin `-e` a propósito: si un archivo falla, se siguen sincronizando los demás y el código de salida
+# se acumula en `rc`.
 set -uo pipefail
 
 # Lo lanza la unidad systemd sync-config.service. Sincroniza shell.json y monitors.lua con el repo.
 # El repo se deduce de este mismo script (stow lo enlaza al checkout), porque Omarchy puede dejar
 # los archivos vivos como ficheros sueltos y ya no apuntan a ningún sitio.
-bin="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
-pkg="$(realpath "${bin}/../..")"
+bin_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+package_dir="$(realpath "${bin_dir}/../..")"
 rc=0
 for rel in .config/omarchy/shell.json .config/hypr/monitors.lua; do
-  "${bin}/sync-config" "${HOME}/${rel}" "${pkg}/${rel}" || rc=1
+  "${bin_dir}/sync-config" "${HOME}/${rel}" "${package_dir}/${rel}" || rc=1
 done
 exit "${rc}"

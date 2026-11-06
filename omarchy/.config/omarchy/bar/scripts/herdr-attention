@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Widget de barra: agentes de herdr bloqueados o terminados (Waybar-JSON). Vacío si no hay ninguno
 # o si herdr no responde, para que el widget desaparezca de la barra.
+# Sin `set -euo pipefail` a propósito: cualquier fallo debe terminar en salida vacía con código 0,
+# para que el widget desaparezca en vez de mostrar un error.
 # Formato de `herdr agent list`: {"result":{"agents":[{"agent_status":"blocked|done|working|idle|unknown",
 # "name":..., "display_agent":..., "agent":...}]}}.
 list="$(herdr agent list 2>/dev/null)" || exit 0

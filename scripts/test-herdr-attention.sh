@@ -52,5 +52,6 @@ jq -e '.version' "${SHELL_JSON}" >/dev/null || fail "shell.json inválido"
 jq -e '.bar.layout.centerEnd[] | select(.id=="herdr-attention")
   | .type=="command" and .interval>=10 and (.onClick|test("omarchy-launch-terminal")) and (.onClick|test("herdr"))
     and (.exec|test("herdr-attention"))' "${SHELL_JSON}" | grep -q true || fail "falta la entrada herdr-attention en centerEnd"
+jq -e '.bar.layout.centerEnd[-1].id=="herdr-attention"' "${SHELL_JSON}" >/dev/null || fail "herdr-attention debe ir al final de centerEnd"
 
 echo "ok"
