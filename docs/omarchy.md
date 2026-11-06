@@ -160,7 +160,6 @@ dos veces (Hyprland y XDG autostart).
 Ajustes → Opciones, activa "Mostrar icono de bandeja" y luego "Iniciar en la
 bandeja" (`startToTray`, requiere lo primero). Sin él, la ventana flotante se abre
 en cada inicio. Comprobado por lectura del paquete; no se ha lanzado para probarlo.
-||||||| acb5f7e
 
 ## 9. Layouts de workspace, dock y ventana cuadrada
 
@@ -182,7 +181,59 @@ en cada inicio. Comprobado por lectura del paquete; no se ha lanzado para probar
   `monitor-workspaces` (qué bloque tiene cada monitor) son estado por máquina.
 - Test: `scripts/test-hypr-looknfeel.sh` (sintaxis y condición por hostname con stubs).
 
-## 10. Vigilante de `shell.json` y `monitors.lua`
+## 10. Tailscale
+
+Solo conectividad entre ANDREA y el ThinkPad, más Taildrop. Servidor de coordinación oficial
+de Tailscale (cuenta personal gratuita), sin Headscale. Sin exit node ni Tailscale SSH: el SSH
+sigue por llaves (`docs/git-and-ssh.md`). `tailscale` **no** está en `packages/*.txt`: lo
+instala el propio Omarchy.
+
+**Paso manual, una vez por máquina**:
+
+```bash
+omarchy install service tailscale
+```
+
+El script instala el paquete `tailscale` por pacman, activa `tailscaled`, ejecuta
+`tailscale up --accept-routes` (abre el login en el navegador), te configura como operador,
+activa el servicio de usuario de Taildrop (recibe en `~/Downloads`), añade el plugin de la
+barra e instala la webapp de administración.
+
+**Aviso con el vigilante de sincronización**: el script reescribe
+`~/.config/omarchy/shell.json` con `mv`, lo que sustituye el symlink de stow por un fichero
+real. Ejecútalo con el vigilante (`sync-config`, units en `omarchy/.config/systemd/user/`) ya
+activo, o revisa `git diff` justo después. El repo ya trae el widget en la barra
+(`omarchy.tailscale` tras `omarchy.network`, refresco por defecto de 30 s), así que el diff
+debería quedar vacío o casi.
+
+**El widget** (`omarchy.tailscale`) solo necesita la CLI de Tailscale y `wl-copy`: muestra el
+estado de la conexión y los dispositivos de la tailnet. Archivos entre máquinas:
+`omarchy tailscale send` y `omarchy tailscale receive`.
+
+**Quitarlo**: `omarchy remove service tailscale`, y borra el bloque `omarchy.tailscale` de
+`bar.layout.right` en `omarchy/.config/omarchy/shell.json` (de nuevo con el vigilante activo o
+revisando `git diff`).
+
+## 11. Marca por hostname (About y fastfetch)
+
+Cada máquina muestra su hostname en letras grandes: `about.andrea.txt` y `about.songbird.txt` en
+`omarchy/.config/omarchy/branding/` (wordmarks de `omarchy ascii`, partidos en dos líneas para caber en
+la caja de 54x26 de About). El portátil se asume `songbird` (sin confirmar con `hostname`).
+
+- `~/.local/bin/branding-select` enlaza `~/.config/omarchy/branding/about.txt` al About del hostname
+  actual. Corre desde el bootstrap y desde `hypr/autostart.lua`. Un About suelto previo se respalda en
+  `about.txt.bak`; un hostname sin archivo avisa por stderr y no toca nada.
+- `omarchy branding about text|image` escribe a través del enlace, o sea en el archivo versionado
+  (se ve en `git diff`). `omarchy branding about reset` copia el genérico sobre el archivo versionado:
+  es destructivo, revisa `git diff` después.
+- `omarchy/.config/fastfetch/config.jsonc` es copia de la global (`/etc/fastfetch`) y lee `about.txt`,
+  así que sigue a la máquina. Al existir una config propia, `omarchy launch about` deja de ajustar la
+  ventana y de animar el logo (lo trata como configuración personalizada).
+- El screensaver (`screensaver.txt`) es común y no cambia.
+- Nuevo equipo: añade `about.<hostname>.txt` (máx. 54 columnas x 26 filas; `scripts/test-branding.sh` lo
+  comprueba).
+
+## 12. Vigilante de `shell.json` y `monitors.lua`
 
 Omarchy reescribe esos dos archivos con temporal + `mv` y rompe el symlink de stow (ver Notes).
 Un observador de systemd de usuario lo repara solo, sin commit: el cambio queda como `git diff`.
