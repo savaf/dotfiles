@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Enlaza ~/.config/omarchy/branding/about.txt (lo que lee Omarchy y fastfetch) al About
+# versionado de esta máquina: about.<hostname>.txt en el paquete Stow. Así
+# `omarchy branding about text|image` escribe a través del enlace en el archivo del repo.
+#
+# Se llama desde scripts/bootstrap.sh y desde hypr/autostart.lua. Idempotente. Un hostname sin
+# About versionado avisa por stderr y deja about.txt como estaba (salida 0).
+#
+# BRANDING_HOSTNAME sustituye a `hostname` (pruebas).
+set -euo pipefail
+
+# El About versionado vive junto a este script en el repo (el script llega por symlink de stow).
+self="$(readlink -f "${BASH_SOURCE[0]}")"
+repo_branding="$(cd "$(dirname "${self}")/../../.config/omarchy/branding" && pwd)"
+
+host="${BRANDING_HOSTNAME:-$(hostname)}"
+host="${host%%.*}"
+host="${host,,}"
+
+source_file="${repo_branding}/about.${host}.txt"
+if [[ ! -f "${source_file}" ]]; then
+  echo "branding-select: no hay About para el hostname '${host}' (${source_file##*/}); se deja about.txt como está." >&2
+  exit 0
+fi
+
+link="${HOME}/.config/omarchy/branding/about.txt"
+mkdir -p "$(dirname "${link}")"
+
+# Un About suelto (el genérico de Omarchy) se respalda una vez antes de reemplazarlo.
+if [[ -e "${link}" && ! -L "${link}" && ! -e "${link}.bak" ]]; then
+  mv "${link}" "${link}.bak"
+fi
+
+ln -sfn "${source_file}" "${link}"
