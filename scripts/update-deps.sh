@@ -199,7 +199,8 @@ main() {
     *) echo "uso: $0 tools|skills" >&2; return 2 ;;
   esac
   if (( ${#WARNINGS[@]} )); then
-    { [[ -s "${CHANGES_FILE}" ]] && echo; echo "## Avisos"; echo; printf -- '- %s\n' "${WARNINGS[@]}"; } >> "${CHANGES_FILE}"
+    [[ -s "${CHANGES_FILE}" ]] && echo >> "${CHANGES_FILE}"
+    { echo "## Avisos"; echo; printf -- '- %s\n' "${WARNINGS[@]}"; } >> "${CHANGES_FILE}"
   else
     [[ -s "${CHANGES_FILE}" ]] || echo "[deps] Nada que actualizar (${mode})." >&2
   fi

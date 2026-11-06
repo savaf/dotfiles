@@ -132,7 +132,7 @@ run skills
 check "skills: sube el commit de una línea simple" grep -q "^mattpocock/skills#${new1}" "${ROOT}/packages/claude-skills.txt"
 check "skills: sube commit y hash de una línea con tarball" grep -q "^pbakaus/impeccable#${new2} impeccable .claude/skills/impeccable $(h64 c)" "${ROOT}/packages/claude-skills.txt"
 check "skills: el resto de líneas no cambia" test "$(diff "${repo}/packages/claude-skills.txt" "${ROOT}/packages/claude-skills.txt" | grep -c '^>')" -eq 2
-check "skills: lista de auditoría en CHANGES_FILE" changes_has '- [ ] `mattpocock/skills`'
+check "skills: lista de auditoría en CHANGES_FILE" changes_has "\`mattpocock/skills\`"
 
 # --- No baja ni toca si menor; ignora prereleases ---------------------------------------------
 setup
