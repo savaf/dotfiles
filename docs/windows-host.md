@@ -6,16 +6,24 @@ the Linux side.
 
 ## 1. Prerequisites
 
-- [Git for Windows](https://git-scm.com/download/win)
 - `winget` (ships with Windows 11; on Windows 10 install "App Installer"
   from the Microsoft Store)
+- [Git for Windows](https://git-scm.com/download/win) — the one-liner below
+  installs it with winget if missing
 
 ## 2. Clone and run
 
-From PowerShell:
+From PowerShell, in one line (installs git if needed, clones over HTTPS into
+`~\dotfiles` or updates it, and runs the bootstrap):
 
 ```powershell
-git clone git@github.com:savaf/dotfiles.git ~/dotfiles
+irm https://raw.githubusercontent.com/savaf/dotfiles/main/install.ps1 | iex
+```
+
+Or by hand:
+
+```powershell
+git clone https://github.com/savaf/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 .\scripts\bootstrap-windows.cmd
 ```

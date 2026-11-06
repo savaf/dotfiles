@@ -7,9 +7,12 @@ estas dentro de Ubuntu/WSL).
 Requiere symlinks: activa "Modo desarrollador" (Settings > Privacidad y
 seguridad > Para desarrolladores) o corre este script como Administrador.
 
-Uso: clona este repo con Git for Windows y corre el lanzador .cmd, que salta
-la ExecutionPolicy solo para este proceso (sin Set-ExecutionPolicy):
-    git clone <repo-url> dotfiles
+Uso rapido (instala git si falta, clona y lanza este script):
+    irm https://raw.githubusercontent.com/savaf/dotfiles/main/install.ps1 | iex
+
+O a mano: clona este repo con Git for Windows y corre el lanzador .cmd, que
+salta la ExecutionPolicy solo para este proceso (sin Set-ExecutionPolicy):
+    git clone https://github.com/savaf/dotfiles.git dotfiles
     cd dotfiles
     .\scripts\bootstrap-windows.cmd
 #>

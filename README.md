@@ -66,13 +66,34 @@ brew install git stow       # macOS
 
 ## Quick start (recommended)
 
-Clone the repo and run the single bootstrap entry point. It detects the OS,
-installs base packages, stows the config packages, syncs VS Code, installs
-global node packages, and applies OS-specific extras (macOS defaults / WSL
-`.wslconfig`).
+One line on a fresh machine (Linux, macOS or WSL). It installs `git` if missing,
+clones the repo over HTTPS into `~/dotfiles` (or updates it if it's already there)
+and runs the single bootstrap entry point, which detects the OS, installs base
+packages, stows the config packages, syncs VS Code, installs global node packages,
+and applies OS-specific extras (macOS defaults / WSL `.wslconfig`).
 
 ```sh
-git clone git@github.com:savaf/dotfiles.git ~/dotfiles
+curl -fsSL https://raw.githubusercontent.com/savaf/dotfiles/main/install.sh | bash
+```
+
+Windows host (native apps + Windows Terminal, from PowerShell; see
+[docs/windows-host.md](docs/windows-host.md)):
+
+```powershell
+irm https://raw.githubusercontent.com/savaf/dotfiles/main/install.ps1 | iex
+```
+
+Options (environment variables): `DOTFILES_DIR` (target, default `~/dotfiles`),
+`DOTFILES_BRANCH` (default `main`), `DOTFILES_REPO`, and `DOTFILES_NO_BOOTSTRAP=1`
+to only clone. Arguments after `bash -s --` are passed to `bootstrap.sh`. The clone
+uses HTTPS; switch to SSH once your keys are set up
+(`git remote set-url origin git@github.com:savaf/dotfiles.git`, see
+[docs/git-and-ssh.md](docs/git-and-ssh.md)).
+
+Or do it by hand:
+
+```sh
+git clone https://github.com/savaf/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 ./scripts/bootstrap.sh
 ```

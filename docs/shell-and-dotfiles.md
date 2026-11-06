@@ -119,9 +119,9 @@ the non-Stow exceptions).
 The easiest path is the bootstrap, which installs packages and stows everything:
 
 ```sh
-git clone git@github.com:savaf/dotfiles.git ~/dotfiles
-cd ~/dotfiles
-./scripts/bootstrap.sh
+curl -fsSL https://raw.githubusercontent.com/savaf/dotfiles/main/install.sh | bash
+# equivalente a mano:
+git clone https://github.com/savaf/dotfiles.git ~/dotfiles && ~/dotfiles/scripts/bootstrap.sh
 ```
 
 Or link packages manually:
