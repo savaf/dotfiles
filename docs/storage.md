@@ -15,16 +15,22 @@ no se versiona. Este documento es la referencia para reconstruirlo tras una rein
 
 | Etiqueta | UUID | Punto de montaje | Symlink | Contenido |
 |---|---|---|---|---|
-| `Games` | `48ea0561-f38a-4966-a708-6d60f14e796b` | `/mnt/games` | `~/Games` | la raíz **es** la librería de Steam (`steamapps/`, `libraryfolder.vdf`), más `Standalone/` y `epic-games-store/` |
-| `LIBRARY` | `efe510d5-526e-46b3-bfa0-ac3db9570994` | `/mnt/library` | `~/Library` | `Movies/`, `Comics/`, `Books/`, `Manga/`, `Archive/` y el `docker-compose.yml` de Kavita |
+| `GAMES` | `58C9-EF00` | `/mnt/games` | `~/Games` | `SteamLibrary/` (la librería de Steam), `Standalone/` y herramientas sueltas |
+| `LIBRARY` | `CABE-732A` | `/mnt/library` | `~/Library` | vacío por ahora (pensado para `Movies/`, `Comics/`, `Books/`, `Manga/`, `Archive/` y el compose de Kavita) |
 
-Ambos son ext4, propiedad de `savaf:savaf` con permisos `700`.
+Ambos son **exFAT** (formateados desde Windows), propiedad de `savaf` vía las opciones de
+montaje `uid=1000,gid=1000,umask=022`; exFAT no tiene permisos POSIX, así que no hay `chown`.
+
+> Límite de exFAT: sin permisos ni symlinks. Los juegos nativos de Linux suelen ir bien,
+> pero Proton necesita un sistema POSIX para el prefijo (`compatdata`) y puede fallar.
+> Cambiar a ext4 borra el disco: es una decisión aparte. El esquema anterior era ext4
+> (`Games` `48ea0561-…`, `LIBRARY` `efe510d5-…`) y quedó obsoleto al reformatearlos.
 
 ## Líneas de fstab
 
 ```
-UUID=48ea0561-f38a-4966-a708-6d60f14e796b	/mnt/games	ext4	defaults,noatime,nofail,x-systemd.device-timeout=10	0 2
-UUID=efe510d5-526e-46b3-bfa0-ac3db9570994	/mnt/library	ext4	defaults,noatime,nofail,x-systemd.device-timeout=10	0 2
+UUID=58C9-EF00	/mnt/games	exfat	defaults,noatime,uid=1000,gid=1000,umask=022,nofail,x-systemd.device-timeout=10	0 0
+UUID=CABE-732A	/mnt/library	exfat	defaults,noatime,uid=1000,gid=1000,umask=022,nofail,x-systemd.device-timeout=10	0 0
 ```
 
 `nofail` y `x-systemd.device-timeout=10` evitan que un disco ausente bloquee el arranque.
@@ -39,16 +45,13 @@ lsblk -o NAME,SIZE,FSTYPE,UUID,LABEL
 sudo mkdir -p /mnt/games /mnt/library
 sudo systemctl daemon-reload && sudo mount -a
 
-# 3. Devolver la propiedad al usuario
-sudo chown savaf:savaf /mnt/games /mnt/library
-
-# 4. Symlinks de conveniencia
+# 3. Symlinks de conveniencia
 ln -s /mnt/games   ~/Games
 ln -s /mnt/library ~/Library
 ```
 
-En Steam, añadir `/mnt/games` como carpeta de librería: la raíz del disco ya es la librería,
-no crear un subdirectorio.
+En Steam: Ajustes → Almacenamiento → añadir unidad → `/mnt/games`. La librería existente es
+`/mnt/games/SteamLibrary` (creada desde Windows); Steam debe detectarla como librería.
 
 ## Kavita
 

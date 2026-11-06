@@ -2,7 +2,7 @@
 # Instala GNU stow si falta y enlaza los paquetes de config en $HOME.
 
 # Config packages that get symlinked into $HOME via stow.
-STOW_PACKAGES=(zsh bash git starship nvim tmux herdr shell lazygit claude mise)
+STOW_PACKAGES=(zsh bash git starship nvim tmux herdr shell lazygit claude mise ssh)
 
 ensure_stow() {
   exists stow && return 0
@@ -35,4 +35,9 @@ stow_packages() {
   # re-ejecutar es seguro y evita la fase unstow que disparaba el bug cosmético
   # de stow ("BUG in find_stowed_path?"). No limpia links de paquetes eliminados.
   stow -d "${ROOT_DIR}" --no-folding --target="${HOME}" "${STOW_PACKAGES[@]}"
+  # git solo guarda 644/755; ssh exige ~/.ssh 700 y config 600.
+  if [[ -d "${HOME}/.ssh" ]]; then
+    chmod 700 "${HOME}/.ssh"
+    [[ -e "${HOME}/.ssh/config" ]] && chmod 600 "${HOME}/.ssh/config"
+  fi
 }
