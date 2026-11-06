@@ -2,7 +2,7 @@
 
 The Neovim config is a [**LazyVim**](https://www.lazyvim.org/) setup living in
 [`nvim/.config/nvim/`](../nvim/.config/nvim/). It's stowed to `~/.config/nvim/`
-and works identically on Ubuntu/WSL, Fedora/Bazzite, Arch/Omarchy and macOS —
+and works identically on Ubuntu/WSL, Arch/Omarchy and macOS —
 the config itself has no platform-specific code; only the underlying tools it
 needs (Neovim, a C compiler, `fd`/`ripgrep`/`fzf`, a Nerd Font, …) are
 provisioned differently per package manager, see [Requirements](#requirements)

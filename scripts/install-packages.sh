@@ -5,7 +5,6 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BREW_CLI="${ROOT_DIR}/packages/brew-cli.txt"
 BREW_CASKS="${ROOT_DIR}/packages/brew-casks.txt"
 APT_CLI="${ROOT_DIR}/packages/apt-cli.txt"
-DNF_CLI="${ROOT_DIR}/packages/dnf-cli.txt"
 PACMAN_CLI="${ROOT_DIR}/packages/pacman-cli.txt"
 ARCH_APPS="${ROOT_DIR}/packages/arch-apps.txt"
 OMARCHY_WEBAPPS="${ROOT_DIR}/packages/omarchy-webapps.txt"
@@ -29,7 +28,7 @@ current_login_shell() {
 
 # Garantiza que zsh esté instalado, registrado en /etc/shells y fijado como login
 # shell del usuario. Consolida lo que antes vivía duplicado (y con `|| true` mudo)
-# en install_macos/ubuntu/fedora/arch. Idempotente: no reinstala ni re-chsh si ya
+# en install_macos/ubuntu/arch. Idempotente: no reinstala ni re-chsh si ya
 # está todo en su sitio, y nunca hace `chsh -s ""` cuando zsh falta.
 ensure_zsh() {
   # 1) Instalar el binario si no vino en la lista de paquetes (o distro rara).
@@ -38,10 +37,6 @@ ensure_zsh() {
     case "${OS}" in
       macos)         exists brew && brew install zsh ;;   # macOS ya trae /bin/zsh; guard
       ubuntu|debian) sudo apt install -y zsh ;;
-      fedora)        sudo dnf install -y zsh ;;
-      bazzite)       sudo rpm-ostree install --idempotent --apply-live zsh \
-                       || { sudo rpm-ostree install --idempotent zsh; \
-                            log "zsh capeado; reinicia y re-ejecuta el bootstrap."; } ;;
       arch|omarchy)  sudo pacman -S --needed --noconfirm zsh ;;
       *)             log "No sé instalar zsh en '${OS}'; hazlo manual y re-ejecuta."; return 0 ;;
     esac
@@ -91,10 +86,6 @@ ensure_bash_installed() {
     log "bash no encontrado; instalándolo…"
     case "${OS}" in
       ubuntu|debian) sudo apt install -y bash ;;
-      fedora)        sudo dnf install -y bash ;;
-      bazzite)       sudo rpm-ostree install --idempotent --apply-live bash \
-                       || { sudo rpm-ostree install --idempotent bash; \
-                            log "bash capeado; reinicia y re-ejecuta el bootstrap."; } ;;
       arch|omarchy)  sudo pacman -S --needed --noconfirm bash ;;
       *)             log "No sé instalar bash en '${OS}'; hazlo manual."; return 0 ;;
     esac
@@ -175,7 +166,7 @@ install_claude_code() {
   curl -fsSL https://claude.ai/install.sh | bash || log "Fallo al instalar Claude Code; omitiendo."
 }
 
-# mise (version manager de lenguajes) no está en apt/dnf; el instalador oficial
+# mise (version manager de lenguajes) no está en apt; el instalador oficial
 # funciona igual en cualquier distro y no pide sudo (instala en ~/.local/bin).
 # Arch/Omarchy: lo instala install_arch vía pacman (no va en pacman-cli.txt).
 # macOS: viene de brew-cli.txt.
@@ -220,7 +211,7 @@ ensure_mise_tools() {
 # Monaspace) para poder añadir más Nerd Fonts con una línea.
 # shellcheck disable=SC2119,SC2120 # el argumento (fuente) es opcional; sin él usa Monaspace
 ensure_nerd_font() {
-  local font="${1:-Monaspace}" NF_VERSION="v3.4.0"
+  local font="${1:-Monaspace}" NF_VERSION="v3.5.1"
   local font_dir="${HOME}/.local/share/fonts"
   local version_file="${font_dir}/.nerd-font-${font}.version" installed=""
 
@@ -301,40 +292,6 @@ install_ubuntu() {
   done
 
   install_claude_code
-  ensure_mise
-  ensure_mise_tools
-  ensure_nerd_font
-
-  ensure_zsh
-  ensure_bash_installed
-}
-
-# Fedora clásica usa dnf. Bazzite (Fedora Atomic) es inmutable: no hay dnf en
-# el host; los paquetes se capean con rpm-ostree. Misma lista para ambos.
-install_fedora() {
-  local pkgs
-  pkgs="$(grep -Ev '^\s*#|^\s*$' "${DNF_CLI}" | tr '\n' ' ')"
-
-  if exists rpm-ostree; then
-    log "Sistema inmutable (rpm-ostree) detectado; capeando paquetes faltantes…"
-    # rpm-ostree falla con paquetes ya presentes en la imagen base: filtrar.
-    local p missing=()
-    for p in ${pkgs}; do rpm -q "$p" >/dev/null 2>&1 || missing+=("$p"); done
-    if ((${#missing[@]})); then
-      # --apply-live aplica sin reboot; si no está soportado, capa normal.
-      if ! sudo rpm-ostree install --idempotent --apply-live "${missing[@]}"; then
-        sudo rpm-ostree install --idempotent "${missing[@]}"
-        log "Paquetes capeados; reinicia para aplicarlos y re-ejecuta el bootstrap."
-      fi
-    else
-      log "Todos los paquetes ya presentes; se omite."
-    fi
-  elif [[ -n "${pkgs// /}" ]]; then
-    log "Installing dnf packages from list..."
-    # shellcheck disable=SC2086
-    sudo dnf install -y ${pkgs}
-  fi
-
   ensure_mise
   ensure_mise_tools
   ensure_nerd_font
@@ -563,9 +520,8 @@ main() {
   case "${OS}" in
     macos) install_macos ;;
     ubuntu|debian) install_ubuntu ;;
-    fedora|bazzite) install_fedora ;;
     arch|omarchy) install_arch ;;
-    *) echo "[setup] Unsupported or unknown OS: ${OS}"; exit 1 ;;
+    *) echo "[setup] OS no soportado: ${OS}. Solo Ubuntu/WSL, Arch/Omarchy y macOS."; exit 1 ;;
   esac
   post_checks
   log "Done. Restart your terminal or run: source ~/.zshrc"

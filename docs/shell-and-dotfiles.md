@@ -177,3 +177,25 @@ git diff                          # keep it, or `git checkout --` to keep the re
 This config assumes a modern CLI toolset (installed via the package lists):
 `eza`, `bat`, `fzf`, `zoxide`, `ripgrep`/`fd`, `neovim`, `tldr`, plus
 `ffmpeg` and `imagemagick` for media work. See [`packages/`](../packages).
+
+## Updating pinned dependencies
+
+Todo lo fijado del repo (mise, nvm, llama.cpp con sus 2 sha256, Nerd Font, CLI `skills`, paquetes
+npm fijados y los commits de `packages/claude-skills.txt`) lo sube
+[`.github/workflows/update-deps.yml`](../.github/workflows/update-deps.yml) cada lunes 09:00 UTC
+(o a mano con `workflow_dispatch`, solo desde `main`). Corre `scripts/update-deps.sh` en dos jobs
+y abre un PR por cada uno que tenga cambios: `deps/tools` y `deps/skills`. Las ramas son fijas y se
+reescriben en cada corrida; sin cambios no hay PR. Nada se mergea solo. Los majors van marcados
+con ⚠ y una fuente caída queda en la sección "Avisos" del PR sin tumbar el job. El de skills hay
+que auditarlo antes de mergear (ver `docs/claude-code.md`). apt/pacman/dnf/brew/winget quedan fuera.
+
+El workflow abre los PRs con el secret `DEPS_BOT_TOKEN`, un PAT fine-grained solo para este repo con
+`contents: write` y `pull-requests: write`. Con `GITHUB_TOKEN` el PR no dispararía `ci.yml`.
+
+A mano:
+
+```sh
+bash scripts/update-deps.sh tools    # o: skills
+git diff                             # revisa; el resumen queda en .deps-changes.md
+bash scripts/ci.sh
+```

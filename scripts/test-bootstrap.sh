@@ -23,7 +23,7 @@ echo "OK: xkb_merge"
 # --- Herramientas CLI gestionadas por mise (config global como paquete Stow) ---
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 MISE_CONFIG="${ROOT_DIR}/mise/.config/mise/config.toml"
-# binario:herramienta:paquetes-del-sistema (nombres equivalentes en apt/dnf/pacman/brew)
+# binario:herramienta:paquetes-del-sistema (nombres equivalentes en apt/pacman/brew)
 # shellcheck disable=SC2054 # la coma separa paquetes alternativos dentro del elemento
 MISE_TOOLS=(
   nvim:neovim:neovim
@@ -63,7 +63,7 @@ echo "OK: config de mise"
 # Doble origen: lo que mise instala no puede seguir en un manifiesto del sistema.
 for entry in "${MISE_TOOLS[@]}"; do
   IFS=: read -r _ tool pkgs <<<"${entry}"
-  for manifest in "${ROOT_DIR}"/packages/{apt-cli,dnf-cli,pacman-cli,brew-cli}.txt; do
+  for manifest in "${ROOT_DIR}"/packages/{apt-cli,pacman-cli,brew-cli}.txt; do
     [[ "${manifest}" == *brew-cli.txt && " ${BREW_KEEP[*]} " == *" ${tool} "* ]] && continue
     for pkg in ${pkgs//,/ }; do
       sed 's/#.*//; s/[[:space:]]*$//' "${manifest}" | grep -Fxq "${pkg}" \

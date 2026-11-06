@@ -23,3 +23,6 @@ nvim/.config/nvim/lazy-lock.json
 
 # Issues locales de los skills (estado de trabajo, no se versiona)
 /.scratch/
+
+# Resumen que escribe scripts/update-deps.sh al correrlo a mano
+.deps-changes.md

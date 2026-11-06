@@ -46,7 +46,7 @@ Examples:
 [mise](https://mise.jdx.dev) is also loaded (per-project tools and `[env]` from a
 `mise.toml`), but **nvm owns Node**: `MISE_DISABLE_TOOLS=node` makes mise ignore it,
 so never put `node` in a `mise.toml`. The installer sets mise up itself (`ensure_mise`
-on Ubuntu/Fedora, `install_arch` on Arch/Omarchy, `brew-cli.txt` on macOS).
+on Ubuntu, `install_arch` on Arch/Omarchy, `brew-cli.txt` on macOS).
 
 ### CLI tools via mise
 

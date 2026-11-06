@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/savaf/dotfiles/actions/workflows/ci.yml/badge.svg)](https://github.com/savaf/dotfiles/actions/workflows/ci.yml)
 
-Cross-platform dotfiles for **Ubuntu/WSL**, **Fedora/Bazzite**, **Arch/Omarchy** and **macOS**, organized as
+Cross-platform dotfiles for **Ubuntu/WSL**, **Arch/Omarchy** and **macOS**, organized as
 [GNU Stow](https://www.gnu.org/software/stow/) packages.
 
 ## Contents
@@ -38,7 +38,7 @@ dotfiles/
 ├── clef/           # systemd --user units + clef-server for the local decision engine (Linux; docs/decision-engine.md)
 ├── vscode/         # settings.json (symlinked per-OS by a script)
 ├── wsl/            # .wslconfig (copied to the Windows profile on WSL)
-├── packages/       # package lists (brew/apt/dnf/node/vscode extensions)
+├── packages/       # package lists (brew/apt/pacman/node/vscode extensions)
 ├── .github/        # GitHub Actions workflow (runs scripts/ci.sh)
 ├── scripts/        # bootstrap + install/sync helpers + ci.sh
 │   ├── lib/        # shared utilities (log, os_detect, sudo keep-alive…)
@@ -59,7 +59,6 @@ files from `~/.config/zsh/` (`exports`, `path`, `plugins`, `completion`,
 
 ```sh
 sudo apt install git stow   # Ubuntu/WSL
-sudo dnf install git stow   # Fedora (Bazzite ships both in the base image)
 sudo pacman -S git stow     # Arch/Omarchy
 brew install git stow       # macOS
 ```
@@ -118,7 +117,7 @@ stow -R zsh                                   # restow (refresh) after changes
 **Installation cascade.** Every tool is installed by the first level that supports it:
 
 1. **mise**, any backend (`mise/.config/mise/config.toml`, pinned versions).
-2. The **system package manager** (apt, dnf, pacman; brew on macOS; winget on Windows).
+2. The **system package manager** (apt, pacman; brew on macOS; winget on Windows).
 3. **Homebrew on Linux**, only if the system manager lacks it.
 4. Building from source, as a last resort.
 
@@ -134,7 +133,6 @@ Reproducible package manifests live in `packages/`:
 xargs brew install < packages/brew-cli.txt          # macOS CLI
 xargs brew install --cask < packages/brew-casks.txt # macOS apps
 sudo xargs -a packages/apt-cli.txt apt install -y   # Ubuntu/WSL CLI
-grep -v '^#' packages/dnf-cli.txt | xargs sudo dnf install -y  # Fedora CLI (Bazzite: rpm-ostree install)
 grep -v '^#' packages/pacman-cli.txt | xargs sudo pacman -S --needed  # Arch/Omarchy CLI
 ```
 
@@ -172,7 +170,6 @@ Step-by-step guides for a fresh machine live in [`docs/`](docs):
 |-------|----------------|
 | [shell-and-dotfiles.md](docs/shell-and-dotfiles.md) | zsh modules, prompt, and applying the dotfiles with Stow |
 | [ubuntu-wsl.md](docs/ubuntu-wsl.md) | Ubuntu & WSL2 setup from scratch (incl. `.wslconfig`, fonts) |
-| [bazzite.md](docs/bazzite.md) | Fedora & Bazzite (immutable) setup — dnf / rpm-ostree |
 | [omarchy.md](docs/omarchy.md) | Arch & Omarchy (Hyprland) setup — pacman, default shell (zsh), bash alternative |
 | [macos-setup.md](docs/macos-setup.md) | macOS system preferences, apps, Homebrew, iTerm2 |
 | [git-and-ssh.md](docs/git-and-ssh.md) | Git defaults and GitHub SSH key setup |

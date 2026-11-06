@@ -398,6 +398,10 @@ repo to the manifest:
    read each warning (network calls, scripts, secrets, manipulation phrases).
 3. Pin what you accepted; a later update is a new review, not a free upgrade.
 
+The weekly `deps/skills` PR bumps these pins for you (commit and sha256) and lists each repo with a
+compare link as an audit checklist; merge it only after steps 1 and 2. See "Updating pinned
+dependencies" in `docs/shell-and-dotfiles.md`.
+
 `~/.claude/skills/` now holds two kinds: the ones this script installs, and the ones versioned
 in `claude/.claude/skills/` and linked by stow. They sit side by side; `npx skills add` leaves the
 symlinked directories alone unless a repo ships a skill with the same name.
