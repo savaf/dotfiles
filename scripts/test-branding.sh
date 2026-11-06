@@ -63,3 +63,14 @@ rm -r "${TMP}/.config"
 run andrea
 [[ -L "${LINK}" ]] || fail "no crea el enlace en un HOME vacío"
 echo "OK: HOME vacío"
+
+# 6. About suelto con .bak previo: no pisa el respaldo, guarda el suelto con otro nombre
+rm -r "${TMP}/.config"
+mkdir -p "${TMP}/.config/omarchy/branding"
+printf 'respaldo viejo\n' >"${LINK}.bak"
+printf 'cambios nuevos\n' >"${LINK}"
+run andrea
+[[ -L "${LINK}" ]] || fail "con .bak previo no enlazó"
+[[ "$(cat "${LINK}.bak")" == "respaldo viejo" ]] || fail "pisó el .bak previo"
+grep -rqx 'cambios nuevos' "${TMP}/.config/omarchy/branding" || fail "se perdió el About suelto"
+echo "OK: no pisa el .bak previo"

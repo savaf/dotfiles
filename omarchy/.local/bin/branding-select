@@ -26,9 +26,12 @@ fi
 link="${HOME}/.config/omarchy/branding/about.txt"
 mkdir -p "$(dirname "${link}")"
 
-# Un About suelto (el genérico de Omarchy) se respalda una vez antes de reemplazarlo.
-if [[ -e "${link}" && ! -L "${link}" && ! -e "${link}.bak" ]]; then
-  mv "${link}" "${link}.bak"
+# Un About suelto (el genérico de Omarchy) se respalda antes de reemplazarlo. Si ya hay un .bak,
+# no se pisa: el suelto va a un .bak con marca de tiempo.
+if [[ -e "${link}" && ! -L "${link}" ]]; then
+  backup="${link}.bak"
+  [[ -e "${backup}" ]] && backup="${link}.$(date +%Y%m%d-%H%M%S).bak"
+  mv "${link}" "${backup}"
 fi
 
 ln -sfn "${source_file}" "${link}"
