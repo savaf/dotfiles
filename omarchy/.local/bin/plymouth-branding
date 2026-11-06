@@ -5,7 +5,8 @@ set -euo pipefail
 # Uso: plymouth-branding preview   # genera el logo y una imagen de previsualización, sin tocar el sistema
 #      plymouth-branding apply     # igual, y aplica con `omarchy plymouth set` (pide sudo)
 #      plymouth-branding reset     # vuelve al arranque por defecto de Omarchy (pide sudo)
-# Variables: PLYMOUTH_TEXT (texto en vez del hostname), PLYMOUTH_FONT (archivo de fuente).
+# Variables: PLYMOUTH_TEXT (texto en vez del hostname), PLYMOUTH_FONT (archivo de fuente),
+#            PLYMOUTH_COLOR (color del logo; por defecto el verde original de Omarchy).
 
 cmd="${1:-preview}"
 theme_colors="${HOME}/.local/state/omarchy/current/theme/colors.toml"
@@ -24,17 +25,31 @@ fi
 
 bg="$(read_color background)"
 fg="$(read_color foreground)"
+logo_color="${PLYMOUTH_COLOR:-#A8CD76}"  # verde del logo original de Omarchy
 [[ -n "${bg}" && -n "${fg}" ]] || { echo "plymouth-branding: no pude leer background/foreground de ${theme_colors}" >&2; exit 1; }
 
 host="$(hostname)"
 text="${PLYMOUTH_TEXT:-${host%%.*}}"
 text="${text^^}"
-font="${PLYMOUTH_FONT:-$(fc-match -f '%{file}' 'monospace:bold')}"
+font="${PLYMOUTH_FONT:-$(fc-match -f '%{file}' 'JetBrainsMono Nerd Font:bold' || fc-match -f '%{file}' 'monospace:bold')}"
 
 mkdir -p "${out_dir}"
-# Lienzo de 800x188 (el tamaño del logo de Omarchy), texto centrado y transparente de fondo.
-magick -background none -fill "${fg}" -font "${font}" -pointsize 120 "label:${text}" \
-  -trim +repage -resize '760x150>' -gravity center -background none -extent 800x188 "${logo}"
+# Estilo del logo original de Omarchy: letras altas y angostas en pixel art. Se rasteriza el texto sin
+# suavizado, se escala con vecino más cercano por un factor entero (el mayor que quepa en 760 px de
+# ancho, máximo 9) y se estira 4/3 en vertical. Lienzo de 800x188, el tamaño del logo de Omarchy.
+base="$(mktemp --suffix=.png)"
+mask="$(mktemp --suffix=.png)"
+trap 'rm -f "${base}" "${mask}"' EXIT
+magick -background black -fill white -font "${font}" +antialias -pointsize 20 -kerning 1 "label:${text}"   -trim +repage -threshold 50% "${base}"
+w="$(identify -format %w "${base}")"
+h="$(identify -format %h "${base}")"
+sx=$(( 760 / w )); (( sx > 9 )) && sx=9; (( sx < 1 )) && sx=1
+sy=$(( sx * 4 / 3 ))
+(( h * sy > 150 )) && sy=$(( 150 / h ))
+(( sy < 1 )) && sy=1
+magick "${base}" -filter point -sample "$(( w * sx ))x$(( h * sy ))!" "${mask}"
+magick -size "$(identify -format '%wx%h' "${mask}")" "xc:${logo_color}" "${mask}" -alpha off -compose CopyOpacity -composite "${mask}"
+magick "${mask}" -background none -gravity center -extent 800x188 "${logo}"
 omarchy plymouth preview "${bg}" "${fg}" "${logo}" "${preview}"
 echo "logo:        ${logo}"
 echo "previsualización: ${preview}"
