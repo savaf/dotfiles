@@ -235,7 +235,7 @@ la caja de 54x26 de About). El portátil se asume `songbird` (sin confirmar con 
   comprueba).
 
 **Pantalla de arranque (Plymouth).** Toca el sistema y pide `sudo`, así que no se aplica sola: en cada
-máquina corre `plymouth-branding preview` (genera el logo con el hostname y una imagen en
+máquina corre `plymouth-branding preview` (genera el logo en pixel art con el verde de Omarchy y tu hostname, y una imagen en
 `~/.local/state/omarchy/branding/plymouth-preview.png`, sin tocar el sistema) y, si te gusta,
 `plymouth-branding apply`. Usa el fondo y el texto del tema activo. Para volver al valor por defecto:
 `plymouth-branding reset`. Se ve en el próximo arranque.
