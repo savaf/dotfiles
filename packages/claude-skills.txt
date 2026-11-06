@@ -25,7 +25,7 @@ cloudflare/security-audit-skill#c1c8a8c1471069fb0e188eeaff69b8e8db6564a8 securit
 # impeccable: línea con dos columnas extra (`<ruta-en-el-repo> <sha256 del contenido>`). Esas líneas
 # NO van por la CLI (instalaría el espejo `.agents/`, otro hash): scripts/install-claude-skills.sh baja
 # el tarball del commit y solo instala si el hash coincide. Riesgos y verbos seguros: docs/claude-code.md.
-pbakaus/impeccable#c3bb418ee38ee49a6b999b7752c1368f3123a2bd impeccable .claude/skills/impeccable e6a272c9664ab4350d53ca4f07b79a99b99424058749fce92f775b4d291065cc
+pbakaus/impeccable#414603bf14c7a344edb466bb1f85690c77ce8b7d impeccable .claude/skills/impeccable 532aa98903b020071ea830f9a97b931e771fa42daea2308af6e4f9f572e65b8b
 # Leonxlnx/taste-skill — DESACTIVADO (13 skills de diseño UI que se pisan entre sí). Solo para
 # trabajo de frontend; directorios en ~/.claude/skills-disabled/. Para recuperar: descomenta la
 # línea y corre scripts/install-claude-skills.sh, o `mv` uno solo.
