@@ -112,11 +112,11 @@ start_watcher() {
 }
 
 # ¿Hay una ventana cuya clase matchee gaming-classes.conf? Misma regla que
-# coolercontrol-mode-watcher. 0 = sí, 1 = no, 2 = sin Hyprland.
+# coolercontrol-mode-watcher. 0 = sí, 1 = no, 2 = no se puede saber (sin Hyprland).
 game_open() {
   local classes patterns cls pat
   classes="$(hyprctl clients -j 2>/dev/null)" || return 2
-  classes="$(jq -r '.[] | .class, .initialClass' <<<"${classes}" 2>/dev/null)"
+  classes="$(jq -r '.[] | .class, .initialClass' <<<"${classes}" 2>/dev/null)" || return 2
   patterns="$(sed 's/#.*//' "${CLASSES_FILE}" 2>/dev/null | grep -v '^[[:space:]]*$')"
   while IFS= read -r cls; do
     [[ -n "${cls}" ]] || continue

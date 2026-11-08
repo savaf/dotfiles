@@ -16,7 +16,7 @@ ensure_coolercontrol_mode_watcher() {
   exists systemctl || return 0
   log "Configurando CoolerControl (curvas + watcher Silencio ⇄ Rendimiento)…"
   if ! "${HOME}/.local/bin/coolercontrol-setup" </dev/null; then
-    COOLERCONTROL_ISSUES+=("coolercontrol-setup falló (¿falta el token?); córrelo a mano: coolercontrol-setup")
+    COOLERCONTROL_ISSUES+=("coolercontrol-setup falló (ver sus FALLO arriba); córrelo a mano: coolercontrol-setup")
   fi
 }
 

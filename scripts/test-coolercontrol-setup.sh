@@ -16,7 +16,7 @@ H="" F="" OUT="" RC=0
 # HOME falso de cada caso.
 BASE_PATH="${TMP}/sysbin"
 mkdir -p "${BASE_PATH}"
-for c in bash cat dirname grep head install jq sed stat touch shellcheck; do
+for c in bash cat dirname grep head install jq sed stat touch; do
   p="$(command -v "${c}")" && ln -s "${p}" "${BASE_PATH}/${c}"
 done
 
