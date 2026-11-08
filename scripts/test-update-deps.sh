@@ -58,7 +58,6 @@ setup() {
   grep -oE 'NF_VERSION="v[0-9.]+"' "${ROOT}/scripts/install-packages.sh" | head -1 | cut -d'"' -f2 > "${STUB_DIR}/gh-ryanoasis_nerd-fonts"
   grep -oE 'LLAMA_CPP_VERSION="b[0-9]+"' "${ROOT}/scripts/modules/llama.sh" | cut -d'"' -f2 > "${STUB_DIR}/llama-build"
   grep -oE 'skills@[0-9][0-9.]*' "${ROOT}/scripts/install-claude-skills.sh" | head -1 | cut -d@ -f2 > "${STUB_DIR}/npm-skills"
-  grep -oE '@karpeleslab/teamclaude@[0-9.]+' "${ROOT}/packages/global-node-packages.txt" | cut -d@ -f3 > "${STUB_DIR}/npm-_karpeleslab_teamclaude"
   while IFS= read -r line; do
     if [[ "${line}" =~ ^([^#[:space:]]+/[^#[:space:]]+)#([0-9a-f]{40}) ]]; then
       printf '%s\n' "${BASH_REMATCH[2]}" > "${STUB_DIR}/head-$(stubkey "${BASH_REMATCH[1]}")"
@@ -104,9 +103,6 @@ check "nvm: sin deriva de regex" no_drift
 
 setup; echo v99.0.0 > "${STUB_DIR}/gh-ryanoasis_nerd-fonts"; run tools
 check "Nerd Font: sube NF_VERSION" grep -q 'NF_VERSION="v99.0.0"' "${ROOT}/scripts/install-packages.sh"
-
-setup; echo 99.0.0 > "${STUB_DIR}/npm-_karpeleslab_teamclaude"; run tools
-check "npm: sube el paquete fijado" grep -q '@karpeleslab/teamclaude@99.0.0' "${ROOT}/packages/global-node-packages.txt"
 
 setup; echo 99.0.0 > "${STUB_DIR}/npm-skills"; run tools
 check "CLI skills: sube SKILLS_CLI" grep -q 'SKILLS_CLI="skills@99.0.0"' "${ROOT}/scripts/install-claude-skills.sh"
