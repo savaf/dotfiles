@@ -3,11 +3,11 @@
 # hostname Y por la presencia real del UUID (blkid), así que en cualquier otra
 # máquina es no-op seguro aunque STORAGE_MOUNTS no cambie. Idempotente: no
 # duplica líneas de fstab ni symlinks ya creados.
-# Formato: "UUID:fstype:punto-de-montaje:symlink". Los discos son exFAT (sin
-# permisos POSIX): la propiedad se fija al montar con uid/gid, no con chown.
+# Formato: "UUID:fstype:punto-de-montaje:symlink". Los discos son ext4; la
+# raíz del montaje se entrega a $USER con chown.
 STORAGE_MOUNTS=(
-  "58C9-EF00:exfat:/mnt/games:${HOME}/Games"
-  "CABE-732A:exfat:/mnt/library:${HOME}/Library"
+  "544bc200-7fbc-442f-a1e0-311c98117cbb:ext4:/mnt/games:${HOME}/Games"
+  "677d4c7f-d91d-4b7f-b495-304008656f69:ext4:/mnt/library:${HOME}/Library"
 )
 
 ensure_storage_mounts() {
@@ -43,6 +43,7 @@ ensure_storage_mounts() {
     if ! mountpoint -q "${mnt}"; then
       sudo mount "${mnt}" || log "Storage: no se pudo montar ${mnt}; revisa manualmente."
     fi
+    [[ "${fstype}" == "exfat" ]] || sudo chown "$(id -u):$(id -g)" "${mnt}"
 
     [[ -e "${link}" ]] || { ln -s "${mnt}" "${link}"; log "Storage: symlink ${link} → ${mnt}"; }
   done
