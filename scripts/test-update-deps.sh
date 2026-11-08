@@ -178,7 +178,7 @@ setup
 echo "${new1}" > "${STUB_DIR}/head-mattpocock_skills"
 echo "${new2}" > "${STUB_DIR}/head-pbakaus_impeccable"      # sin tree-… → hash caído
 run skills
-check "skills: sin hash no toca la línea con tarball" grep -q '^pbakaus/impeccable#414603bf' "${ROOT}/packages/claude-skills.txt"
+check "skills: sin hash no toca la línea con tarball" grep -q '^pbakaus/impeccable#c3bb418e' "${ROOT}/packages/claude-skills.txt"
 check "skills: sigue con las demás" grep -q "^mattpocock/skills#${new1}" "${ROOT}/packages/claude-skills.txt"
 check "skills: avisa del hash" changes_has 'pbakaus/impeccable'
 check "skills: sección Avisos" changes_has '## Avisos'

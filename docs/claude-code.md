@@ -483,7 +483,7 @@ Audit table (notes from 2026-11-05; `content_sha256` checked against a temp-HOME
 | `ponytail`, `ponytail-review` | `DietrichGebert/ponytail` | `96608e07` | `ponytail` acceptable; `ponytail-review` with reservations | session-wide style; its output format clashes with fixed-format agents |
 | `mattpocock/skills` (14 audited) | `mattpocock/skills` | `4ae2317d` | acceptable to with reservations | `improve-codebase-architecture` loads unpinned CDN scripts; `implement-spec` and `to-tickets` write to the tracker; `setup-matt-pocock-skills` edits the repo |
 | `resolving-merge-conflicts` | `mattpocock/skills` | none | not auditable | retired upstream in 1.3.2; optional here |
-| `impeccable` | `pbakaus/impeccable` | `414603bf` (tag `skill-v4.8.0`) | with reservations | installed by default by the maintainer's decision, against the audit's "opt-in only"; 22 MB binary, network calls, agent directives, live mode with `bypassPermissions`; the CLI would install the `.agents/` mirror (different hash), so it goes by verified tarball |
+| `impeccable` | `pbakaus/impeccable` | `c3bb418e` (untagged `main` commit; last tag `skill-v4.8.0`) | with reservations (audit was for `414603bf`; the bump to `c3bb418e` was accepted without a fresh audit) | installed by default by the maintainer's decision, against the audit's "opt-in only"; 22 MB binary, network calls, agent directives, live mode with `bypassPermissions`; the CLI would install the `.agents/` mirror (different hash), so it goes by verified tarball |
 
 `impeccable` (`pbakaus/impeccable`) is installed by default, as a required skill.
 Audit verdict: "aceptable con reservas, solo opt-in".
@@ -502,7 +502,8 @@ On a mismatch the step exits non-zero, a previous copy that does not match is re
 A malformed manifest line also fails the step, loudly.
 `scripts/lib/third-party.sh` is copied verbatim from `b0-conuco`; its test is `bash scripts/test-third-party.sh` (fixture tarballs, no network).
 To run only this step: `bash scripts/install-claude-skills.sh pinned`.
-Pin: tag `skill-v4.8.0`, commit `414603bf14c7a344edb466bb1f85690c77ce8b7d`.
+Pin: commit `c3bb418ee38ee49a6b999b7752c1368f3123a2bd`, path hash `e6a272c9…65cc`.
+The audit above covers the earlier pin, tag `skill-v4.8.0` (`414603bf`, hash `532aa989…5b8b`); the move to `c3bb418e` came from `update-deps.sh skills` (#46) and was accepted without re-auditing.
 An update is a new audit: change the commit, path and hash together.
 
 Risks accepted:
