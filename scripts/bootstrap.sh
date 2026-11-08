@@ -58,7 +58,7 @@ main() {
   # Paquete solo-Omarchy: hook de OpenRGB (RGB sync con el tema) + autostart de hypr.
   # coolercontrol: perfiles/modos de temperatura + watcher que cambia de modo
   # según las ventanas abiertas (ver docs/omarchy.md).
-  [[ "${OS}" == "omarchy" ]] && STOW_PACKAGES+=(omarchy coolercontrol)
+  [[ "${OS}" == "omarchy" ]] && STOW_PACKAGES+=(omarchy coolercontrol pipewire)
   # systemd --user units for the decision engine (see docs/decision-engine.md).
   [[ "${OS}" != "macos" ]] && STOW_PACKAGES+=(clef)
 

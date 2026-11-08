@@ -303,6 +303,21 @@ sin ejecutarlo). La carpeta queda enlazada en `~/.config/omarchy/plugins/` con S
 - Validación: `omarchy plugin validate omarchy/.config/omarchy/plugins/savaf.media` (solo lectura). Verlo en
   la barra con música real requiere recargar el shell, que hace el integrador.
 
+## 15. Supresión de ruido del micrófono
+
+Paquete stow `pipewire` (solo Omarchy): `pipewire/.config/pipewire/pipewire.conf.d/99-input-denoising.conf`
+crea con `filter-chain` + RNNoise la fuente virtual **"Noise Canceling source"**. Necesita el paquete
+`noise-suppression-for-voice` (en `packages/arch-apps.txt`). Comparativa de alternativas
+(Krisp, EasyEffects, DeepFilterNet, NoiseTorch) y fuentes: `docs/research/mic-noise-cancelling.md`.
+
+- Aplicar: `stow -d ~/dotfiles -t ~ --no-folding pipewire && systemctl --user restart pipewire pipewire-pulse wireplumber`.
+- Usar: poner la fuente como entrada por defecto (`pactl set-default-source rnnoise_source`)
+  o elegirla en el selector de micrófono de Discord. Discord es una webapp en Brave, que usa la entrada por defecto del sistema.
+- Ajustar la agresividad: `"VAD Threshold (%)"` en el `.conf` (90 por defecto; sube si se cuela ruido, baja si corta la voz).
+- Límites de RNNoise: solo 48 kHz; los ruidos fuertes no vocales (teclado) solo se reducen mientras hablas.
+- Si no aparece la fuente: `journalctl --user -u pipewire -b | grep -i -E "filter-chain|ladspa"`
+  (PipeWire ≥ 1.6.3 rechaza rutas absolutas de plugins; el `.conf` usa el nombre `librnnoise_ladspa`).
+
 ## Notes
 
 - **Omarchy reescribe algunos ficheros que stow enlaza.** `omarchy-shell-config` (detrás de
