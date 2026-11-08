@@ -15,6 +15,13 @@
       "response_delay": 1,
       "deviance": 1.0,
       "only_downward": false
+    },
+    "ultra": {
+      "duty_minimum": 100,
+      "duty_maximum": 100,
+      "response_delay": 0,
+      "deviance": 1.0,
+      "only_downward": false
     }
   },
 
@@ -35,6 +42,15 @@
         "cpu_pump": { "curve": [[25,80],[33,90],[40,100]] },
         "hub_fan3": { "curve": [[30,45],[52,55],[64,70],[74,86],[80,100]] },
         "gpu_fan":  { "curve": [[30,45],[50,58],[60,72],[70,86],[78,100]] }
+      }
+    },
+    {
+      "name": "Ultra",
+      "channels": {
+        "cpu_fan":  { "curve": [[20,100],[90,100]] },
+        "cpu_pump": { "curve": [[20,100],[90,100]] },
+        "hub_fan3": { "curve": [[20,100],[90,100]] },
+        "gpu_fan":  { "curve": [[20,100],[90,100]] }
       }
     }
   ]
