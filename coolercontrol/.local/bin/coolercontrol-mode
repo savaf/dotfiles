@@ -1,0 +1,43 @@
+#!/bin/bash
+# Elige a mano el modo térmico de CoolerControl.
+#   coolercontrol-mode auto|silencio|rendimiento|ultra   fija ese modo
+#   coolercontrol-mode cycle                             auto → silencio → rendimiento → ultra → auto
+#   coolercontrol-mode status                            muestra el modo elegido y el activo
+# "auto" = el watcher decide solo (Silencio, o Rendimiento si hay un juego abierto).
+# Cualquier otro valor lo fija el watcher también: ni abrir ni cerrar juegos lo cambia.
+set -uo pipefail
+
+CC_URL="http://127.0.0.1:11987"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/coolercontrol-modes"
+TOKEN="$(<"$STATE_DIR/api-token")" || exit 1
+CHOICE_FILE="$STATE_DIR/manual-mode"
+ORDER=(auto silencio rendimiento ultra)
+
+api() { curl -sS -m 10 -H "Authorization: Bearer ${TOKEN}" -H 'Content-Type: application/json' -X "$1" "${CC_URL}${2}"; }
+current() { cat "$CHOICE_FILE" 2>/dev/null || echo auto; }
+uid_of() { jq -r --arg n "$1" '.modes[]? | select(.name|ascii_downcase==$n) | .uid' <<<"$(api GET /modes)" | head -1; }
+notify() { echo "$1"; command -v omarchy-notification-send >/dev/null && omarchy-notification-send "Ventiladores: $1"; }
+
+apply() {
+  local want="$1" uid
+  mkdir -p "$STATE_DIR"; echo "$want" >"$CHOICE_FILE"
+  if [[ "$want" == auto ]]; then
+    systemctl --user restart coolercontrol-mode-watcher   # reconcilia al arrancar
+    notify "auto"; return
+  fi
+  uid="$(uid_of "$want")"
+  [[ -n "$uid" ]] || { notify "modo '$want' no existe (corre coolercontrol-provision)"; exit 1; }
+  api POST "/modes-active/${uid}" >/dev/null && notify "$want"
+}
+
+case "${1:-status}" in
+  auto|silencio|rendimiento|ultra) apply "$1" ;;
+  cycle)
+    cur="$(current)"; next="${ORDER[0]}"
+    for i in "${!ORDER[@]}"; do [[ "${ORDER[$i]}" == "$cur" ]] && next="${ORDER[$(( (i + 1) % ${#ORDER[@]} ))]}"; done
+    apply "$next" ;;
+  status)
+    act="$(jq -r '.current_mode_uid // empty' <<<"$(api GET /modes-active)")"
+    echo "elegido: $(current) | activo: $(jq -r --arg u "$act" '.modes[]? | select(.uid==$u) | .name' <<<"$(api GET /modes)")" ;;
+  *) echo "uso: ${0##*/} auto|silencio|rendimiento|ultra|cycle|status" >&2; exit 2 ;;
+esac

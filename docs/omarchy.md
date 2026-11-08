@@ -512,6 +512,19 @@ sin ejecutarlo). La carpeta queda enlazada en `~/.config/omarchy/plugins/` con S
     ~58 °C de CPU / ~52 °C de GPU.
   - **Rendimiento**: piso de RPM más alto y rampa más agresiva; se activa solo
     mientras hay una ventana de juego abierta.
+  - **Ultra**: todos los ventiladores y la bomba al 100 % siempre.
+
+  **Elegir el modo a mano**: `coolercontrol-mode auto|silencio|rendimiento|ultra|cycle|status`,
+  o `SUPER+ALT+T` (cicla `auto → silencio → rendimiento → ultra → auto` y avisa con una
+  notificación). La elección se guarda en `~/.local/state/coolercontrol-modes/manual-mode`
+  (sobrevive a reinicios). `auto` es el comportamiento de arriba; cualquier otra
+  elección la mantiene el watcher aunque abras o cierres juegos.
+
+  **Subida automática por calor**: en `auto`, el watcher sondea cada 5 s la temperatura
+  máxima entre GPU (`nvidia-smi`) y CPU (`coretemp`); a ≥ 85 °C activa Ultra y vuelve
+  al modo normal por debajo de 78 °C (histéresis). Umbrales `HOT_ON`/`HOT_OFF` en
+  `coolercontrol-mode-watcher`. Ojo: lee la temperatura del núcleo, no la de la
+  VRAM GDDR6X (la 3080 no la expone), así que no ve un calentamiento solo de memoria.
 
   `coolercontrol/.local/bin/coolercontrol-provision` aplica `curves.json` vía
   la API REST del daemon (`127.0.0.1:11987`) de forma idempotente (crea o

@@ -14,3 +14,6 @@ o.bind("SUPER + ALT + K", "Toggle keyboard layout", [[bash -c 'hyprctl switchxkb
 
 -- Tmux keybindings, que dejó de tener atajo al reasignar SUPER+ALT+K.
 o.bind("SUPER + ALT + SHIFT + K", "Tmux keybindings", "omarchy-menu-tmux-keybindings")
+
+-- Modo térmico de los ventiladores: cicla auto → silencio → rendimiento → ultra (ver coolercontrol-mode).
+o.bind("SUPER + ALT + T", "Fan mode cycle", "coolercontrol-mode cycle")

@@ -16,6 +16,12 @@ CC_TOKEN_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/coolercontrol-modes/api-tok
 CLASSES_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/coolercontrol-modes/gaming-classes.conf"
 MODE_IDLE="Silencio"
 MODE_GAMING="Rendimiento"
+MODE_HOT="Ultra"
+HOT_ON="${HOT_ON:-85}"    # °C (máx de GPU/CPU) a partir de los que, en auto, sube a Ultra
+HOT_OFF="${HOT_OFF:-78}"   # °C por debajo de los que vuelve; la banda evita oscilar en el umbral
+HOT_FILE="${XDG_RUNTIME_DIR:-/tmp}/coolercontrol-mode-watcher.hot"
+POLL_SECS=5
+CHOICE_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/coolercontrol-modes/manual-mode"
 
 log() { echo "[coolercontrol-mode-watcher] $*" >&2; }
 
@@ -39,6 +45,7 @@ resolve_mode_uid() {  # resolve_mode_uid NOMBRE
 
 UID_IDLE="$(resolve_mode_uid "$MODE_IDLE")"
 UID_GAMING="$(resolve_mode_uid "$MODE_GAMING")"
+UID_HOT="$(resolve_mode_uid "$MODE_HOT")"   # opcional: sin Ultra no hay subida por calor
 
 if [[ -z "$UID_IDLE" || -z "$UID_GAMING" ]]; then
   log "faltan los modos '${MODE_IDLE}'/'${MODE_GAMING}'; aprovisionando…"
@@ -48,6 +55,28 @@ if [[ -z "$UID_IDLE" || -z "$UID_GAMING" ]]; then
   [[ -n "$UID_IDLE" && -n "$UID_GAMING" ]] || { log "los modos siguen sin existir; saliendo"; exit 1; }
 fi
 log "modos resueltos: ${MODE_IDLE}=${UID_IDLE} ${MODE_GAMING}=${UID_GAMING}"
+
+# Temperatura máxima (°C entera) entre GPU y CPU; vacío si no se pudo leer.
+max_temp() {
+  local g c hw
+  g="$(timeout 5 nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader 2>/dev/null | head -1)"
+  for hw in /sys/class/hwmon/hwmon*; do
+    [[ "$(cat "$hw/name" 2>/dev/null)" == coretemp ]] && { c="$(( $(cat "$hw/temp1_input" 2>/dev/null || echo 0) / 1000 ))"; break; }
+  done
+  printf '%s\n' "${g:-0}" "${c:-0}" | sort -n | tail -1
+}
+
+# ¿Está "caliente"? Con histéresis: se enciende a HOT_ON y se apaga bajo HOT_OFF.
+# El estado vive en un fichero (no en memoria) por la misma razón que el resto:
+# lo comparten el hilo de eventos y el de sondeo, y sobrevive a un reinicio.
+is_hot() {
+  local t
+  t="$(max_temp)"
+  [[ "$t" =~ ^[0-9]+$ ]] || { [[ -e "$HOT_FILE" ]]; return; }
+  if (( t >= HOT_ON )); then : >"$HOT_FILE"
+  elif (( t < HOT_OFF )); then rm -f "$HOT_FILE"; fi
+  [[ -e "$HOT_FILE" ]]
+}
 
 # ¿Hay alguna ventana abierta cuya class/initialClass matchee un patrón (glob)
 # de gaming-classes.conf? Se relee el fichero en cada llamada: así añadir un
@@ -69,17 +98,32 @@ any_game_open() {
 }
 
 reconcile() {
-  local want cur
+  local want cur choice manual
   want="$UID_IDLE"
   any_game_open && want="$UID_GAMING"
+  # Elección manual (coolercontrol-mode): manda sobre la detección de juegos.
+  choice="$(cat "$CHOICE_FILE" 2>/dev/null)"
+  if [[ -n "${choice:-}" && "$choice" != auto ]]; then
+    manual="$(resolve_mode_uid "${choice^}")"
+    [[ -n "$manual" ]] && want="$manual"
+  fi
+  # En auto, el calor extremo manda sobre todo lo demás (no sobre la elección manual).
+  if [[ -z "${choice:-}" || "$choice" == auto ]] && [[ -n "$UID_HOT" ]] && is_hot; then
+    want="$UID_HOT"
+  fi
   cur="$(jq -r '.current_mode_uid // empty' <<<"$(cc_api GET /modes-active)" 2>/dev/null)"
   [[ -n "$cur" && "$cur" == "$want" ]] && return 0
   cc_api POST "/modes-active/${want}" >/dev/null
-  [[ "$want" == "$UID_GAMING" ]] && log "juego detectado → modo ${MODE_GAMING}" \
-                                  || log "sin juegos detectados → modo ${MODE_IDLE}"
+  case "$want" in
+    "$UID_HOT")    log "temperatura >= ${HOT_ON} °C → modo ${MODE_HOT}" ;;
+    "$UID_GAMING") log "juego detectado → modo ${MODE_GAMING}" ;;
+    *)             log "sin juegos detectados → modo ${MODE_IDLE}" ;;
+  esac
 }
 
 revert_on_exit() {
+  [[ -n "${POLL_PID:-}" ]] && kill "$POLL_PID" 2>/dev/null
+  rm -f "$HOT_FILE"
   log "parando: forzando modo ${MODE_IDLE}"
   cc_api POST "/modes-active/${UID_IDLE}" >/dev/null
 }
@@ -91,7 +135,12 @@ if [[ -z "$SOCK" ]]; then
   exit 1
 fi
 
+rm -f "$HOT_FILE"
 reconcile   # cubre arrancar/reiniciar con un juego ya abierto
+
+# Sondeo de temperatura: los eventos de ventana no avisan de que algo se calienta.
+[[ -n "$UID_HOT" ]] && { while sleep "$POLL_SECS"; do reconcile; done; } &
+POLL_PID=$!
 
 # Debounce: coalescer ráfagas de eventos (varias ventanas al lanzar un juego)
 # en como mucho una reconciliación por segundo.

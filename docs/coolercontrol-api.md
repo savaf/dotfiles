@@ -9,12 +9,18 @@ spec. Keep it in English on purpose: it's an API reference, not usage docs.
 ## What's stowed
 
 - `coolercontrol/.local/bin/coolercontrol-provision` — idempotent script that creates/
-  updates the `Silencio`/`Rendimiento` functions, profiles and modes via the API.
+  updates the `Silencio`/`Rendimiento`/`Ultra` functions, profiles and modes via the API.
 - `coolercontrol/.local/bin/coolercontrol-setup` — end-to-end setup and verification:
   prompts for and validates the token, runs `coolercontrol-provision`, enables and
   restarts the watcher, then checks everything (`--check` = verify only).
+- `coolercontrol/.local/bin/coolercontrol-mode` — manual mode picker (`auto`, `silencio`,
+  `rendimiento`, `ultra`, `cycle`, `status`). Writes the choice to
+  `~/.local/state/coolercontrol-modes/manual-mode` and activates it via `POST /modes-active/{uid}`;
+  `auto` restarts the watcher so it reconciles immediately. Bound to `SUPER+ALT+T`.
 - `coolercontrol/.local/bin/coolercontrol-mode-watcher` — listens to Hyprland's
-  `.socket2.sock` and switches the active mode based on open window classes.
+  `.socket2.sock` and switches the active mode based on open window classes. In `auto` it also
+  polls GPU/CPU temperature and jumps to `Ultra` at ≥ 85 °C (back below 78 °C); a manual
+  choice from `coolercontrol-mode` overrides both.
 - `coolercontrol/.config/coolercontrol-modes/curves.json` — the only file to edit to
   change curve numbers.
 - `coolercontrol/.config/coolercontrol-modes/gaming-classes.conf` — window-class glob

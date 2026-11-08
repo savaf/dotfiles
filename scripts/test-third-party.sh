@@ -141,7 +141,7 @@ check "completa: la línea con tarball no pasa por npx" test "$(grep -c 'owner/r
 check "completa: el fallo del tarball no detiene el MCP" grep -q 'claude mcp add' "${calls}"
 check "completa: el fallo del tarball hace salir distinto de 0" test "${RC}" -ne 0
 
-# Manifiesto real: líneas con tarball bien formadas; impeccable activa y fijada al tag skill-v4.8.0.
+# Manifiesto real: líneas con tarball bien formadas; impeccable activa y fijada al commit c3bb418.
 lock="${repo}/packages/claude-skills.txt"
 real_ok() {
   local n=0 r p h x
@@ -156,8 +156,8 @@ real_ok() {
   [ "${n}" -gt 0 ]
 }
 check "packages/claude-skills.txt: las líneas con tarball están bien formadas" real_ok
-check "impeccable está activa en el manifiesto, fijada al tag skill-v4.8.0 (commit, ruta y hash auditados)" \
-  grep -qx 'pbakaus/impeccable#414603bf14c7a344edb466bb1f85690c77ce8b7d impeccable \.claude/skills/impeccable 532aa98903b020071ea830f9a97b931e771fa42daea2308af6e4f9f572e65b8b' "${lock}"
+check "impeccable está activa en el manifiesto, fijada al commit c3bb418 (commit, ruta y hash auditados)" \
+  grep -qx 'pbakaus/impeccable#c3bb418ee38ee49a6b999b7752c1368f3123a2bd impeccable \.claude/skills/impeccable e6a272c9664ab4350d53ca4f07b79a99b99424058749fce92f775b4d291065cc' "${lock}"
 
 # shellcheck disable=SC2015 # solo imprime el resultado; ambas ramas son echo
 [ "${fails}" -eq 0 ] && echo "todo ok" || { echo "${fails} fallos"; exit 1; }

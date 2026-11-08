@@ -1,6 +1,6 @@
 #!/bin/bash
 # Aprovisiona en CoolerControl (vía su API REST) los perfiles/funciones/modos
-# "Silencio" y "Rendimiento" definidos en curves.json. Idempotente: re-ejecutar
+# "Silencio", "Rendimiento" y "Ultra" definidos en curves.json. Idempotente: re-ejecutar
 # no duplica nada.
 #
 # Por qué existe: coolercontrold detecta bien todo el hardware pero llega sin
@@ -181,8 +181,8 @@ ensure_mode_from_current_state() {
 CURVES="$(<"$CURVES_FILE")"
 declare -A MODE_UID
 
-for mode_name in Silencio Rendimiento; do
-  key="silencio"; [[ "$mode_name" == "Rendimiento" ]] && key="rendimiento"
+for mode_name in Silencio Rendimiento Ultra; do
+  key="${mode_name,,}"
   log "== Modo ${mode_name} =="
 
   func_params="$(jq -c --arg k "$key" '.functions[$k]' <<<"$CURVES")"
@@ -213,4 +213,4 @@ done
 log "Activando modo por defecto: Silencio"
 cc_api POST "/modes-active/${MODE_UID[silencio]}" >/dev/null
 
-log "Listo. Silencio=${MODE_UID[silencio]} Rendimiento=${MODE_UID[rendimiento]}"
+log "Listo. Silencio=${MODE_UID[silencio]} Rendimiento=${MODE_UID[rendimiento]} Ultra=${MODE_UID[ultra]}"
