@@ -28,3 +28,6 @@ nct6687d-dkms-git
 # que reempaqueta la app oficial de Anthropic
 claude-code
 claude-desktop
+# supresión de ruido del micrófono (RNNoise, plugin LADSPA); lo usa el paquete stow
+# pipewire para crear la fuente virtual "Noise Canceling source" (ver docs/omarchy.md)
+noise-suppression-for-voice
