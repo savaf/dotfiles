@@ -10,6 +10,9 @@ spec. Keep it in English on purpose: it's an API reference, not usage docs.
 
 - `coolercontrol/.local/bin/coolercontrol-provision` — idempotent script that creates/
   updates the `Silencio`/`Rendimiento` functions, profiles and modes via the API.
+- `coolercontrol/.local/bin/coolercontrol-setup` — end-to-end setup and verification:
+  prompts for and validates the token, runs `coolercontrol-provision`, enables and
+  restarts the watcher, then checks everything (`--check` = verify only).
 - `coolercontrol/.local/bin/coolercontrol-mode-watcher` — listens to Hyprland's
   `.socket2.sock` and switches the active mode based on open window classes.
 - `coolercontrol/.config/coolercontrol-modes/curves.json` — the only file to edit to
@@ -19,20 +22,17 @@ spec. Keep it in English on purpose: it's an API reference, not usage docs.
 - `coolercontrol/.config/systemd/user/coolercontrol-mode-watcher.service`.
 
 `scripts/modules/coolercontrol.sh:ensure_coolercontrol_mode_watcher()` (called from
-`bootstrap.sh`) stows the package, runs the provisioning script and enables the service —
-but only once the API token below exists.
+`bootstrap.sh` after stow) runs `coolercontrol-setup </dev/null`. Without a saved token it
+fails without prompting and the bootstrap lists it in its final summary.
 
 ## Prerequisite: API token
 
 The daemon rejects unauthenticated requests (`{"error":"Invalid Credentials"}`) and has
 no CLI for this. Create a token from the GUI (Settings → Access Tokens) **with write
 access checked** — a read-only token 403s on every POST/PUT with
-`{"error":"This token does not have write access."}`. Save it to:
-
-```sh
-install -d -m 700 ~/.local/state/coolercontrol-modes
-umask 077; printf '%s' '<TOKEN>' > ~/.local/state/coolercontrol-modes/api-token
-```
+`{"error":"This token does not have write access."}`. Run `coolercontrol-setup` and paste
+it at the prompt: it validates it with `GET /modes` and saves it to
+`~/.local/state/coolercontrol-modes/api-token` (mode `600`, dir `700`).
 
 Sent as `Authorization: Bearer <token>` on every request. No expiry handling needed —
 tokens created without an `expires_at` don't expire.
@@ -153,19 +153,11 @@ Activate: `POST /modes-active/{uid}` (empty body). Read current: `GET /modes-act
 cd ~/dotfiles && ./scripts/bootstrap.sh
 
 # 2. Create the API token from the GUI (Settings > Access Tokens, write access ON),
-#    then save it — bootstrap checks for this file and skips enabling the watcher
-#    until it exists:
-install -d -m 700 ~/.local/state/coolercontrol-modes
-umask 077; printf '%s' '<TOKEN>' > ~/.local/state/coolercontrol-modes/api-token
+#    then run the setup and paste it when prompted (provisions, enables, verifies):
+coolercontrol-setup
 
-# 3. Re-run bootstrap (or do it directly):
-coolercontrol-provision
-systemctl --user daemon-reload
-systemctl --user enable --now coolercontrol-mode-watcher.service
-
-# 4. Verify
-curl -s -H "Authorization: Bearer $(cat ~/.local/state/coolercontrol-modes/api-token)" \
-  http://127.0.0.1:11987/modes-active | jq .
+# 3. Verify any time (read-only):
+coolercontrol-setup --check
 journalctl --user -u coolercontrol-mode-watcher.service -f
 ```
 

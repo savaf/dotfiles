@@ -378,15 +378,26 @@ sin ejecutarlo). La carpeta queda enlazada en `~/.config/omarchy/plugins/` con S
   `coredumpctl list` como un `SIGABRT` de Hyprland + `SIGSEGV` de
   `xdg-desktop-portal-hyprland` en el mismo segundo, y en
   `journalctl -k -b <n> | grep Xid` como cientos/miles de líneas repetidas
-  (el GSP queda reintentando y fallando hasta el reinicio). Workaround:
-  desactivar GSP con `NVreg_EnableGpuFirmware=0` en
-  `/etc/modprobe.d/nvidia.conf` (vuelve al driver a modo "legacy" sin GSP; el
-  costo es algo de gestión de energía dinámica de menos). El contenido
-  canónico vive versionado en `system/etc/modprobe.d/nvidia.conf` — no es
-  stow (`/etc` está fuera de `$HOME`), lo instala `ensure_nvidia_gsp_disabled`
-  en `install-packages.sh`, que también regenera el initramfs si el archivo
-  cambió (el módulo `nvidia` se carga temprano vía el hook `kms`). Requiere
-  reiniciar para tomar efecto.
+  (el GSP queda reintentando y fallando hasta el reinicio). **No hay
+  workaround por modprobe**: `NVreg_EnableGpuFirmware=0` estuvo puesto desde
+  2026-09 pero `nvidia-open` exige GSP y lo ignora en silencio (compruébalo:
+  `nvidia-smi -q | grep GSP` sigue mostrando versión de firmware). Si el Xid
+  120 vuelve, la vía es actualizar el driver o reportarlo a NVIDIA.
+- NVIDIA modprobe: el contenido canónico vive versionado en
+  `system/etc/modprobe.d/nvidia.conf` — no es stow (`/etc` está fuera de
+  `$HOME`), lo instala `ensure_nvidia_modprobe` en `install-packages.sh`, que
+  también regenera el initramfs si el archivo cambió (el módulo `nvidia` se
+  carga temprano vía el hook `kms`). Requiere reiniciar para tomar efecto.
+- Cuelgue total jugando (artefactos en pantalla → freeze → reset a mano, **sin
+  ningún Xid en `journalctl -k`**): pasó 3 veces seguidas con Elden Ring
+  (2026-11-08, a los 3–10 min de juego). Sin log no es el driver: apunta a
+  VRAM GDDR6X caliente/inestable o a picos de la fuente. Ese día además el
+  `coolercontrol-mode-watcher` no corría (faltaba el token de la API), así que
+  la GPU jugó con la curva Silencio. **Resuelto** creando el token y habilitando
+  el watcher: con la curva Rendimiento se jugó >1 h a 250 W y luego a 320 W
+  (stock) sin cuelgues. Si vuelve: corre primero `coolercontrol-setup --check`;
+  después aísla con
+  `sudo nvidia-smi -pl 250` (no persiste) y `memtest_vulkan` (AUR) para la VRAM.
 - **Reboot to Windows**: el paquete stow `omarchy` instala `~/.local/bin/reboot-windows` y
   la fila **System → Reboot to Windows** del menú (`SUPER+SPACE`), declarada en
   `~/.config/omarchy/extensions/omarchy-menu.jsonc`.
@@ -527,16 +538,16 @@ sin ejecutarlo). La carpeta queda enlazada en `~/.config/omarchy/plugins/` con S
   tiempo; el disparador real son las clases de juego (`steam_app_*`,
   `gamescope`, `steam_proton`).
 
-  **Token de la API** (paso manual, una sola vez, fuera del repo): la API
-  exige un Bearer token con permiso de escritura. Créalo desde la GUI de
-  CoolerControl (Settings → Access Tokens) y guárdalo en
-  `~/.local/state/coolercontrol-modes/api-token` con permisos `600`:
-  ```sh
-  install -d -m 700 ~/.local/state/coolercontrol-modes
-  umask 077; printf '%s' '<TOKEN>' > ~/.local/state/coolercontrol-modes/api-token
-  ```
-  Sin ese fichero, `ensure_coolercontrol_mode_watcher` deja el watcher sin
-  habilitar y avisa en el log del bootstrap; una vez creado el token,
-  re-ejecuta `scripts/bootstrap.sh` (o a mano:
-  `coolercontrol-provision && systemctl --user enable --now coolercontrol-mode-watcher`).
+  **Setup y verificación: `coolercontrol-setup`** (paquete `coolercontrol`).
+  - Sin argumentos: pide el token si falta, aprovisiona `curves.json`, habilita y reinicia el watcher, y verifica.
+  - `--check`: solo verifica (daemon, token, watcher, modos, modo activo según el juego abierto, perfil de los ventiladores de la GPU).
+  - Sale con 0 si todo está OK y con 1 si algo falla.
+  - Tras editar `curves.json`, basta con volver a correrlo.
+  - El bootstrap lo corre sin TTY: si falta el token, no lo pide y lo lista en el resumen final.
+
+  **Token de la API** (paso manual, una sola vez): la API exige un Bearer token
+  con permiso de escritura y solo se crea desde la GUI de CoolerControl
+  (Settings → Access Tokens). Corre `coolercontrol-setup` y pégalo cuando lo
+  pida: lo valida contra la API y lo guarda en
+  `~/.local/state/coolercontrol-modes/api-token` con permisos `600`.
 - To re-apply config after pulling changes: `cd ~/dotfiles && stow -R bash zsh git starship nvim tmux shell lazygit mise`.

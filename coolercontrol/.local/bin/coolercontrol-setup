@@ -1,0 +1,220 @@
+#!/bin/bash
+# Deja CoolerControl listo de punta a punta y verifica que las curvas estén
+# activas: token de la API, coolercontrol-provision (curves.json) y el watcher
+# Silencio ⇄ Rendimiento. Existe porque el 2026-11-08 faltaba el token, el
+# bootstrap solo lo avisó en el log, y la GPU jugó sin curvas hasta colgarse
+# (ver docs/omarchy.md).
+#
+#   coolercontrol-setup          configura y verifica (idempotente)
+#   coolercontrol-setup --check  solo verifica, sin cambiar nada
+#
+# Sale 0 si todas las comprobaciones pasan, 1 si alguna falla, 2 si el uso es
+# incorrecto.
+
+set -uo pipefail
+
+usage() { echo "uso: coolercontrol-setup [--check]" >&2; }
+
+CHECK_ONLY=0
+case "${1:-}" in
+  "") ;;
+  --check) CHECK_ONLY=1 ;;
+  *) usage; exit 2 ;;
+esac
+(($# <= 1)) || { usage; exit 2; }
+
+log() { echo "[coolercontrol-setup] $*"; }
+
+# Misma marca que os_detect (scripts/lib/common.sh).
+if [[ ! -d "${HOME}/.local/share/omarchy" ]] && ! command -v omarchy >/dev/null 2>&1; then
+  log "no es Omarchy; nada que hacer."
+  exit 0
+fi
+
+CC_URL="http://127.0.0.1:11987"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/coolercontrol-modes"
+TOKEN_FILE="${STATE_DIR}/api-token"
+CLASSES_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/coolercontrol-modes/gaming-classes.conf"
+UNIT="coolercontrol-mode-watcher"
+GUI_HINT="créalo en la GUI de CoolerControl (Settings → Access Tokens, con permiso de escritura)"
+
+TOKEN=""
+API_BODY="" API_CODE=""
+FAILS=0
+
+ok()   { log "OK     $*"; }
+ko()   { log "FALLO  $*"; FAILS=$((FAILS + 1)); }
+omit() { log "OMITE  $*"; }
+
+# api METHOD PATH — deja la respuesta en API_BODY y el status en API_CODE
+# (000 = sin conexión). Sin $(…) a propósito: perdería las variables.
+api() {
+  local resp
+  API_BODY="" API_CODE="000"
+  resp="$(curl -sS -m 5 -w $'\n%{http_code}' -H "Authorization: Bearer ${TOKEN}" \
+    -X "$1" "${CC_URL}$2" 2>/dev/null)" || return 1
+  API_CODE="${resp##*$'\n'}"
+  API_BODY="${resp%$'\n'*}"
+  [[ "${API_CODE}" -lt 300 ]]
+}
+
+explain_api_error() {
+  case "${API_CODE}" in
+    000) log "coolercontrold no responde en ${CC_URL}; arráncalo: sudo systemctl enable --now coolercontrold" ;;
+    401) log "token rechazado (HTTP 401); ${GUI_HINT} y vuelve a correr coolercontrol-setup." ;;
+    403) log "token sin permiso de escritura (HTTP 403); ${GUI_HINT}." ;;
+    *)   log "la API respondió HTTP ${API_CODE}: ${API_BODY}" ;;
+  esac
+}
+
+# Carga el token guardado o lo pide (TTY: oculto; sin TTY: una línea de stdin),
+# lo valida contra la API y solo entonces lo guarda con permisos 600.
+ensure_token() {
+  if [[ -s "${TOKEN_FILE}" ]]; then
+    TOKEN="$(<"${TOKEN_FILE}")"
+    return 0
+  fi
+  local t=""
+  if [[ -t 0 ]]; then
+    log "Falta el token de la API: ${GUI_HINT} y pégalo aquí."
+    read -rsp "token: " t || true
+    echo >&2
+  else
+    IFS= read -r t || true
+  fi
+  if [[ -z "${t}" ]]; then
+    log "falta el token (${TOKEN_FILE}) y no hay terminal para pedirlo; ${GUI_HINT}."
+    return 1
+  fi
+  TOKEN="${t}"
+  api GET /modes || { explain_api_error; TOKEN=""; return 1; }
+  install -d -m 700 "${STATE_DIR}"
+  (umask 077 && printf '%s' "${t}" >"${TOKEN_FILE}")
+  log "token guardado en ${TOKEN_FILE}."
+}
+
+provision() {
+  local out rc=0
+  out="$("$(dirname "$0")/coolercontrol-provision" 2>&1)" || rc=$?
+  [[ -z "${out}" ]] || printf '%s\n' "${out}"
+  ((rc == 0)) && return 0
+  if grep -q 'HTTP 403' <<<"${out}"; then
+    API_CODE=403; explain_api_error
+  fi
+  log "coolercontrol-provision falló (código ${rc})."
+  return 1
+}
+
+start_watcher() {
+  systemctl --user daemon-reload \
+    && systemctl --user enable "${UNIT}" \
+    && systemctl --user restart "${UNIT}"
+}
+
+# ¿Hay una ventana cuya clase matchee gaming-classes.conf? Misma regla que
+# coolercontrol-mode-watcher. 0 = sí, 1 = no, 2 = sin Hyprland.
+game_open() {
+  local classes patterns cls pat
+  classes="$(hyprctl clients -j 2>/dev/null)" || return 2
+  classes="$(jq -r '.[] | .class, .initialClass' <<<"${classes}" 2>/dev/null)"
+  patterns="$(sed 's/#.*//' "${CLASSES_FILE}" 2>/dev/null | grep -v '^[[:space:]]*$')"
+  while IFS= read -r cls; do
+    [[ -n "${cls}" ]] || continue
+    while IFS= read -r pat; do
+      # shellcheck disable=SC2053
+      [[ -n "${pat}" && "${cls}" == ${pat} ]] && return 0
+    done <<<"${patterns}"
+  done <<<"${classes}"
+  return 1
+}
+
+report() {
+  log "== Verificación =="
+  if api GET /handshake || [[ "${API_CODE}" != 000 ]]; then
+    ok "daemon coolercontrold responde"
+  else
+    ko "daemon coolercontrold no responde en ${CC_URL}"
+  fi
+
+  local api_ok=0
+  if [[ ! -s "${TOKEN_FILE}" ]]; then
+    ko "token: falta ${TOKEN_FILE}"
+  elif [[ "$(stat -c %a "${TOKEN_FILE}")" != 600 ]]; then
+    ko "token: permisos $(stat -c %a "${TOKEN_FILE}") (deben ser 600)"
+  else
+    TOKEN="$(<"${TOKEN_FILE}")"
+    if api GET /modes; then ok "token aceptado por la API"; api_ok=1
+    else ko "token: la API responde HTTP ${API_CODE}"; fi
+  fi
+
+  if systemctl --user is-enabled --quiet "${UNIT}" && systemctl --user is-active --quiet "${UNIT}"; then
+    ok "watcher ${UNIT} habilitado y activo"
+  else
+    ko "watcher ${UNIT} no está habilitado y activo"
+  fi
+
+  if ((api_ok == 0)); then
+    omit "modos, modo activo y gpu (sin acceso a la API)"
+    return
+  fi
+
+  local modes sil ren
+  modes="${API_BODY}"
+  sil="$(jq -r '.modes[]? | select(.name=="Silencio") | .uid' <<<"${modes}" | head -1)"
+  ren="$(jq -r '.modes[]? | select(.name=="Rendimiento") | .uid' <<<"${modes}" | head -1)"
+  if [[ -n "${sil}" && -n "${ren}" ]]; then ok "modos Silencio y Rendimiento existen"
+  else ko "modos: falta Silencio o Rendimiento (corre coolercontrol-setup)"; fi
+
+  local cur active_name=""
+  api GET /modes-active
+  cur="$(jq -r '.current_mode_uid // empty' <<<"${API_BODY}" 2>/dev/null)"
+  [[ -n "${cur}" && "${cur}" == "${sil}" ]] && active_name="Silencio"
+  [[ -n "${cur}" && "${cur}" == "${ren}" ]] && active_name="Rendimiento"
+
+  local want rc=0
+  game_open || rc=$?
+  case "${rc}" in
+    0) want="Rendimiento" ;;
+    1) want="Silencio" ;;
+    *) want="" ;;
+  esac
+  if [[ -z "${want}" ]]; then
+    omit "modo activo (Hyprland no está corriendo)"
+  elif [[ "${active_name}" == "${want}" ]]; then
+    ok "modo activo ${want}, el que corresponde"
+  else
+    ko "modo activo '${active_name:-desconocido}', debería ser ${want}"
+  fi
+
+  local gpu profiles expected assigned ch
+  api GET /devices
+  gpu="$(jq -r '.devices[]? | select(.name | test("geforce|nvidia"; "i")) | .uid' <<<"${API_BODY}" | head -1)"
+  if [[ -z "${gpu}" || -z "${active_name}" ]]; then
+    ko "gpu: no se encontró la GPU o no hay modo activo conocido"
+    return
+  fi
+  api GET /profiles
+  profiles="${API_BODY}"
+  expected="dotfiles-${active_name,,}-gpu-fan"
+  api GET "/devices/${gpu}/settings"
+  for ch in fan1 fan2; do
+    assigned="$(jq -r --arg c "${ch}" '.settings[]? | select(.channel_name==$c) | .profile_uid' <<<"${API_BODY}" | head -1)"
+    assigned="$(jq -r --arg u "${assigned}" '.profiles[]? | select(.uid==$u) | .name' <<<"${profiles}" | head -1)"
+    if [[ "${assigned}" == "${expected}" ]]; then ok "gpu ${ch} con perfil ${expected}"
+    else ko "gpu ${ch} con perfil '${assigned:-ninguno}', debería ser ${expected}"; fi
+  done
+}
+
+if ((CHECK_ONLY == 0)); then
+  if ensure_token; then
+    if ! { provision && start_watcher; }; then
+      log "el setup no terminó; revisa los mensajes de arriba."
+    fi
+  else
+    log "sin token válido no se puede aprovisionar ni arrancar el watcher."
+  fi
+fi
+
+report
+((FAILS == 0)) || { log "${FAILS} comprobación(es) fallaron."; exit 1; }
+log "todo en orden."
