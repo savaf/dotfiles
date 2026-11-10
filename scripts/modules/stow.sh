@@ -49,6 +49,11 @@ link_ssh_key() {
   if [[ -f "${ROOT_DIR}/ssh/.ssh/${host}.pub" ]]; then
     ln -sfn "${host}.pub" "${HOME}/.ssh/github.pub"
   else
-    log "Falta ssh/.ssh/${host}.pub: expórtala de Bitwarden y reejecuta (sin ella no se firma)."
+    if [[ "${BOOTSTRAP_HEADLESS:-}" == 1 ]]; then
+      log "Sin ssh/.ssh/${host}.pub (BOOTSTRAP_HEADLESS=1): se omite github.pub; ver docs/git-and-ssh.md."
+    else
+      log "Falta ssh/.ssh/${host}.pub: scripts/ssh-add-host.sh (o BOOTSTRAP_HEADLESS=1 en un VPS)."
+      return 1
+    fi
   fi
 }
