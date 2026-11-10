@@ -33,9 +33,19 @@ stow_packages() {
   # re-ejecutar es seguro y evita la fase unstow que disparaba el bug cosmético
   # de stow ("BUG in find_stowed_path?"). No limpia links de paquetes eliminados.
   stow -d "${ROOT_DIR}" --no-folding --target="${HOME}" "${STOW_PACKAGES[@]}"
-  # git solo guarda 644/755; ssh exige ~/.ssh 700 y config 600.
+  # git solo guarda 644/755; ssh exige ~/.ssh 700, config 600 y las .pub usadas como IdentityFile 600.
   if [[ -d "${HOME}/.ssh" ]]; then
     chmod 700 "${HOME}/.ssh"
     [[ -e "${HOME}/.ssh/config" ]] && chmod 600 "${HOME}/.ssh/config"
+    # OpenSSH 10.x rechaza como IdentityFile una .pub con permisos 644.
+    chmod 600 "${HOME}"/.ssh/*.pub 2>/dev/null || true
+    # Cada máquina firma y autentica con su propia llave: github.pub -> <hostname>.pub.
+    local host_key
+    host_key="${HOME}/.ssh/$(hostname -s | tr '[:upper:]' '[:lower:]').pub"
+    if [[ -e "${host_key}" ]]; then
+      ln -sfn "${host_key}" "${HOME}/.ssh/github.pub"
+    else
+      log "AVISO: no hay ${host_key}; github.pub (SSH y firma de git) no queda enlazado."
+    fi
   fi
 }
