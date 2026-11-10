@@ -86,7 +86,14 @@ setup
 if run nohost >/dev/null 2>&1; then fail "aceptó un host sin llave en el agente"; fi
 [[ ! -e "${R}/ssh/.ssh/nohost.pub" ]] || fail "creó .pub sin llave"
 
-# link_ssh_key: sin .pub falla salvo BOOTSTRAP_HEADLESS=1; con .pub enlaza.
+# .pub existente con otra llave: aborta sin tocar el .pub ni allowed_signers.
+setup
+echo "ssh-ed25519 AAAAotra savaf@testbox" >"${R}/ssh/.ssh/testbox.pub"
+if run >/dev/null 2>&1; then fail "sobrescribió un .pub con otra llave"; fi
+[[ "$(cat "${R}/ssh/.ssh/testbox.pub")" == "ssh-ed25519 AAAAotra savaf@testbox" ]] || fail "modificó el .pub existente"
+[[ "$(wc -l <"${R}/ssh/.ssh/allowed_signers")" == 1 ]] || fail "tocó allowed_signers con .pub conflictivo"
+
+# link_ssh_key: sin .pub solo avisa (nunca aborta el bootstrap, con o sin headless); con .pub enlaza.
 link() { # corre link_ssh_key en un proceso aparte con HOME y ROOT_DIR falsos
   ROOT_DIR="${R}" HOME="${R}/home" REAL_ROOT="${REAL_ROOT}" bash -c '
     source "${REAL_ROOT}/scripts/lib/common.sh"
@@ -96,9 +103,9 @@ link() { # corre link_ssh_key en un proceso aparte con HOME y ROOT_DIR falsos
 REAL_ROOT="${ROOT_DIR}"
 setup
 mkdir -p "${R}/home/.ssh"
-if link >/dev/null 2>&1; then fail "link_ssh_key no falló sin .pub"; fi
+link >/dev/null 2>&1 || fail "link_ssh_key falló sin .pub"
 BOOTSTRAP_HEADLESS=1 link >/dev/null 2>&1 || fail "link_ssh_key falló en headless sin .pub"
-[[ ! -e "${R}/home/.ssh/github.pub" ]] || fail "enlazó sin .pub"
+[[ ! -e "${R}/home/.ssh/github.pub" && ! -L "${R}/home/.ssh/github.pub" ]] || fail "creó github.pub sin .pub"
 echo "${KEY} savaf@testbox" >"${R}/ssh/.ssh/testbox.pub"
 link >/dev/null
 [[ "$(readlink "${R}/home/.ssh/github.pub")" == testbox.pub ]] || fail "no enlazó github.pub"

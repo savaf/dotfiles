@@ -52,8 +52,7 @@ link_ssh_key() {
     if [[ "${BOOTSTRAP_HEADLESS:-}" == 1 ]]; then
       log "Sin ssh/.ssh/${host}.pub (BOOTSTRAP_HEADLESS=1): se omite github.pub; ver docs/git-and-ssh.md."
     else
-      log "Falta ssh/.ssh/${host}.pub: scripts/ssh-add-host.sh (o BOOTSTRAP_HEADLESS=1 en un VPS)."
-      return 1
+      log "Falta ssh/.ssh/${host}.pub: scripts/ssh-add-host.sh (sin ella no se firma; en un VPS, BOOTSTRAP_HEADLESS=1)."
     fi
   fi
 }

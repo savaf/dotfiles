@@ -81,15 +81,24 @@ Comprobar: `echo $SSH_AUTH_SOCK`, `ssh-add -L`, `ssh -T git@github.com`.
 
 ## VPS / headless
 
-Sin Bitwarden en el VPS no hay agente propio. Dos opciones:
+Sin Bitwarden en el VPS hay dos opciones:
 
 - **(a) `ForwardAgent` solo hacia ese Host**: descomenta el bloque `Host vps` de
   `ssh/.ssh/config` (`ForwardAgent yes`). Nunca lo pongas en `Host *`: cualquier servidor
-  podría usar tu agente. La llave y la firma siguen siendo las de tu máquina de escritorio.
-- **(b) Llave ed25519 propia del VPS**: `ssh-keygen -t ed25519 -C savaf@<vps>` en el VPS
-  (la privada no sale de ahí), copia la `.pub` a `ssh/.ssh/<vps>.pub` y regístrala con
-  `scripts/ssh-add-host.sh --github` (con la llave cargada en un agente local).
+  podría usar tu agente. La llave y la firma siguen siendo las del escritorio. En el VPS
+  enlaza `github.pub` al `.pub` del escritorio (`ln -sfn andrea.pub ~/.ssh/github.pub`);
+  si no, `IdentitiesOnly yes` impide ofrecer la llave reenviada y la firma falla.
+- **(b) Llave ed25519 propia del VPS**: en el VPS, `ssh-keygen -t ed25519 -C savaf@<vps>`
+  (`<vps>` debe coincidir con `hostname -s`), carga la privada en un `ssh-agent` local del
+  VPS (`eval "$(ssh-agent -s)"; ssh-add`) y corre allí `scripts/ssh-add-host.sh --github`:
+  genera `ssh/.ssh/<vps>.pub` y `allowed_signers`, y registra la llave. Commitea ambos. El
+  bootstrap enlaza `~/.ssh/github.pub` a esa `.pub`; no hace falta bloque extra en la config.
 
 En el VPS corre el bootstrap con `BOOTSTRAP_HEADLESS=1`: si falta `<hostname>.pub`, solo
-avisa y omite `~/.ssh/github.pub` en vez de fallar (sin él, usa
-`git -c commit.gpgsign=false commit`).
+avisa (con un mensaje distinto) y omite `~/.ssh/github.pub`. Sin él, usa
+`git -c commit.gpgsign=false commit`.
+
+> [!NOTE]
+> Supuesto a comprobar: `scripts/ssh-add-host.sh` busca la llave por el comentario
+> `savaf@<hostname>` en `ssh-add -L`, así que el ítem de Bitwarden debe llamarse
+> `savaf@<hostname>`. No lo he podido verificar contra Bitwarden.
