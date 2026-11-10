@@ -66,7 +66,8 @@ escritorio (`pacman -S bitwarden`, binario `bitwarden-desktop`) crea el socket
   con `IdentitiesOnly yes`, así el agente ofrece solo esa llave.
 - **Llaves públicas (una por máquina)**: exporta cada una desde Bitwarden (campo
   *Public key*) a `ssh/.ssh/<hostname>.pub` (`songbird.pub`, `andrea.pub`…) y
-  commitéala. Ya no hay symlink `~/.ssh/github.pub`: `~/.ssh/config` usa
+  commitéala. El nombre debe coincidir **exacto** con `hostname -s`, mayúsculas y
+  minúsculas incluidas (ojo en WSL). Ya no hay symlink `~/.ssh/github.pub`: `~/.ssh/config` usa
   `IdentityFile ~/.ssh/%L.pub` (`%L` = hostname corto, lo resuelve ssh) y el bootstrap
   genera `~/.config/git/host.conf` (no versionado) con
   `user.signingkey = ~/.ssh/<hostname>.pub`, que `git/.gitconfig` incluye con
@@ -77,6 +78,9 @@ escritorio (`pacman -S bitwarden`, binario `bitwarden-desktop`) crea el socket
   desbloqueado); sin agente falla. Bypass puntual: `git -c commit.gpgsign=false commit`.
 - Máquina nueva: añade `<hostname>.pub` y su línea en `allowed_signers`, reejecuta
   el bootstrap. Tras él, cierra sesión y vuelve a entrar para que uwsm cargue el env.
+- **Migración**: en una máquina ya configurada, tras hacer pull de este cambio reejecuta
+  el bootstrap; si no, `~/.config/git/host.conf` no existe, git pierde el `signingkey` y
+  los commits fallan (`ssh-doctor` lo detecta).
 
 ### `ssh-doctor`
 

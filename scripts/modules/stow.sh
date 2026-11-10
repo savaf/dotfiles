@@ -52,6 +52,8 @@ link_host_conf() {
     mkdir -p "${HOME}/.config/git"
     printf '[user]\n\tsigningkey = ~/.ssh/%s.pub\n' "${host}" >"${HOME}/.config/git/host.conf"
   else
+    # Sin .pub no hay llave que fijar: un host.conf viejo daría "Couldn't load public key".
+    rm -f "${HOME}/.config/git/host.conf"
     log "Falta ssh/.ssh/${host}.pub: expórtala de Bitwarden y reejecuta (sin ella no se firma)."
   fi
 }

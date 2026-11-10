@@ -23,7 +23,8 @@ EMAIL="test@example.invalid"
 start_agent() { # $1 socket; deja el pid en AGENT_PIDS
   local out
   out="$(ssh-agent -a "$1" -s)"
-  AGENT_PIDS+=("$(sed -n 's/^SSH_AGENT_PID=\([0-9]*\);.*/\1/p' <<<"${out}")")
+  LAST_PID="$(sed -n 's/^SSH_AGENT_PID=\([0-9]*\);.*/\1/p' <<<"${out}")"
+  AGENT_PIDS+=("${LAST_PID}")
 }
 
 # Entorno nuevo: HOME falso con la clave de este host, allowed_signers y un agente que la
@@ -36,6 +37,7 @@ setup() {
   ssh-keygen -q -t ed25519 -N '' -C "${HOST}" -f "${H}/key"
   mv "${H}/key.pub" "${H}/.ssh/${HOST}.pub"
   echo "${EMAIL} namespaces=\"git\" $(cut -d' ' -f1,2 "${H}/.ssh/${HOST}.pub")" >"${H}/.ssh/allowed_signers"
+  printf '[user]\n\tsigningkey = ~/.ssh/%s.pub\n' "${HOST}" >"${H}/.gitconfig"
   SOCK="${H}/.bitwarden-ssh-agent.sock"
   start_agent "${SOCK}"
   SSH_AUTH_SOCK="${SOCK}" ssh-add -q "${H}/key"
@@ -45,7 +47,7 @@ setup() {
 doctor() { # args extra; deja salida en OUT y código en RC
   RC=0
   OUT="$(HOME="${H}" SSH_AUTH_SOCK="${AUTH_SOCK}" SSH_DOCTOR_HOST="${HOST}" \
-    SSH_DOCTOR_EMAIL="${EMAIL}" PATH="${STUBS:+${STUBS}:}${PATH}" bash "${DOCTOR}" "$@" 2>&1)" || RC=$?
+    SSH_DOCTOR_EMAIL="${DOCTOR_EMAIL-${EMAIL}}" GIT_CONFIG_GLOBAL="${H}/.gitconfig" PATH="${STUBS:+${STUBS}:}${PATH}" bash "${DOCTOR}" "$@" 2>&1)" || RC=$?
 }
 
 expect() { # $1 descripción  $2 código esperado  $3 fragmento esperado en la salida
@@ -70,7 +72,7 @@ expect "SSH_AUTH_SOCK incorrecto" 1 "✗ SSH_AUTH_SOCK"
 
 setup; SSH_AUTH_SOCK="${SOCK}" ssh-add -q -D
 doctor
-expect "clave fuera del agente" 1 "✗ La clave de ${HOST} está en el agente"
+expect "clave fuera del agente" 1 "✗ La clave de ${HOST} no está en el agente"
 
 setup; rm "${H}/.ssh/${HOST}.pub"
 doctor
@@ -82,11 +84,31 @@ echo "${EMAIL} namespaces=\"git\" $(cut -d' ' -f1,2 "${H}/otra.pub")" >"${H}/.ss
 doctor
 expect "allowed_signers sin la clave" 1 "✗ Firma de prueba"
 
-setup; kill "${AGENT_PIDS[-1]}"; sleep 0.2; rm -f "${SOCK}"
+setup; kill "${LAST_PID}"; sleep 0.2; rm -f "${SOCK}"
 doctor
 expect "sin agente" 1 "✗ Socket de Bitwarden"
 [[ "${OUT}" == *"→"* ]] || fail "sin agente: no sugiere arreglo:
 ${OUT}"
+
+# Socket presente pero muerto (ssh-add sale 2): agente matado con -9 deja el archivo.
+setup; kill -9 "${LAST_PID}"; sleep 0.2
+doctor
+expect "socket que no responde" 1 "✗ Socket de Bitwarden"
+[[ "${OUT}" == *"no responde"* ]] || fail "socket muerto: mensaje distinto de 'no responde':
+${OUT}"
+
+setup; printf '[user]\n\tsigningkey = ~/.ssh/otro.pub\n' >"${H}/.gitconfig"
+doctor
+expect "signingkey de otro host" 1 "✗ user.signingkey"
+[[ "${OUT}" == *"reejecuta el bootstrap"* ]] || fail "signingkey: sin sugerencia:
+${OUT}"
+
+setup; : >"${H}/.gitconfig"
+doctor
+expect "sin signingkey" 1 "✗ user.signingkey"
+
+setup; DOCTOR_EMAIL="" doctor
+expect "user.email vacío" 1 "✗ Firma de prueba omitida"
 
 # --network: ssh stub (nunca la red real). GitHub responde con código 1 al autenticar.
 STUBS="${TMP}/stubs"; mkdir -p "${STUBS}"
@@ -120,8 +142,9 @@ HOME="${H}" ROOT_DIR="${R}"
 # shellcheck source=modules/stow.sh
 source "${REPO}/scripts/modules/stow.sh"
 
+mkdir -p "${H}/.config/git"; echo stale >"${H}/.config/git/host.conf"   # host.conf viejo
 link_host_conf
-[[ ! -e "${H}/.config/git/host.conf" ]] || fail "host.conf sin .pub en el repo"
+[[ ! -e "${H}/.config/git/host.conf" ]] || fail "host.conf sin .pub en el repo (o viejo sin borrar)"
 
 touch "${R}/ssh/.ssh/${host}.pub"
 link_host_conf; link_host_conf   # idempotente

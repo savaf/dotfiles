@@ -59,9 +59,18 @@ if [[ -f "${pub}" ]]; then
   if ssh-add -L 2>/dev/null | cut -d' ' -f1,2 | grep -Fxq -- "${blob}"; then
     ok "La clave de ${host} está en el agente"
   else
-    bad "La clave de ${host} está en el agente: no aparece en ssh-add -L" \
+    bad "La clave de ${host} no está en el agente (no aparece en ssh-add -L)" \
       "desbloquea Bitwarden y comprueba que la llave de ${host} existe en el vault y tiene el agente habilitado"
   fi
+fi
+
+# 4b. La llave de firma efectiva de git (la que escribe host.conf) es la de este host.
+sk="$(git config --global --includes user.signingkey 2>/dev/null)"
+if [[ "${sk/#\~/${HOME}}" == "${pub}" ]]; then
+  ok "user.signingkey de git es la clave de ${host}"
+else
+  bad "user.signingkey de git es '${sk}' (esperado ${pub})" \
+    "reejecuta el bootstrap para generar ~/.config/git/host.conf"
 fi
 
 # 5. Firma de prueba contra allowed_signers (en Bitwarden pide aprobación).
