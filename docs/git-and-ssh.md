@@ -66,13 +66,26 @@ escritorio (`pacman -S bitwarden`, binario `bitwarden-desktop`) crea el socket
   con `IdentitiesOnly yes`, así el agente ofrece solo esa llave.
 - **Llaves públicas (una por máquina)**: exporta cada una desde Bitwarden (campo
   *Public key*) a `ssh/.ssh/<hostname>.pub` (`songbird.pub`, `andrea.pub`…) y
-  commitéala. El bootstrap crea `~/.ssh/github.pub -> <hostname>.pub`, que usan
-  `~/.ssh/config` y `signingkey`. Nunca commitees una llave privada.
-- **Firma de commits**: `git/.gitconfig` usa `gpg.format = ssh` con
-  `~/.ssh/github.pub`. Registra cada llave en GitHub como *Signing key* y añádela
+  commitéala. Ya no hay symlink `~/.ssh/github.pub`: `~/.ssh/config` usa
+  `IdentityFile ~/.ssh/%L.pub` (`%L` = hostname corto, lo resuelve ssh) y el bootstrap
+  genera `~/.config/git/host.conf` (no versionado) con
+  `user.signingkey = ~/.ssh/<hostname>.pub`, que `git/.gitconfig` incluye con
+  `[include]`. Nunca commitees una llave privada.
+- **Firma de commits**: `git/.gitconfig` usa `gpg.format = ssh` con la llave de
+  `host.conf`. Registra cada llave en GitHub como *Signing key* y añádela
   a `ssh/.ssh/allowed_signers`. Cada commit pide aprobación en Bitwarden (abierto y
   desbloqueado); sin agente falla. Bypass puntual: `git -c commit.gpgsign=false commit`.
 - Máquina nueva: añade `<hostname>.pub` y su línea en `allowed_signers`, reejecuta
   el bootstrap. Tras él, cierra sesión y vuelve a entrar para que uwsm cargue el env.
 
-Comprobar: `echo $SSH_AUTH_SOCK`, `ssh-add -L`, `ssh -T git@github.com`.
+### `ssh-doctor`
+
+`ssh-doctor` (`scripts/ssh-doctor.sh`, enlazado a `~/.local/bin` por el paquete `ssh`)
+diagnostica la firma y la auth, con ✓/✗, el arreglo sugerido (→) y exit code ≠0 si algo
+falla. Solo lectura. Comprueba, en orden: socket de Bitwarden existe y responde,
+`SSH_AUTH_SOCK` apunta a él, existe `~/.ssh/<hostname>.pub`, esa llave está en
+`ssh-add -L`, y una firma de prueba (`ssh-keygen -Y sign/verify`, pide aprobación en
+Bitwarden) verifica contra `allowed_signers`. `ssh-doctor --network` añade
+`ssh -T git@github.com`. Tests: `scripts/test-ssh-doctor.sh` (agente y HOME temporales).
+
+Comprobar: `ssh-doctor --network` (o a mano: `echo $SSH_AUTH_SOCK`, `ssh-add -L`, `ssh -T git@github.com`).

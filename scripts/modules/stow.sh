@@ -37,17 +37,20 @@ stow_packages() {
   if [[ -d "${HOME}/.ssh" ]]; then
     chmod 700 "${HOME}/.ssh"
     [[ -e "${HOME}/.ssh/config" ]] && chmod 600 "${HOME}/.ssh/config"
-    link_ssh_key
+    link_host_conf
   fi
 }
 
-# ~/.ssh/github.pub -> <hostname>.pub: git y ssh eligen la llave de esta máquina
-# en el agente de Bitwarden por su parte pública (una llave por máquina).
-link_ssh_key() {
+# ~/.config/git/host.conf (no versionado): git/.gitconfig lo incluye y fija la llave de
+# firma de esta máquina (una por host). ssh no necesita nada: su config usa ~/.ssh/%L.pub.
+link_host_conf() {
   local host
   host="$(hostname -s)"
+  # Residuo de la versión anterior (~/.ssh/github.pub -> <host>.pub).
+  [[ -L "${HOME}/.ssh/github.pub" ]] && rm "${HOME}/.ssh/github.pub"
   if [[ -f "${ROOT_DIR}/ssh/.ssh/${host}.pub" ]]; then
-    ln -sfn "${host}.pub" "${HOME}/.ssh/github.pub"
+    mkdir -p "${HOME}/.config/git"
+    printf '[user]\n\tsigningkey = ~/.ssh/%s.pub\n' "${host}" >"${HOME}/.config/git/host.conf"
   else
     log "Falta ssh/.ssh/${host}.pub: expórtala de Bitwarden y reejecuta (sin ella no se firma)."
   fi

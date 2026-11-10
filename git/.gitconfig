@@ -1,7 +1,10 @@
 [user]
 	name = Sinver Aguilo
 	email = 10409334+savaf@users.noreply.github.com
-	signingkey = ~/.ssh/github.pub
+
+# Llave de firma de esta máquina; la genera el bootstrap (scripts/modules/stow.sh).
+[include]
+	path = ~/.config/git/host.conf
 
 [gpg]
 	format = ssh
