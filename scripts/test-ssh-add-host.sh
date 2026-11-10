@@ -87,16 +87,11 @@ if run nohost >/dev/null 2>&1; then fail "aceptó un host sin llave en el agente
 [[ ! -e "${R}/ssh/.ssh/nohost.pub" ]] || fail "creó .pub sin llave"
 
 # link_ssh_key: sin .pub falla salvo BOOTSTRAP_HEADLESS=1; con .pub enlaza.
-link() { # corre link_ssh_key en un HOME falso
-  (
-    ROOT_DIR="${R}"
-    HOME="${R}/home"
-    # shellcheck source=lib/common.sh
+link() { # corre link_ssh_key en un proceso aparte con HOME y ROOT_DIR falsos
+  ROOT_DIR="${R}" HOME="${R}/home" REAL_ROOT="${REAL_ROOT}" bash -c '
     source "${REAL_ROOT}/scripts/lib/common.sh"
-    # shellcheck source=modules/stow.sh
     source "${REAL_ROOT}/scripts/modules/stow.sh"
-    link_ssh_key
-  )
+    link_ssh_key'
 }
 REAL_ROOT="${ROOT_DIR}"
 setup
