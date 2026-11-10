@@ -64,11 +64,15 @@ escritorio (`pacman -S bitwarden`, binario `bitwarden-desktop`) crea el socket
   Hyprland usa la config Lua; un `autostart.conf` se ignora.
 - **`~/.ssh/config`** (paquete `ssh`): cada `Host` apunta a la llave **pública**
   con `IdentitiesOnly yes`, así el agente ofrece solo esa llave.
-- **Llaves públicas**: exporta `github.pub` desde Bitwarden (campo *Public key*) a
-  `ssh/.ssh/github.pub` y commitéala. Nunca commitees una llave privada.
+- **Llaves públicas (una por máquina)**: exporta cada una desde Bitwarden (campo
+  *Public key*) a `ssh/.ssh/<hostname>.pub` (`songbird.pub`, `andrea.pub`…) y
+  commitéala. El bootstrap crea `~/.ssh/github.pub -> <hostname>.pub`, que usan
+  `~/.ssh/config` y `signingkey`. Nunca commitees una llave privada.
 - **Firma de commits**: `git/.gitconfig` usa `gpg.format = ssh` con
-  `~/.ssh/github.pub`. Registra la misma llave en GitHub como *Signing key*.
-  Cada commit pide aprobación en Bitwarden (abierto y desbloqueado).
-- Tras el bootstrap, cierra sesión y vuelve a entrar para que uwsm cargue el env.
+  `~/.ssh/github.pub`. Registra cada llave en GitHub como *Signing key* y añádela
+  a `ssh/.ssh/allowed_signers`. Cada commit pide aprobación en Bitwarden (abierto y
+  desbloqueado); sin agente falla. Bypass puntual: `git -c commit.gpgsign=false commit`.
+- Máquina nueva: añade `<hostname>.pub` y su línea en `allowed_signers`, reejecuta
+  el bootstrap. Tras él, cierra sesión y vuelve a entrar para que uwsm cargue el env.
 
 Comprobar: `echo $SSH_AUTH_SOCK`, `ssh-add -L`, `ssh -T git@github.com`.

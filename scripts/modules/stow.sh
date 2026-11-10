@@ -37,5 +37,18 @@ stow_packages() {
   if [[ -d "${HOME}/.ssh" ]]; then
     chmod 700 "${HOME}/.ssh"
     [[ -e "${HOME}/.ssh/config" ]] && chmod 600 "${HOME}/.ssh/config"
+    link_ssh_key
+  fi
+}
+
+# ~/.ssh/github.pub -> <hostname>.pub: git y ssh eligen la llave de esta máquina
+# en el agente de Bitwarden por su parte pública (una llave por máquina).
+link_ssh_key() {
+  local host
+  host="$(hostname -s)"
+  if [[ -f "${ROOT_DIR}/ssh/.ssh/${host}.pub" ]]; then
+    ln -sfn "${host}.pub" "${HOME}/.ssh/github.pub"
+  else
+    log "Falta ssh/.ssh/${host}.pub: expórtala de Bitwarden y reejecuta (sin ella no se firma)."
   fi
 }
