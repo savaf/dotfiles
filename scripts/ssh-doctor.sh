@@ -24,7 +24,6 @@ ok() { echo "✓ $1"; }
 bad() { echo "✗ $1"; echo "  → $2"; failed=1; }
 
 # 1. Socket de Bitwarden: existe y responde (ssh-add -l: 0 con llaves, 1 sin ellas, 2 error).
-bw_up=0
 if [[ ! -S "${bw_sock}" ]]; then
   bad "Socket de Bitwarden (${bw_sock}) no existe" \
     "abre y desbloquea Bitwarden Desktop con el agente SSH activado (Settings → SSH agent)"
@@ -34,7 +33,6 @@ else
     bad "Socket de Bitwarden (${bw_sock}) no responde" \
       "desbloquea el vault de Bitwarden; si persiste, reinicia bitwarden-desktop"
   else
-    bw_up=1
     ok "Socket de Bitwarden responde"
   fi
 fi

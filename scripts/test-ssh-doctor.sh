@@ -114,6 +114,7 @@ H="${TMP}/hb"; R="${TMP}/repo"
 mkdir -p "${H}/.ssh" "${R}/ssh/.ssh"
 ln -s ancient.pub "${H}/.ssh/github.pub"   # residuo de la versión anterior
 host="$(hostname -s)"
+TILDE="~"   # git guarda la ruta con "~" literal (no se expande); por eso no es $HOME
 log() { :; }
 HOME="${H}" ROOT_DIR="${R}"
 # shellcheck source=modules/stow.sh
@@ -124,16 +125,16 @@ link_host_conf
 
 touch "${R}/ssh/.ssh/${host}.pub"
 link_host_conf; link_host_conf   # idempotente
-[[ "$(git config --file "${H}/.config/git/host.conf" user.signingkey)" == "~/.ssh/${host}.pub" ]] \
+[[ "$(git config --file "${H}/.config/git/host.conf" user.signingkey)" == "${TILDE}/.ssh/${host}.pub" ]] \
   || fail "host.conf sin signingkey de ${host}"
 [[ ! -L "${H}/.ssh/github.pub" ]] || fail "github.pub residual no se limpió"
 
 # El .gitconfig versionado incluye host.conf y de él sale la llave efectiva.
 GITCONFIG="${REPO}/git/.gitconfig"
-[[ "$(git config --file "${GITCONFIG}" --get-all include.path)" == "~/.config/git/host.conf" ]] \
+[[ "$(git config --file "${GITCONFIG}" --get-all include.path)" == "${TILDE}/.config/git/host.conf" ]] \
   || fail "git/.gitconfig no incluye ~/.config/git/host.conf"
 ! git config --file "${GITCONFIG}" --get user.signingkey >/dev/null \
   || fail "git/.gitconfig aún fija user.signingkey"
-[[ "$(HOME="${H}" GIT_CONFIG_GLOBAL="${GITCONFIG}" git config --global --includes user.signingkey)" == "~/.ssh/${host}.pub" ]] \
+[[ "$(HOME="${H}" GIT_CONFIG_GLOBAL="${GITCONFIG}" git config --global --includes user.signingkey)" == "${TILDE}/.ssh/${host}.pub" ]] \
   || fail "signingkey efectiva no sale de host.conf"
 echo "OK: link_host_conf"
