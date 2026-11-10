@@ -83,8 +83,9 @@ Comprobar: `echo $SSH_AUTH_SOCK`, `ssh-add -L`, `ssh -T git@github.com`.
 
 Sin Bitwarden en el VPS hay dos opciones:
 
-- **(a) `ForwardAgent` solo hacia ese Host**: descomenta el bloque `Host vps` de
-  `ssh/.ssh/config` (`ForwardAgent yes`). Nunca lo pongas en `Host *`: cualquier servidor
+- **(a) `ForwardAgent` solo hacia ese Host**: copia el ejemplo `Host vps` de
+  `ssh/.ssh/config` a `~/.ssh/config.local` (no versionado; el config versionado lo incluye
+  primero, así el repo público no publica tu `HostName`/`User`) con `ForwardAgent yes`. Nunca lo pongas en `Host *`: cualquier servidor
   podría usar tu agente. La llave y la firma siguen siendo las del escritorio. En el VPS
   enlaza `github.pub` al `.pub` del escritorio (`ln -sfn andrea.pub ~/.ssh/github.pub`);
   si no, `IdentitiesOnly yes` impide ofrecer la llave reenviada y la firma falla.
@@ -93,6 +94,9 @@ Sin Bitwarden en el VPS hay dos opciones:
   VPS (`eval "$(ssh-agent -s)"; ssh-add`) y corre allí `scripts/ssh-add-host.sh --github`:
   genera `ssh/.ssh/<vps>.pub` y `allowed_signers`, y registra la llave. Commitea ambos. El
   bootstrap enlaza `~/.ssh/github.pub` a esa `.pub`; no hace falta bloque extra en la config.
+  **Ojo:** registrarla con `--github` la hace válida para push y firma de toda la cuenta.
+  Protege la privada con passphrase, o, si el VPS solo clona, usa una deploy key de solo
+  lectura (`gh repo deploy-key add <.pub> -R <repo>`) en lugar de `--github`.
 
 En el VPS corre el bootstrap con `BOOTSTRAP_HEADLESS=1`: si falta `<hostname>.pub`, solo
 avisa (con un mensaje distinto) y omite `~/.ssh/github.pub`. Sin él, usa

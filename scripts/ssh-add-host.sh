@@ -24,11 +24,16 @@ for arg in "$@"; do
   esac
 done
 HOST="${HOST:-$(hostname -s)}"
+# El hostname forma parte de una ruta y de la búsqueda en el agente: solo caracteres seguros.
+[[ "${HOST}" =~ ^[A-Za-z0-9][A-Za-z0-9-]*$ ]] || { echo "Hostname inválido: ${HOST}" >&2; exit 2; }
 PUB="${SSH_DIR}/${HOST}.pub"
 
 # Línea completa "tipo base64 comentario" de la llave savaf@<host> en el agente.
-line="$(ssh-add -L 2>/dev/null | awk -v c="savaf@${HOST}" '$3 == c { print; exit }')"
-[[ -n "${line}" ]] || { echo "No hay llave 'savaf@${HOST}' en el agente (ssh-add -L)." >&2; exit 1; }
+# El comentario va por ENVIRON (awk -v interpretaría escapes).
+lines="$(ssh-add -L 2>/dev/null | C="savaf@${HOST}" awk '$3 == ENVIRON["C"]')"
+[[ -n "${lines}" ]] || { echo "No hay llave 'savaf@${HOST}' en el agente (ssh-add -L)." >&2; exit 1; }
+[[ "${lines}" != *$'\n'* ]] || { echo "Hay varias llaves 'savaf@${HOST}' en el agente: deja solo una." >&2; exit 1; }
+line="${lines}"
 key="${line%% savaf@*}"
 
 if [[ -f "${PUB}" && "$(cat "${PUB}")" != "${line}" ]]; then
@@ -49,10 +54,16 @@ if [[ ${DRY} -eq 1 ]]; then
 fi
 
 echo "${line}" >"${PUB}"
-[[ ${have_signer} -eq 1 ]] || echo "${signer}" >>"${SSH_DIR}/allowed_signers"
+if [[ ${have_signer} -eq 0 ]]; then
+  signers="${SSH_DIR}/allowed_signers"
+  # Si el archivo no termina en salto de línea, la entrada nueva se pegaría a la última.
+  [[ ! -s "${signers}" || -z "$(tail -c1 "${signers}")" ]] || echo >>"${signers}"
+  echo "${signer}" >>"${signers}"
+fi
 echo "Listo: ${PUB} y allowed_signers. Commitea ambos."
 
 if [[ ${GITHUB} -eq 1 ]]; then
+  ssh-keygen -lf "${PUB}"
   read -r -p "¿Registrar savaf@${HOST} en GitHub (authentication y signing)? [y/N] " ans || ans=""
   if [[ "${ans}" =~ ^[yY] ]]; then
     gh ssh-key add "${PUB}" --type authentication --title "${HOST}"

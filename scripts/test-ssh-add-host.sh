@@ -93,6 +93,37 @@ if run >/dev/null 2>&1; then fail "sobrescribió un .pub con otra llave"; fi
 [[ "$(cat "${R}/ssh/.ssh/testbox.pub")" == "ssh-ed25519 AAAAotra savaf@testbox" ]] || fail "modificó el .pub existente"
 [[ "$(wc -l <"${R}/ssh/.ssh/allowed_signers")" == 1 ]] || fail "tocó allowed_signers con .pub conflictivo"
 
+# Hostname inválido (ruta o escapes de awk): exit 2 y nada escrito.
+setup
+for bad in .. 'a/b' '\x62'; do
+  rc=0; run "${bad}" >/dev/null 2>&1 || rc=$?
+  [[ ${rc} -ne 0 ]] || fail "aceptó el hostname inválido ${bad}"
+done
+rc=0; run '..' >/dev/null 2>&1 || rc=$?
+[[ ${rc} -eq 2 ]] || fail "hostname '..' salió con ${rc}, no 2"
+rc=0; run '\x62' >/dev/null 2>&1 || rc=$?
+[[ ${rc} -eq 2 ]] || fail "hostname '\\x62' salió con ${rc}, no 2"
+[[ ! -e "${R}/ssh/.pub" && ! -e "${R}/ssh/b.pub" ]] || fail "escribió con hostname inválido"
+
+# Varias llaves con el mismo comentario: falla.
+setup
+ssh-keygen -q -t ed25519 -N '' -C 'savaf@testbox' -f "${TMP}/k3"
+ssh-add -q "${TMP}/k3"
+if run >/dev/null 2>&1; then fail "aceptó dos llaves savaf@testbox"; fi
+[[ ! -e "${R}/ssh/.ssh/testbox.pub" ]] || fail "escribió con llaves duplicadas"
+ssh-add -d "${TMP}/k3.pub" >/dev/null 2>&1
+
+# allowed_signers sin salto de línea final: la entrada nueva no se pega a la anterior.
+setup
+printf 'otro@x namespaces="git" %s' "$(cut -d' ' -f1,2 "${TMP}/k2.pub")" >"${R}/ssh/.ssh/allowed_signers"
+run >/dev/null
+echo data >"${TMP}/data"
+ssh-keygen -q -Y sign -f "${TMP}/k1" -n git "${TMP}/data"
+principal="$(ssh-keygen -Y find-principals -s "${TMP}/data.sig" -f "${R}/ssh/.ssh/allowed_signers")"
+[[ "${principal}" == "10409334+savaf@users.noreply.github.com" ]] || fail "find-principals: ${principal}"
+[[ "$(wc -l <"${R}/ssh/.ssh/allowed_signers")" == 2 ]] || fail "allowed_signers sin 2 líneas"
+rm -f "${TMP}/data" "${TMP}/data.sig"
+
 # link_ssh_key: sin .pub solo avisa (nunca aborta el bootstrap, con o sin headless); con .pub enlaza.
 link() { # corre link_ssh_key en un proceso aparte con HOME y ROOT_DIR falsos
   ROOT_DIR="${R}" HOME="${R}/home" REAL_ROOT="${REAL_ROOT}" bash -c '
@@ -110,9 +141,10 @@ echo "${KEY} savaf@testbox" >"${R}/ssh/.ssh/testbox.pub"
 link >/dev/null
 [[ "$(readlink "${R}/home/.ssh/github.pub")" == testbox.pub ]] || fail "no enlazó github.pub"
 
-# Config versionada: bloque VPS comentado y nunca ForwardAgent global.
+# Config versionada: Include de config.local primero, ejemplo VPS comentado, nunca ForwardAgent activo.
 CONF="${REAL_ROOT}/ssh/.ssh/config"
-grep -Eq '^# *Host vps' "${CONF}" || fail "falta el bloque comentado del VPS"
-if grep -Eq '^[[:space:]]*ForwardAgent' "${CONF}"; then fail "ForwardAgent activo en config"; fi
+[[ "$(grep -Eiv '^[[:space:]]*(#|$)' "${CONF}" | head -1)" == "Include ~/.ssh/config.local" ]] || fail "Include ~/.ssh/config.local no es la primera directiva"
+grep -Eiq '^# *Host vps' "${CONF}" || fail "falta el ejemplo comentado del VPS"
+if grep -Eiq '^[[:space:]]*ForwardAgent' "${CONF}"; then fail "ForwardAgent activo en config"; fi
 
 echo "OK: ssh-add-host"
