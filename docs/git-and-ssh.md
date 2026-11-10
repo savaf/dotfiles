@@ -75,4 +75,28 @@ escritorio (`pacman -S bitwarden`, binario `bitwarden-desktop`) crea el socket
   *Signing key*. Cada commit pide aprobación en Bitwarden (abierto y desbloqueado).
 - Tras el bootstrap, cierra sesión y vuelve a entrar para que uwsm cargue el env.
 
+### Alta de máquina nueva
+
+1. En Bitwarden crea (o reutiliza) la llave SSH de la máquina y copia su campo *Public key*.
+2. Guárdala en `ssh/.ssh/$(hostname -s).pub` (una sola línea; solo la pública).
+3. Añade su línea a `ssh/.ssh/allowed_signers`:
+   `10409334+savaf@users.noreply.github.com namespaces="git" <tipo> <clave>`.
+4. Regístrala en GitHub como *Authentication key* y como *Signing key*.
+5. Reejecuta `scripts/bootstrap.sh`; luego cierra sesión y vuelve a entrar (uwsm carga el env).
+6. Comprueba que `scripts/test-ssh-key.sh` (parte de `bash scripts/ci.sh`) sigue en verde: falla si
+   alguna `.pub` versionada no está en `allowed_signers`.
+
+### Si algo falla
+
+| Síntoma | Causa probable |
+|---|---|
+| `Couldn't load public key …/github.pub` o `failed to write commit object` | `~/.ssh/github.pub` apunta a un `.pub` inexistente (falta `ssh/.ssh/<hostname>.pub`, o el enlace quedó viejo): añade el `.pub` y reejecuta el bootstrap |
+| El bootstrap avisa `Falta ssh/.ssh/<host>.pub` | El hostname (`hostname -s`) no coincide con ningún `.pub` versionado |
+| El bootstrap avisa que `github.pub` es un archivo real | Hay un archivo suelto en `~/.ssh/github.pub`; el bootstrap no lo pisa: bórralo o muévelo y reejecuta |
+| `Load key … agent refused operation` / `incorrect passphrase` / sin respuesta al firmar | Bitwarden cerrado o bloqueado, o `SSH_AUTH_SOCK` no apunta a `~/.bitwarden-ssh-agent.sock` (`echo $SSH_AUTH_SOCK`, `ssh-add -L`) |
+| Commit firmado pero GitHub no muestra *Verified* | La llave no está registrada como *Signing key*, o el correo del commit no es el noreply |
+| `git log --show-signature` dice `No principal matched` | Falta la llave en `ssh/.ssh/allowed_signers` |
+
+Sin agente disponible, bypass puntual: `git -c commit.gpgsign=false commit`.
+
 Comprobar: `echo $SSH_AUTH_SOCK`, `ssh-add -L`, `ssh -T git@github.com`.
