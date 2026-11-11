@@ -536,9 +536,10 @@ crea con `filter-chain` + RNNoise la fuente virtual **"Noise Canceling source"**
   elección la mantiene el watcher aunque abras o cierres juegos.
 
   **Subida automática por calor**: en `auto`, el watcher sondea cada 5 s la temperatura
-  máxima entre GPU (`nvidia-smi`) y CPU (`coretemp`); a ≥ 85 °C activa Ultra y vuelve
-  al modo normal por debajo de 78 °C (histéresis). Umbrales `HOT_ON`/`HOT_OFF` en
-  `coolercontrol-mode-watcher`. Ojo: lee la temperatura del núcleo, no la de la
+  máxima entre GPU (`nvidia-smi`) y CPU (`coretemp`); a ≥ 70 °C sube a Rendimiento
+  (vuelve a Silencio por debajo de 62 °C) y a ≥ 85 °C activa Ultra (vuelve por debajo de
+  78 °C). Umbrales `WARM_ON`/`WARM_OFF` y `HOT_ON`/`HOT_OFF` en `coolercontrol-mode-watcher`.
+  Cada minuto deja `temp máx N °C` en el journal del servicio. Ojo: lee la temperatura del núcleo, no la de la
   VRAM GDDR6X (la 3080 no la expone), así que no ve un calentamiento solo de memoria.
 
   `coolercontrol/.local/bin/coolercontrol-provision` aplica `curves.json` vía

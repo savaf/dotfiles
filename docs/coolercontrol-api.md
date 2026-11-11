@@ -19,7 +19,7 @@ spec. Keep it in English on purpose: it's an API reference, not usage docs.
   `auto` restarts the watcher so it reconciles immediately. Bound to `SUPER+ALT+T`.
 - `coolercontrol/.local/bin/coolercontrol-mode-watcher` — listens to Hyprland's
   `.socket2.sock` and switches the active mode based on open window classes. In `auto` it also
-  polls GPU/CPU temperature and jumps to `Ultra` at ≥ 85 °C (back below 78 °C); a manual
+  polls GPU/CPU temperature: `Rendimiento` at ≥ 70 °C (back below 62 °C), `Ultra` at ≥ 85 °C (back below 78 °C); a manual
   choice from `coolercontrol-mode` overrides both.
 - `coolercontrol/.config/coolercontrol-modes/curves.json` — the only file to edit to
   change curve numbers.
