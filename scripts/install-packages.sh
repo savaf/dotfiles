@@ -368,14 +368,14 @@ ensure_nvidia_modprobe() {
 
 # Copia system/<ruta> a /<ruta> si falta o difiere. Devuelve 0 solo si cambió algo.
 install_system_conf() {
-  local src="${ROOT_DIR}/system/$1" dst="/$1"
+  local src="${ROOT_DIR}/system/$1" dst="/$1" mode="${2:-644}"
   [[ -f "${src}" ]] || return 1
   if [[ -f "${dst}" ]] && cmp -s "${src}" "${dst}"; then
     log "Ya al día (${dst}); se omite."
     return 1
   fi
   log "Instalando ${dst}..."
-  sudo install -D -m 644 "${src}" "${dst}"
+  sudo install -D -m "${mode}" "${src}" "${dst}"
 }
 
 # Resiliencia ante cuelgues: sysrq completo (apagado limpio con REISUB) y journal con fsync cada 30 s.
@@ -385,6 +385,17 @@ ensure_crash_resilience() {
   fi
   if install_system_conf etc/systemd/journald.conf.d/sync.conf; then
     sudo systemctl restart systemd-journald
+  fi
+  # gpu-watchdog (fase 1: solo observa) únicamente donde hay GPU NVIDIA.
+  if exists nvidia-smi; then
+    local changed=0
+    install_system_conf usr/local/bin/gpu-watchdog 755 && changed=1
+    install_system_conf etc/systemd/system/gpu-watchdog.service && changed=1
+    if ((changed)); then
+      sudo systemctl daemon-reload
+      sudo systemctl enable gpu-watchdog.service
+      sudo systemctl restart gpu-watchdog.service
+    fi
   fi
 }
 

@@ -12,6 +12,7 @@ command -v jq >/dev/null || { echo "skip: falta jq"; exit 0; }
 mkdir -p "${TMP}/bin" "${TMP}/state/coolercontrol-modes" "${TMP}/run" "${TMP}/watch"
 cp "${ROOT_DIR}/coolercontrol/.local/bin/coolercontrol-mode-watcher" "${TMP}/watch/"
 printf '#!/bin/sh\ntouch "%s/provision-called"\n' "${TMP}" >"${TMP}/watch/coolercontrol-provision"
+# shellcheck disable=SC2016 # $CURL_BODY lo expande el curl falso, no este script
 printf '#!/bin/sh\necho x >>"%s/curl-calls"\necho "$CURL_BODY"\n' "${TMP}" >"${TMP}/bin/curl"
 printf '#!/bin/sh\ntouch "%s/notified"\n' "${TMP}" >"${TMP}/bin/notify-send"
 chmod +x "${TMP}/watch/"* "${TMP}/bin/"*

@@ -406,6 +406,14 @@ crea con `filter-chain` + RNNoise la fuente virtual **"Noise Canceling source"**
   (`ensure_crash_resilience`); `system/etc/systemd/journald.conf.d/sync.conf` sube el fsync del journal
   de 5 min a 30 s para no perder los últimos minutos de log. Sin confirmar: que sysrq responda con la GPU
   colgada y que Hyprland no intercepte Alt+Impr Pant.
+- **`gpu-watchdog` (fase 1, solo observa)**: servicio de sistema (`system/usr/local/bin/gpu-watchdog` +
+  `system/etc/systemd/system/gpu-watchdog.service`, instalado por el bootstrap solo si hay `nvidia-smi`).
+  Detecta el cuelgue por dos `nvidia-smi` fallidos separados 30 s, o porque `coolercontrold` registra
+  "stopped answering". Al detectar escribe una línea `crit` en el journal, guarda una instantánea con
+  `sync` en `/var/log/gpu-watchdog/<fecha>/` (journal, `nvidia-smi -q`, sensores, procesos que usan la GPU;
+  conserva las últimas 10) y avisa por notificación. **No reinicia ni resetea el driver.** La fase 2
+  (apagado limpio automático por sysrq) queda pendiente de ≥ 3 días sin falsos positivos: revisa
+  `journalctl -t gpu-watchdog`. Plan y fuentes en `.scratch/gpu-hang-resilience/` (local).
 - **Token de CoolerControl rechazado (`429`/`Invalid Credentials`)**: el watcher ya no llama a
   `coolercontrol-provision` ni reintenta en bucle; avisa una vez y espera 60 s ×2 hasta 300 s. Recupera
   creando un token en la GUI (Settings → Access Tokens, con escritura) y corriendo `coolercontrol-setup`

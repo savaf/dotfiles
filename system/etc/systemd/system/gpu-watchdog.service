@@ -1,0 +1,14 @@
+[Unit]
+Description=Detecta cuelgues de la GPU NVIDIA y guarda evidencia (fase 1: solo observa)
+After=coolercontrold.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/gpu-watchdog
+Restart=always
+RestartSec=5
+# Prioridad baja: si la máquina va justa, que no empeore el cuelgue.
+Nice=10
+
+[Install]
+WantedBy=multi-user.target
