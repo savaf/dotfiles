@@ -366,6 +366,28 @@ ensure_nvidia_modprobe() {
   log "AVISO: reinicia para que las opciones de nvidia tomen efecto."
 }
 
+# Copia system/<ruta> a /<ruta> si falta o difiere. Devuelve 0 solo si cambió algo.
+install_system_conf() {
+  local src="${ROOT_DIR}/system/$1" dst="/$1"
+  [[ -f "${src}" ]] || return 1
+  if [[ -f "${dst}" ]] && cmp -s "${src}" "${dst}"; then
+    log "Ya al día (${dst}); se omite."
+    return 1
+  fi
+  log "Instalando ${dst}..."
+  sudo install -D -m 644 "${src}" "${dst}"
+}
+
+# Resiliencia ante cuelgues: sysrq completo (apagado limpio con REISUB) y journal con fsync cada 30 s.
+ensure_crash_resilience() {
+  if install_system_conf etc/sysctl.d/90-sysrq.conf; then
+    sudo sysctl -q -p /etc/sysctl.d/90-sysrq.conf
+  fi
+  if install_system_conf etc/systemd/journald.conf.d/sync.conf; then
+    sudo systemctl restart systemd-journald
+  fi
+}
+
 # Webapps de Omarchy (equivalente a casks sin buen paquete Linux). Lista en
 # omarchy-webapps.txt con formato Nombre|URL|IconoURL[|ExecPersonalizado], los
 # 4 args no interactivos de omarchy-webapp-install. El 4º es opcional: si va
@@ -486,6 +508,7 @@ install_arch() {
     ensure_omarchy_webapps
     ensure_omarchy_initramfs
     ensure_nvidia_modprobe
+    ensure_crash_resilience
     ensure_i2c_dev
     ensure_nct6687
     ensure_coolercontrol

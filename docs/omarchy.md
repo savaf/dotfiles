@@ -398,6 +398,19 @@ crea con `filter-chain` + RNNoise la fuente virtual **"Noise Canceling source"**
   2026-09 pero `nvidia-open` exige GSP y lo ignora en silencio (compruébalo:
   `nvidia-smi -q | grep GSP` sigue mostrando versión de firmware). Si el Xid
   120 vuelve, la vía es actualizar el driver o reportarlo a NVIDIA.
+- **Cuelgue de la GPU: apagar limpio, no cortar la energía.** El 2026-11-11 un cuelgue con Elden Ring
+  (sin Xid, 56 °C de núcleo) obligó a forzar el apagado y dejó `/etc/coolercontrol/.tokens` en 0 bytes
+  (el daemon lo escribe sin atomicidad) y los discos recuperando journal. Con el kernel vivo, usa
+  **Alt + Impr Pant + R E I S U B** (una tecla cada vez, con pausa corta) en vez del botón de encendido.
+  Eso requiere `kernel.sysrq=244`, que instala `system/etc/sysctl.d/90-sysrq.conf` desde el bootstrap
+  (`ensure_crash_resilience`); `system/etc/systemd/journald.conf.d/sync.conf` sube el fsync del journal
+  de 5 min a 30 s para no perder los últimos minutos de log. Sin confirmar: que sysrq responda con la GPU
+  colgada y que Hyprland no intercepte Alt+Impr Pant.
+- **Token de CoolerControl rechazado (`429`/`Invalid Credentials`)**: el watcher ya no llama a
+  `coolercontrol-provision` ni reintenta en bucle; avisa una vez y espera 60 s ×2 hasta 300 s. Recupera
+  creando un token en la GUI (Settings → Access Tokens, con escritura) y corriendo `coolercontrol-setup`
+  (`--check` imprime estos pasos). `coolercontrold backup --include-secrets` / `restore` permite
+  respaldarlo.
 - NVIDIA modprobe: el contenido canónico vive versionado en
   `system/etc/modprobe.d/nvidia.conf` — no es stow (`/etc` está fuera de
   `$HOME`), lo instala `ensure_nvidia_modprobe` en `install-packages.sh`, que

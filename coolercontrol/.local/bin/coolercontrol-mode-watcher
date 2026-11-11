@@ -34,17 +34,58 @@ if [[ ! -s "$CC_TOKEN_FILE" ]]; then
 fi
 TOKEN="$(<"$CC_TOKEN_FILE")"
 
+# Si el daemon rechaza el token (token vacío tras un apagado sucio, o 429 por demasiados
+# fallos) NO se reintenta cada pocos segundos: cada fallo alarga el bloqueo del daemon y,
+# peor, antes se caía a coolercontrol-provision en bucle. El fallo se anota en un fichero
+# y el resto del watcher espera a que pase.
+AUTH_FILE="${XDG_RUNTIME_DIR:-/tmp}/coolercontrol-mode-watcher.authfail"
+AUTH_BACKOFF_START="${AUTH_BACKOFF_START:-60}"   # s; el daemon tiene tope de 300 s
+AUTH_BACKOFF_MAX=300
+
+note_auth_fail() {  # note_auth_fail SEGUNDOS (0 = usar AUTH_BACKOFF_START)
+  local s="${1:-0}"
+  (( s > 0 )) || s="$AUTH_BACKOFF_START"
+  echo $(( $(date +%s) + s + 1 )) >"$AUTH_FILE"
+}
+auth_blocked() { [[ -f "$AUTH_FILE" ]] && (( $(date +%s) < $(<"$AUTH_FILE") )); }
+
 # A propósito SIN abortar en error: un timeout puntual del daemon (ya visto en
 # los logs con liquidctl) no debe tumbar el watcher, solo se reintenta en el
 # siguiente evento de ventana.
 cc_api() {
-  curl -sS -m 10 -H "Authorization: Bearer ${TOKEN}" -H 'Content-Type: application/json' \
-    -X "$1" "${CC_URL}${2}" ${3:+-d "$3"} 2>/dev/null
+  local body
+  body="$(curl -sS -m 10 -H "Authorization: Bearer ${TOKEN}" -H 'Content-Type: application/json' \
+    -X "$1" "${CC_URL}${2}" ${3:+-d "$3"} 2>/dev/null)"
+  case "$body" in
+    *'Too many failed authentication'*) note_auth_fail "$(sed -nE 's/.*Try again in ([0-9]+)s.*/\1/p' <<<"$body")" ;;
+    *'Invalid Credentials'*|*'does not have write access'*) note_auth_fail 0 ;;
+  esac
+  printf '%s' "$body"
+}
+
+# Espera a que la API acepte el token, con espera creciente. No aprovisiona nunca.
+wait_for_auth() {
+  local wait="$AUTH_BACKOFF_START" notified=0 body left
+  while :; do
+    body="$(cc_api GET /modes)"
+    if jq -e '.modes' >/dev/null 2>&1 <<<"$body"; then rm -f "$AUTH_FILE"; return 0; fi
+    if (( ! notified )); then
+      log "la API no acepta el token (${body:0:80}); no se aprovisiona. Crea un token nuevo en la GUI (con escritura) y corre coolercontrol-setup."
+      command -v notify-send >/dev/null && notify-send -u critical "CoolerControl" "El watcher no tiene acceso a la API: crea un token nuevo y corre coolercontrol-setup." || true
+      notified=1
+    fi
+    left=0
+    [[ -f "$AUTH_FILE" ]] && left=$(( $(<"$AUTH_FILE") - $(date +%s) ))
+    sleep $(( left > wait ? left : wait ))
+    (( wait = wait * 2 > AUTH_BACKOFF_MAX ? AUTH_BACKOFF_MAX : wait * 2 ))
+  done
 }
 
 resolve_mode_uid() {  # resolve_mode_uid NOMBRE
   jq -r --arg n "$1" '.modes[]? | select(.name==$n) | .uid' <<<"$(cc_api GET /modes)" 2>/dev/null | head -1
 }
+
+wait_for_auth
 
 UID_IDLE="$(resolve_mode_uid "$MODE_IDLE")"
 UID_GAMING="$(resolve_mode_uid "$MODE_GAMING")"
@@ -101,6 +142,7 @@ any_game_open() {
 }
 
 reconcile() {
+  auth_blocked && return 0
   local want cur choice manual
   want="$UID_IDLE"
   any_game_open && want="$UID_GAMING"
