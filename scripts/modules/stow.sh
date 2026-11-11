@@ -39,13 +39,21 @@ stow_packages() {
     [[ -e "${HOME}/.ssh/config" ]] && chmod 600 "${HOME}/.ssh/config"
     # OpenSSH 10.x rechaza como IdentityFile una .pub con permisos 644.
     chmod 600 "${HOME}"/.ssh/*.pub 2>/dev/null || true
-    # Cada máquina firma y autentica con su propia llave: github.pub -> <hostname>.pub.
-    local host_key
-    host_key="${HOME}/.ssh/$(hostname -s | tr '[:upper:]' '[:lower:]').pub"
-    if [[ -e "${host_key}" ]]; then
-      ln -sfn "${host_key}" "${HOME}/.ssh/github.pub"
-    else
-      log "AVISO: no hay ${host_key}; github.pub (SSH y firma de git) no queda enlazado."
-    fi
+    link_ssh_key
+  fi
+}
+
+# Cada máquina firma y autentica con su propia llave: github.pub -> <hostname>.pub
+# (hostname en minúsculas; stow deja la .pub en ~/.ssh antes de llamar aquí).
+link_ssh_key() {
+  local host link="${HOME}/.ssh/github.pub" key
+  host="$(hostname -s | tr '[:upper:]' '[:lower:]')"
+  key="${HOME}/.ssh/${host}.pub"
+  if [[ ! -e "${key}" ]]; then
+    log "AVISO: no hay ${key}; github.pub (SSH y firma de git) no queda enlazado."
+  elif [[ -e "${link}" && ! -L "${link}" ]]; then
+    log "${link} es un archivo real: no se pisa. Bórralo o muévelo y reejecuta."
+  else
+    ln -sfn "${key}" "${link}"
   fi
 }
