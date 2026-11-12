@@ -144,7 +144,14 @@ report() {
   else
     TOKEN="$(<"${TOKEN_FILE}")"
     if api GET /modes; then ok "token aceptado por la API"; api_ok=1
-    else ko "token: la API responde HTTP ${API_CODE}"; fi
+    else
+      ko "token: la API responde HTTP ${API_CODE}"
+      if [[ "${API_CODE}" == 401 || "${API_CODE}" == 403 || "${API_CODE}" == 429 ]]; then
+        log "  Si el apagado fue brusco, /etc/coolercontrol/.tokens pudo quedar vacío. Recupera así:"
+        log "  1) espera a que acabe el bloqueo (429), 2) crea un token en la GUI con escritura,"
+        log "  3) pégalo al correr coolercontrol-setup, 4) o restaura con 'coolercontrold restore'."
+      fi
+    fi
   fi
 
   if systemctl --user is-enabled --quiet "${UNIT}" && systemctl --user is-active --quiet "${UNIT}"; then

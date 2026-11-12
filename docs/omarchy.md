@@ -398,6 +398,27 @@ crea con `filter-chain` + RNNoise la fuente virtual **"Noise Canceling source"**
   2026-09 pero `nvidia-open` exige GSP y lo ignora en silencio (compruébalo:
   `nvidia-smi -q | grep GSP` sigue mostrando versión de firmware). Si el Xid
   120 vuelve, la vía es actualizar el driver o reportarlo a NVIDIA.
+- **Cuelgue de la GPU: apagar limpio, no cortar la energía.** El 2026-11-11 un cuelgue con Elden Ring
+  (sin Xid, 56 °C de núcleo) obligó a forzar el apagado y dejó `/etc/coolercontrol/.tokens` en 0 bytes
+  (el daemon lo escribe sin atomicidad) y los discos recuperando journal. Con el kernel vivo, usa
+  **Alt + Impr Pant + R E I S U B** (una tecla cada vez, con pausa corta) en vez del botón de encendido.
+  Eso requiere `kernel.sysrq=244`, que instala `system/etc/sysctl.d/90-sysrq.conf` desde el bootstrap
+  (`ensure_crash_resilience`); `system/etc/systemd/journald.conf.d/sync.conf` sube el fsync del journal
+  de 5 min a 30 s para no perder los últimos minutos de log. Sin confirmar: que sysrq responda con la GPU
+  colgada y que Hyprland no intercepte Alt+Impr Pant.
+- **`gpu-watchdog` (fase 1, solo observa)**: servicio de sistema (`system/usr/local/bin/gpu-watchdog` +
+  `system/etc/systemd/system/gpu-watchdog.service`, instalado por el bootstrap solo si hay `nvidia-smi`).
+  Detecta el cuelgue por dos `nvidia-smi` fallidos separados 30 s, o porque `coolercontrold` registra
+  "stopped answering". Al detectar escribe una línea `crit` en el journal, guarda una instantánea con
+  `sync` en `/var/log/gpu-watchdog/<fecha>/` (journal, `nvidia-smi -q`, sensores, procesos que usan la GPU;
+  conserva las últimas 10) y avisa por notificación. **No reinicia ni resetea el driver.** La fase 2
+  (apagado limpio automático por sysrq) queda pendiente de ≥ 3 días sin falsos positivos: revisa
+  `journalctl -t gpu-watchdog`. Plan y fuentes en `.scratch/gpu-hang-resilience/` (local).
+- **Token de CoolerControl rechazado (`429`/`Invalid Credentials`)**: el watcher ya no llama a
+  `coolercontrol-provision` ni reintenta en bucle; avisa una vez y espera 60 s ×2 hasta 300 s. Recupera
+  creando un token en la GUI (Settings → Access Tokens, con escritura) y corriendo `coolercontrol-setup`
+  (`--check` imprime estos pasos). `coolercontrold backup --include-secrets` / `restore` permite
+  respaldarlo.
 - NVIDIA modprobe: el contenido canónico vive versionado en
   `system/etc/modprobe.d/nvidia.conf` — no es stow (`/etc` está fuera de
   `$HOME`), lo instala `ensure_nvidia_modprobe` en `install-packages.sh`, que
@@ -536,9 +557,10 @@ crea con `filter-chain` + RNNoise la fuente virtual **"Noise Canceling source"**
   elección la mantiene el watcher aunque abras o cierres juegos.
 
   **Subida automática por calor**: en `auto`, el watcher sondea cada 5 s la temperatura
-  máxima entre GPU (`nvidia-smi`) y CPU (`coretemp`); a ≥ 85 °C activa Ultra y vuelve
-  al modo normal por debajo de 78 °C (histéresis). Umbrales `HOT_ON`/`HOT_OFF` en
-  `coolercontrol-mode-watcher`. Ojo: lee la temperatura del núcleo, no la de la
+  máxima entre GPU (`nvidia-smi`) y CPU (`coretemp`); a ≥ 70 °C sube a Rendimiento
+  (vuelve a Silencio por debajo de 62 °C) y a ≥ 85 °C activa Ultra (vuelve por debajo de
+  78 °C). Umbrales `WARM_ON`/`WARM_OFF` y `HOT_ON`/`HOT_OFF` en `coolercontrol-mode-watcher`.
+  Cada minuto deja `temp máx N °C` en el journal del servicio. Ojo: lee la temperatura del núcleo, no la de la
   VRAM GDDR6X (la 3080 no la expone), así que no ve un calentamiento solo de memoria.
 
   `coolercontrol/.local/bin/coolercontrol-provision` aplica `curves.json` vía

@@ -19,7 +19,10 @@ MODE_GAMING="Rendimiento"
 MODE_HOT="Ultra"
 HOT_ON="${HOT_ON:-85}"    # °C (máx de GPU/CPU) a partir de los que, en auto, sube a Ultra
 HOT_OFF="${HOT_OFF:-78}"   # °C por debajo de los que vuelve; la banda evita oscilar en el umbral
+WARM_ON="${WARM_ON:-70}"   # °C a partir de los que, en auto, Silencio sube a Rendimiento
+WARM_OFF="${WARM_OFF:-62}" # °C por debajo de los que vuelve a Silencio
 HOT_FILE="${XDG_RUNTIME_DIR:-/tmp}/coolercontrol-mode-watcher.hot"
+WARM_FILE="${XDG_RUNTIME_DIR:-/tmp}/coolercontrol-mode-watcher.warm"
 POLL_SECS=5
 CHOICE_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/coolercontrol-modes/manual-mode"
 
@@ -31,17 +34,58 @@ if [[ ! -s "$CC_TOKEN_FILE" ]]; then
 fi
 TOKEN="$(<"$CC_TOKEN_FILE")"
 
+# Si el daemon rechaza el token (token vacío tras un apagado sucio, o 429 por demasiados
+# fallos) NO se reintenta cada pocos segundos: cada fallo alarga el bloqueo del daemon y,
+# peor, antes se caía a coolercontrol-provision en bucle. El fallo se anota en un fichero
+# y el resto del watcher espera a que pase.
+AUTH_FILE="${XDG_RUNTIME_DIR:-/tmp}/coolercontrol-mode-watcher.authfail"
+AUTH_BACKOFF_START="${AUTH_BACKOFF_START:-60}"   # s; el daemon tiene tope de 300 s
+AUTH_BACKOFF_MAX=300
+
+note_auth_fail() {  # note_auth_fail SEGUNDOS (0 = usar AUTH_BACKOFF_START)
+  local s="${1:-0}"
+  (( s > 0 )) || s="$AUTH_BACKOFF_START"
+  echo $(( $(date +%s) + s + 1 )) >"$AUTH_FILE"
+}
+auth_blocked() { [[ -f "$AUTH_FILE" ]] && (( $(date +%s) < $(<"$AUTH_FILE") )); }
+
 # A propósito SIN abortar en error: un timeout puntual del daemon (ya visto en
 # los logs con liquidctl) no debe tumbar el watcher, solo se reintenta en el
 # siguiente evento de ventana.
 cc_api() {
-  curl -sS -m 10 -H "Authorization: Bearer ${TOKEN}" -H 'Content-Type: application/json' \
-    -X "$1" "${CC_URL}${2}" ${3:+-d "$3"} 2>/dev/null
+  local body
+  body="$(curl -sS -m 10 -H "Authorization: Bearer ${TOKEN}" -H 'Content-Type: application/json' \
+    -X "$1" "${CC_URL}${2}" ${3:+-d "$3"} 2>/dev/null)"
+  case "$body" in
+    *'Too many failed authentication'*) note_auth_fail "$(sed -nE 's/.*Try again in ([0-9]+)s.*/\1/p' <<<"$body")" ;;
+    *'Invalid Credentials'*|*'does not have write access'*) note_auth_fail 0 ;;
+  esac
+  printf '%s' "$body"
+}
+
+# Espera a que la API acepte el token, con espera creciente. No aprovisiona nunca.
+wait_for_auth() {
+  local wait="$AUTH_BACKOFF_START" notified=0 body left
+  while :; do
+    body="$(cc_api GET /modes)"
+    if jq -e '.modes' >/dev/null 2>&1 <<<"$body"; then rm -f "$AUTH_FILE"; return 0; fi
+    if (( ! notified )); then
+      log "la API no acepta el token (${body:0:80}); no se aprovisiona. Crea un token nuevo en la GUI (con escritura) y corre coolercontrol-setup."
+      command -v notify-send >/dev/null && notify-send -u critical "CoolerControl" "El watcher no tiene acceso a la API: crea un token nuevo y corre coolercontrol-setup." || true
+      notified=1
+    fi
+    left=0
+    [[ -f "$AUTH_FILE" ]] && left=$(( $(<"$AUTH_FILE") - $(date +%s) ))
+    sleep $(( left > wait ? left : wait ))
+    (( wait = wait * 2 > AUTH_BACKOFF_MAX ? AUTH_BACKOFF_MAX : wait * 2 ))
+  done
 }
 
 resolve_mode_uid() {  # resolve_mode_uid NOMBRE
   jq -r --arg n "$1" '.modes[]? | select(.name==$n) | .uid' <<<"$(cc_api GET /modes)" 2>/dev/null | head -1
 }
+
+wait_for_auth
 
 UID_IDLE="$(resolve_mode_uid "$MODE_IDLE")"
 UID_GAMING="$(resolve_mode_uid "$MODE_GAMING")"
@@ -66,16 +110,16 @@ max_temp() {
   printf '%s\n' "${g:-0}" "${c:-0}" | sort -n | tail -1
 }
 
-# ¿Está "caliente"? Con histéresis: se enciende a HOT_ON y se apaga bajo HOT_OFF.
-# El estado vive en un fichero (no en memoria) por la misma razón que el resto:
-# lo comparten el hilo de eventos y el de sondeo, y sobrevive a un reinicio.
-is_hot() {
-  local t
-  t="$(max_temp)"
-  [[ "$t" =~ ^[0-9]+$ ]] || { [[ -e "$HOT_FILE" ]]; return; }
-  if (( t >= HOT_ON )); then : >"$HOT_FILE"
-  elif (( t < HOT_OFF )); then rm -f "$HOT_FILE"; fi
-  [[ -e "$HOT_FILE" ]]
+# Histéresis con el estado en un fichero (no en memoria): lo comparten el hilo de
+# eventos y el de sondeo, y sobrevive a un reinicio. hyst FICHERO ON OFF TEMP:
+# se enciende a ON, se apaga bajo OFF y entre ambos conserva el estado. Sin
+# lectura de temperatura válida, conserva el estado.
+hyst() {
+  local f="$1" on="$2" off="$3" t="$4"
+  [[ "$t" =~ ^[0-9]+$ ]] || { [[ -e "$f" ]]; return; }
+  if (( t >= on )); then : >"$f"
+  elif (( t < off )); then rm -f "$f"; fi
+  [[ -e "$f" ]]
 }
 
 # ¿Hay alguna ventana abierta cuya class/initialClass matchee un patrón (glob)
@@ -98,6 +142,7 @@ any_game_open() {
 }
 
 reconcile() {
+  auth_blocked && return 0
   local want cur choice manual
   want="$UID_IDLE"
   any_game_open && want="$UID_GAMING"
@@ -107,23 +152,30 @@ reconcile() {
     manual="$(resolve_mode_uid "${choice^}")"
     [[ -n "$manual" ]] && want="$manual"
   fi
-  # En auto, el calor extremo manda sobre todo lo demás (no sobre la elección manual).
-  if [[ -z "${choice:-}" || "$choice" == auto ]] && [[ -n "$UID_HOT" ]] && is_hot; then
-    want="$UID_HOT"
+  # En auto, el calor manda sobre la detección de juegos (no sobre la elección
+  # manual): tibio sube a Rendimiento, caliente a Ultra. Se actualizan ambas
+  # histéresis en cada pasada, sin cortocircuitar.
+  if [[ -z "${choice:-}" || "$choice" == auto ]]; then
+    local t warm=1 hot=1
+    t="$(max_temp)"
+    hyst "$WARM_FILE" "$WARM_ON" "$WARM_OFF" "$t" && warm=0
+    hyst "$HOT_FILE" "$HOT_ON" "$HOT_OFF" "$t" && hot=0
+    (( warm == 0 )) && want="$UID_GAMING"
+    [[ -n "$UID_HOT" ]] && (( hot == 0 )) && want="$UID_HOT"
   fi
   cur="$(jq -r '.current_mode_uid // empty' <<<"$(cc_api GET /modes-active)" 2>/dev/null)"
   [[ -n "$cur" && "$cur" == "$want" ]] && return 0
   cc_api POST "/modes-active/${want}" >/dev/null
   case "$want" in
     "$UID_HOT")    log "temperatura >= ${HOT_ON} °C → modo ${MODE_HOT}" ;;
-    "$UID_GAMING") log "juego detectado → modo ${MODE_GAMING}" ;;
+    "$UID_GAMING") log "juego detectado o temperatura >= ${WARM_ON} °C → modo ${MODE_GAMING}" ;;
     *)             log "sin juegos detectados → modo ${MODE_IDLE}" ;;
   esac
 }
 
 revert_on_exit() {
   [[ -n "${POLL_PID:-}" ]] && kill "$POLL_PID" 2>/dev/null
-  rm -f "$HOT_FILE"
+  rm -f "$HOT_FILE" "$WARM_FILE"
   log "parando: forzando modo ${MODE_IDLE}"
   cc_api POST "/modes-active/${UID_IDLE}" >/dev/null
 }
@@ -135,11 +187,13 @@ if [[ -z "$SOCK" ]]; then
   exit 1
 fi
 
-rm -f "$HOT_FILE"
+rm -f "$HOT_FILE" "$WARM_FILE"
 reconcile   # cubre arrancar/reiniciar con un juego ya abierto
 
 # Sondeo de temperatura: los eventos de ventana no avisan de que algo se calienta.
-[[ -n "$UID_HOT" ]] && { while sleep "$POLL_SECS"; do reconcile; done; } &
+# Cada minuto deja la temperatura máxima en el journal: si la máquina se corta, es
+# la única evidencia de si fue por calor.
+{ i=0; while sleep "$POLL_SECS"; do reconcile; (( ++i % 12 )) || log "temp máx $(max_temp) °C"; done; } &
 POLL_PID=$!
 
 # Debounce: coalescer ráfagas de eventos (varias ventanas al lanzar un juego)
