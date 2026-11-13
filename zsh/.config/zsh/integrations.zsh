@@ -48,3 +48,6 @@ command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"
 # ---- PHP Brew ----
 [[ -e ~/.phpbrew/bashrc ]] && source ~/.phpbrew/bashrc
 
+
+# ---- SSH agent bridge (WSL -> Bitwarden en Windows) ----
+[[ -r ~/.ssh/wsl-agent.sh ]] && source ~/.ssh/wsl-agent.sh

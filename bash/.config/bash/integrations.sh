@@ -54,3 +54,6 @@ command -v mise >/dev/null 2>&1 && eval "$(mise activate bash)"
 # Unificado con zsh (ver zsh/.config/zsh/plugins.zsh): mismo prompt en ambos
 # shells. El binario lo instala mise (mise/.config/mise/config.toml).
 command -v starship >/dev/null 2>&1 && eval "$(starship init bash)"
+
+# ---- SSH agent bridge (WSL -> Bitwarden en Windows) ----
+[[ -r ~/.ssh/wsl-agent.sh ]] && source ~/.ssh/wsl-agent.sh
