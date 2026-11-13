@@ -51,6 +51,20 @@ cat ~/.ssh/id_ed25519.pub      # copy this
 ssh -T git@github.com
 ```
 
+## Bitwarden SSH agent (WSL)
+
+Bitwarden Desktop corre en Windows; WSL llega a su agente por un puente
+(`ssh/.ssh/wsl-agent.sh`, cargado desde zsh/bash solo en WSL):
+`socat` crea `~/.ssh/agent.sock` y reenvía a la named pipe `//./pipe/openssh-ssh-agent` con
+`npiperelay.exe`. `SSH_AUTH_SOCK` apunta a ese socket.
+
+1. En Windows: `bootstrap-windows.cmd` instala Bitwarden y `jstarks.npiperelay` (winget).
+   En Bitwarden → Settings → *Enable SSH agent*; deja la app abierta y desbloqueada.
+2. Desactiva el servicio *OpenSSH Authentication Agent* de Windows (si no, ocupa la pipe).
+3. En WSL: `socat` (en `packages/apt-cli.txt`) y `wsl --shutdown` una vez, para que el PATH
+   incluya `npiperelay.exe`.
+4. Comprueba: `echo $SSH_AUTH_SOCK`, `ssh-add -L`, `ssh -T git@github.com`.
+
 ## Bitwarden SSH agent (Omarchy)
 
 Las llaves SSH viven solo en el vault de Bitwarden; nunca en disco. El agente del

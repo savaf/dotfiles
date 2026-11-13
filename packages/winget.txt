@@ -9,6 +9,8 @@ Microsoft.VisualStudioCode
 Anthropic.Claude
 Valve.Steam
 Bitwarden.Bitwarden
+# Puente del agente SSH de Bitwarden hacia WSL (docs/git-and-ssh.md)
+jstarks.npiperelay
 Discord.Discord
 NZXT.CAM
 # Resto de apps cross-platform que ya usas en Omarchy (arch-apps.txt) y/o
@@ -23,6 +25,7 @@ Google.Chrome
 qBittorrent.qBittorrent
 jqlang.jq
 GitHub.cli
+LocalSend.LocalSend
 
 # --- Sin paquete en winget (instalación manual) ---
 # GlobalProtect: no existe paquete público (microsoft/winget-pkgs#188530,
