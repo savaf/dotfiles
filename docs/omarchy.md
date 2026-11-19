@@ -361,11 +361,18 @@ crea con `filter-chain` + RNNoise la fuente virtual **"Noise Canceling source"**
   hay en Linux, y también con HEVC Main10), el frame se decodifica bien pero
   el compositor no lo pinta: pantalla negra, audio normal. Es un bug conocido
   de Chromium/Brave en NVIDIA+Wayland, no de Widevine ni de los codecs (ver
-  `brave/brave-browser#57974`). Solución aplicada: añadir `--use-gl=egl` y
-  `--disable-features=VaapiVideoDecoder` a `~/.config/brave-flags.conf` y
-  `~/.config/chromium-flags.conf` (se queda en Wayland, no hace falta forzar
-  X11 con `--ozone-platform=x11`). Estos ficheros están versionados en el
-  paquete Stow `omarchy/.config/{brave,chromium}-flags.conf`, así que
+  `brave/brave-browser#57974`). Solución aplicada: `--use-gl=egl` y
+  `--disable-features=VaapiVideoDecoder` en `~/.config/{brave,chromium}-flags.conf` (se queda
+  en Wayland, no hace falta forzar X11). **`--use-gl=egl` solo va en equipos NVIDIA**: en
+  Intel/AMD (songbird) deja a Brave sin WebGL y Figma no abre ("WebGL isn't supported").
+  Por eso hay dos variantes versionadas en el paquete Stow `omarchy`
+  (`<nav>-flags.conf` base y `<nav>-flags.nvidia.conf`, que es la base + ese flag; lo vigila
+  `scripts/test-browser-flags.sh`) y `browser-flags-select` (lo llama `bootstrap.sh`) enlaza
+  la que toca según `has_nvidia_gpu` (hostname `andrea` o `lspci` con NVIDIA). Si vuelves a
+  correr `stow omarchy` a mano y se queja de esos enlaces, bórralos y re-ejecuta el script.
+  `ensure_nvidia_userspace` (`install-packages.sh`) instala `nvidia-utils` solo en esas
+  máquinas y lo quita donde no hay NVIDIA (llega como dependencia de `hyprland`/`steam` y su
+  vendor EGL compite con mesa). Los ficheros están versionados, así que
   sobreviven a una reinstalación — tras `stow`, reinicia el navegador para que
   tome los flags nuevos. Nota: si en algún momento reactivas la aceleración
   por hardware del navegador (`brave://settings/system` /
