@@ -9,10 +9,10 @@
 
 # Clef support since b11622 (PR ggml-org/llama.cpp#29831). Bump by hand, together
 # with the sha256 of both tarballs (a release's assets can change).
-LLAMA_CPP_VERSION="b12179"
+LLAMA_CPP_VERSION="b12651"
 declare -A LLAMA_CPP_SHA256=(
-  [llama]=9a5b9bf36ff80ea58bf9d5ea11fb2462d61430ec9f9a752230eb4bcf8ee68c3d
-  [cudart-llama]=111c2e4c7a770d4c22a0f07e3e9f72cfeaacd27ecaec1ab2bd3cd2d3781b094c
+  [llama]=cb099350c6a025e67eefaa13f2b67b2dcce53e38a0da22476e070d166ef367ea
+  [cudart-llama]=485df8f0b0ab30c15807d25fd23a821aeaef62a3947722c683429491a5e0d027
 )
 
 ensure_clef() {
