@@ -87,6 +87,8 @@ main() {
   stow_packages
   # Marca por hostname (About): enlaza about.<hostname>.txt; avisa y sigue si no hay.
   [[ "${OS}" == "omarchy" ]] && { "${ROOT_DIR}/omarchy/.local/bin/branding-select" || true; }
+  # --use-gl=egl solo en equipos NVIDIA (rompe WebGL en Intel); ver browser-flags-select.
+  [[ "${OS}" == "omarchy" ]] && { "${ROOT_DIR}/omarchy/.local/bin/browser-flags-select" || true; }
   link_claude_profiles
   ensure_clef
   ensure_coolercontrol_mode_watcher

@@ -344,6 +344,26 @@ ensure_omarchy_initramfs() {
   rm -f "${tmp}"
 }
 
+# Userspace NVIDIA (nvidia-utils): solo donde hay GPU NVIDIA (o en "andrea"). En equipos
+# sin ella (p.ej. Intel) llega como dependencia indirecta (opengl-driver) y su vendor EGL
+# (10_nvidia.json) compite con mesa y puede dejar a Brave sin WebGL. mesa provee
+# opengl-driver, así que `pacman -R` (sin -dd) lo quita limpio y se niega si algo lo
+# necesitara. Idempotente.
+ensure_nvidia_userspace() {
+  if has_nvidia_gpu; then
+    sudo pacman -S --needed --noconfirm nvidia-utils
+    return 0
+  fi
+  local pkgs=() p
+  for p in lib32-nvidia-utils nvidia-utils; do
+    pacman -Qq "${p}" >/dev/null 2>&1 && pkgs+=("${p}")
+  done
+  (( ${#pkgs[@]} )) || return 0
+  log "Sin GPU NVIDIA: quitando ${pkgs[*]}..."
+  sudo pacman -Rns --noconfirm "${pkgs[@]}" \
+    || log "AVISO: no se pudo quitar ${pkgs[*]} (algo lo requiere); sigo."
+}
+
 # GPU (RTX 3080): opciones de modprobe de nvidia (KMS, fbdev, preservar VRAM).
 # El contenido versionado vive en system/etc/modprobe.d/; aquí solo se instala
 # si difiere y se regenera el initramfs (necesario: nvidia se carga temprano
@@ -518,6 +538,7 @@ install_arch() {
     ensure_omarchy_zsh
     ensure_omarchy_webapps
     ensure_omarchy_initramfs
+    ensure_nvidia_userspace
     ensure_nvidia_modprobe
     ensure_crash_resilience
     ensure_i2c_dev

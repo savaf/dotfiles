@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Enlaza ~/.config/{brave,chromium}-flags.conf al archivo versionado que toca en esta máquina:
+# `<nav>-flags.nvidia.conf` (con --use-gl=egl, arregla el video DRM negro en NVIDIA+Wayland, ver
+# docs/omarchy.md) donde hay NVIDIA (andrea), `<nav>-flags.conf` (base) en el resto. En Intel/AMD
+# --use-gl=egl deja a Brave sin WebGL (Figma no abre).
+#
+# Se llama desde scripts/bootstrap.sh. Idempotente. NVIDIA_FORCE=1|0 fuerza la detección (pruebas);
+# FLAGS_HOME sustituye a $HOME (pruebas). Si stow (paquete omarchy) se vuelve a correr a mano y
+# se queja de conflicto en estos enlaces, bórralos y re-ejecuta este script.
+set -euo pipefail
+
+self="$(readlink -f "${BASH_SOURCE[0]}")"
+repo_cfg="$(cd "$(dirname "${self}")/../../.config" && pwd)"
+# shellcheck source=../../../scripts/lib/common.sh
+source "${repo_cfg}/../../scripts/lib/common.sh"
+
+home="${FLAGS_HOME:-${HOME}}"
+variant="flags.conf"
+has_nvidia_gpu && variant="flags.nvidia.conf"
+
+for nav in brave chromium; do
+  src="${repo_cfg}/${nav}-${variant}"
+  link="${home}/.config/${nav}-flags.conf"
+  [[ -f "${src}" ]] || continue
+  mkdir -p "$(dirname "${link}")"
+  # Un archivo real (no enlace) se respalda antes de reemplazarlo.
+  if [[ -e "${link}" && ! -L "${link}" ]]; then
+    mv "${link}" "${link}.$(date +%Y%m%d-%H%M%S).bak"
+  fi
+  ln -sfn "${src}" "${link}"
+done
