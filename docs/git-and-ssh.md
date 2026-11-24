@@ -84,9 +84,8 @@ escritorio (`pacman -S bitwarden`, binario `bitwarden-desktop`) crea el socket
   `~/.ssh/github.pub` -> `~/.ssh/<hostname>.pub`, y tanto `ssh/.ssh/config` como
   `git/.gitconfig` usan `github.pub`, así que no hay overrides por máquina. Nunca commitees
   una llave privada. Las `.pub` quedan en 600 (OpenSSH 10 rechaza 644).
-- **Firma de commits**: `git/.gitconfig` usa `gpg.format = ssh` con `~/.ssh/github.pub`
-  (la llave de la máquina). Registra cada llave en GitHub como *Authentication key* y como
-  *Signing key*. Cada commit pide aprobación en Bitwarden (abierto y desbloqueado).
+- **Firma de commits**: desactivada; `git/.gitconfig` no configura `gpgsign`. Las llaves
+  siguen en `ssh/.ssh/allowed_signers` por si se reactiva.
 - Tras el bootstrap, cierra sesión y vuelve a entrar para que uwsm cargue el env.
 
 ### Alta de máquina nueva
@@ -95,7 +94,7 @@ escritorio (`pacman -S bitwarden`, binario `bitwarden-desktop`) crea el socket
 2. Guárdala en `ssh/.ssh/$(hostname -s).pub` (una sola línea; solo la pública).
 3. Añade su línea a `ssh/.ssh/allowed_signers`:
    `10409334+savaf@users.noreply.github.com namespaces="git" <tipo> <clave>`.
-4. Regístrala en GitHub como *Authentication key* y como *Signing key*.
+4. Regístrala en GitHub como *Authentication key*.
 5. Reejecuta `scripts/bootstrap.sh`; luego cierra sesión y vuelve a entrar (uwsm carga el env).
 6. Comprueba que `scripts/test-ssh-key.sh` (parte de `bash scripts/ci.sh`) sigue en verde: falla si
    alguna `.pub` versionada no está en `allowed_signers`.
@@ -104,13 +103,9 @@ escritorio (`pacman -S bitwarden`, binario `bitwarden-desktop`) crea el socket
 
 | Síntoma | Causa probable |
 |---|---|
-| `Couldn't load public key …/github.pub` o `failed to write commit object` | `~/.ssh/github.pub` apunta a un `.pub` inexistente (falta `ssh/.ssh/<hostname>.pub`, o el enlace quedó viejo): añade el `.pub` y reejecuta el bootstrap |
+| `Couldn't load public key …/github.pub` | `~/.ssh/github.pub` apunta a un `.pub` inexistente (falta `ssh/.ssh/<hostname>.pub`, o el enlace quedó viejo): añade el `.pub` y reejecuta el bootstrap |
 | El bootstrap avisa `Falta ssh/.ssh/<host>.pub` | El hostname (`hostname -s`) no coincide con ningún `.pub` versionado |
 | El bootstrap avisa que `github.pub` es un archivo real | Hay un archivo suelto en `~/.ssh/github.pub`; el bootstrap no lo pisa: bórralo o muévelo y reejecuta |
 | `Load key … agent refused operation` / `incorrect passphrase` / sin respuesta al firmar | Bitwarden cerrado o bloqueado, o `SSH_AUTH_SOCK` no apunta a `~/.bitwarden-ssh-agent.sock` (`echo $SSH_AUTH_SOCK`, `ssh-add -L`) |
-| Commit firmado pero GitHub no muestra *Verified* | La llave no está registrada como *Signing key*, o el correo del commit no es el noreply |
-| `git log --show-signature` dice `No principal matched` | Falta la llave en `ssh/.ssh/allowed_signers` |
-
-Sin agente disponible, bypass puntual: `git -c commit.gpgsign=false commit`.
 
 Comprobar: `echo $SSH_AUTH_SOCK`, `ssh-add -L`, `ssh -T git@github.com`.
