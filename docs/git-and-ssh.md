@@ -107,6 +107,7 @@ escritorio (`pacman -S bitwarden`, binario `bitwarden-desktop`) crea el socket
 | `Couldn't load public key …/github.pub` o `failed to write commit object` | `~/.ssh/github.pub` apunta a un `.pub` inexistente (falta `ssh/.ssh/<hostname>.pub`, o el enlace quedó viejo): añade el `.pub` y reejecuta el bootstrap |
 | El bootstrap avisa `Falta ssh/.ssh/<host>.pub` | El hostname (`hostname -s`) no coincide con ningún `.pub` versionado |
 | El bootstrap avisa que `github.pub` es un archivo real | Hay un archivo suelto en `~/.ssh/github.pub`; el bootstrap no lo pisa: bórralo o muévelo y reejecuta |
+| `Load key …/github.pub: invalid format` y `ssh-add -L` dice `No such file or directory` | `SSH_AUTH_SOCK` apunta a un socket inexistente (p. ej. el proxy de herdr `herdr.sock.agent`); `integrations.zsh` lo reapunta a Bitwarden al abrir un shell nuevo |
 | `Load key … agent refused operation` / `incorrect passphrase` / sin respuesta al firmar | Bitwarden cerrado o bloqueado, o `SSH_AUTH_SOCK` no apunta a `~/.bitwarden-ssh-agent.sock` (`echo $SSH_AUTH_SOCK`, `ssh-add -L`) |
 | Commit firmado pero GitHub no muestra *Verified* | La llave no está registrada como *Signing key*, o el correo del commit no es el noreply |
 | `git log --show-signature` dice `No principal matched` | Falta la llave en `ssh/.ssh/allowed_signers` |

@@ -51,3 +51,10 @@ command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"
 
 # ---- SSH agent bridge (WSL -> Bitwarden en Windows) ----
 [[ -r ~/.ssh/wsl-agent.sh ]] && source ~/.ssh/wsl-agent.sh
+
+# ---- SSH agent (Omarchy -> Bitwarden) ----
+# herdr reescribe SSH_AUTH_SOCK a su proxy (herdr.sock.agent); si ese socket no
+# existe, ssh no ve ninguna llave. Recupera el agente de Bitwarden.
+if [[ -S ~/.bitwarden-ssh-agent.sock && ! -S ${SSH_AUTH_SOCK:-} ]]; then
+  export SSH_AUTH_SOCK=~/.bitwarden-ssh-agent.sock
+fi
