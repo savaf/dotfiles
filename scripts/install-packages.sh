@@ -344,7 +344,7 @@ ensure_omarchy_initramfs() {
   rm -f "${tmp}"
 }
 
-# Userspace NVIDIA (nvidia-utils): solo donde hay GPU NVIDIA (o en "andrea"). En equipos
+# Userspace NVIDIA (nvidia-utils): solo donde hay GPU NVIDIA. En equipos
 # sin ella (p.ej. Intel) llega como dependencia indirecta (opengl-driver) y su vendor EGL
 # (10_nvidia.json) compite con mesa y puede dejar a Brave sin WebGL. mesa provee
 # opengl-driver, así que `pacman -R` (sin -dd) lo quita limpio y se niega si algo lo
@@ -354,6 +354,7 @@ ensure_nvidia_userspace() {
     sudo pacman -S --needed --noconfirm nvidia-utils
     return 0
   fi
+  lacks_nvidia_gpu || { log "No se pudo consultar lspci; no se toca nvidia-utils."; return 0; }
   local pkgs=() p
   for p in lib32-nvidia-utils nvidia-utils; do
     pacman -Qq "${p}" >/dev/null 2>&1 && pkgs+=("${p}")
@@ -364,31 +365,36 @@ ensure_nvidia_userspace() {
     || log "AVISO: no se pudo quitar ${pkgs[*]} (algo lo requiere); sigo."
 }
 
-# GPU (RTX 3080): opciones de modprobe de nvidia (KMS, fbdev, preservar VRAM).
-# El contenido versionado vive en system/etc/modprobe.d/; aquí solo se instala
-# si difiere y se regenera el initramfs (necesario: nvidia se carga temprano
-# vía el hook kms). Idempotente.
+# Opciones de modprobe de nvidia (KMS, fbdev, preservar VRAM). El contenido versionado vive en
+# system/etc/modprobe.d/; con GPU NVIDIA se instala si difiere y sin ella se borra, solo si es
+# idéntico al versionado (uno propio no se toca). Si cambia algo se regenera el initramfs
+# (nvidia se carga temprano vía el hook kms). Idempotente. SYSTEM_ROOT antepone raíz (pruebas).
 ensure_nvidia_modprobe() {
   local src="${ROOT_DIR}/system/etc/modprobe.d/nvidia.conf"
-  local dst="/etc/modprobe.d/nvidia.conf"
+  local dst="${SYSTEM_ROOT:-}/etc/modprobe.d/nvidia.conf"
   [[ -f "${src}" ]] || return 0
-  exists nvidia-smi || return 0
-  if [[ -f "${dst}" ]] && cmp -s "${src}" "${dst}"; then
-    log "Opciones de NVIDIA ya al día (${dst}); se omite."
-    return 0
+  if has_nvidia_gpu; then
+    if [[ -f "${dst}" ]] && cmp -s "${src}" "${dst}"; then
+      log "Opciones de NVIDIA ya al día (${dst}); se omite."
+      return 0
+    fi
+    log "Instalando ${dst} (opciones del módulo nvidia)..."
+    sudo cp "${src}" "${dst}"
+  else
+    lacks_nvidia_gpu && [[ -f "${dst}" ]] && cmp -s "${src}" "${dst}" || return 0
+    log "Sin GPU NVIDIA: borrando ${dst}..."
+    sudo rm -f "${dst}"
   fi
-  log "Instalando ${dst} (opciones del módulo nvidia)..."
-  sudo cp "${src}" "${dst}"
   if exists limine-mkinitcpio; then
     log "Regenerando initramfs para que el cambio aplique desde el próximo arranque..."
     sudo limine-mkinitcpio
   fi
-  log "AVISO: reinicia para que las opciones de nvidia tomen efecto."
+  log "AVISO: reinicia para que el cambio de opciones de nvidia tome efecto."
 }
 
 # Copia system/<ruta> a /<ruta> si falta o difiere. Devuelve 0 solo si cambió algo.
 install_system_conf() {
-  local src="${ROOT_DIR}/system/$1" dst="/$1" mode="${2:-644}"
+  local src="${ROOT_DIR}/system/$1" dst="${SYSTEM_ROOT:-}/$1" mode="${2:-644}"
   [[ -f "${src}" ]] || return 1
   if [[ -f "${dst}" ]] && cmp -s "${src}" "${dst}"; then
     log "Ya al día (${dst}); se omite."
@@ -407,7 +413,7 @@ ensure_crash_resilience() {
     sudo systemctl restart systemd-journald
   fi
   # gpu-watchdog (fase 1: solo observa) únicamente donde hay GPU NVIDIA.
-  if exists nvidia-smi; then
+  if has_nvidia_gpu; then
     local changed=0
     install_system_conf usr/local/bin/gpu-watchdog 755 && changed=1
     install_system_conf etc/systemd/system/gpu-watchdog.service && changed=1
@@ -416,7 +422,23 @@ ensure_crash_resilience() {
       sudo systemctl enable gpu-watchdog.service
       sudo systemctl restart gpu-watchdog.service
     fi
+  elif lacks_nvidia_gpu; then
+    remove_gpu_watchdog
   fi
+}
+
+# Quita los restos de gpu-watchdog (la evidencia en /var/log/gpu-watchdog se conserva). Idempotente.
+remove_gpu_watchdog() {
+  local unit="${SYSTEM_ROOT:-}/etc/systemd/system/gpu-watchdog.service"
+  local bin="${SYSTEM_ROOT:-}/usr/local/bin/gpu-watchdog"
+  [[ -e "${unit}" || -e "${bin}" ]] || return 0
+  log "Sin GPU NVIDIA: quitando gpu-watchdog..."
+  if [[ -e "${unit}" ]]; then
+    sudo systemctl disable --now gpu-watchdog.service \
+      || log "AVISO: no se pudo deshabilitar gpu-watchdog; sigo."
+  fi
+  sudo rm -f "${unit}" "${bin}"
+  sudo systemctl daemon-reload
 }
 
 # Webapps de Omarchy (equivalente a casks sin buen paquete Linux). Lista en
@@ -579,4 +601,5 @@ main() {
   log "Done. Restart your terminal or run: source ~/.zshrc"
 }
 
-main "$@"
+# Sourced (pruebas): solo se definen las funciones.
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then main "$@"; fi

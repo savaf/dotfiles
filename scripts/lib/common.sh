@@ -19,14 +19,16 @@ os_detect() {
   echo "unknown"
 }
 
-# ¿Esta máquina usa NVIDIA? Sí en "andrea" o si lspci ve una GPU NVIDIA. NVIDIA_FORCE=1|0 lo
-# fuerza (pruebas); HOSTNAME_OVERRIDE sustituye a `hostname` (pruebas).
+# ¿Hay GPU NVIDIA? Solo cuenta el hardware (lspci). NVIDIA_FORCE=1|0 lo fuerza (pruebas).
 has_nvidia_gpu() {
   [[ -n "${NVIDIA_FORCE:-}" ]] && { [[ "${NVIDIA_FORCE}" == 1 ]]; return; }
-  local host="${HOSTNAME_OVERRIDE:-$(hostname 2>/dev/null)}"
-  host="${host%%.*}"
-  [[ "${host,,}" == "andrea" ]] && return 0
-  exists lspci && lspci 2>/dev/null | grep -qi nvidia
+  # Sin grep -q: cortar la tubería haría fallar a lspci bajo pipefail.
+  exists lspci && lspci 2>/dev/null | grep -i nvidia >/dev/null
+}
+
+# ¿Es seguro afirmar que NO hay NVIDIA? Falso si lspci no responde: ante la duda no se limpia.
+lacks_nvidia_gpu() {
+  ! has_nvidia_gpu && { [[ -n "${NVIDIA_FORCE:-}" ]] || lspci >/dev/null 2>&1; }
 }
 
 is_wsl() { grep -qi microsoft /proc/version 2>/dev/null; }

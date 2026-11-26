@@ -59,7 +59,8 @@ This is how every quirk below was found. `strings -a /usr/bin/coolercontrold | g
 ## Devices (`GET /devices`)
 
 Resolve devices by `name` substring, not `uid` — the uid is a hash of hardware identity
-and changes if the Kraken moves USB ports or the GPU changes. On this machine:
+and changes if the Kraken moves USB ports or the GPU changes. Recorded on the desktop when it
+still had the RTX 3080 (since removed, see [hardware.md](hardware.md)):
 
 | name (as returned by the API) | role |
 |---|---|
