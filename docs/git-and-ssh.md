@@ -104,7 +104,7 @@ escritorio (`pacman -S bitwarden`, binario `bitwarden-desktop`) crea el socket
 
 | Síntoma | Causa probable |
 |---|---|
-| `Couldn't load public key …/github.pub` o `failed to write commit object` | `~/.ssh/github.pub` apunta a un `.pub` inexistente (falta `ssh/.ssh/<hostname>.pub`, o el enlace quedó viejo): añade el `.pub` y reejecuta el bootstrap |
+| `Couldn't load public key …/github.pub` o `failed to write commit object` | `~/.ssh/github.pub` apunta a un `.pub` inexistente (falta `ssh/.ssh/<hostname>.pub`, o el enlace quedó viejo): añade el `.pub` y reejecuta el bootstrap. Si la `.pub` ya está en `~/.ssh`, basta abrir un shell zsh nuevo: `integrations.zsh` repone el enlace |
 | El bootstrap avisa `Falta ssh/.ssh/<host>.pub` | El hostname (`hostname -s`) no coincide con ningún `.pub` versionado |
 | El bootstrap avisa que `github.pub` es un archivo real | Hay un archivo suelto en `~/.ssh/github.pub`; el bootstrap no lo pisa: bórralo o muévelo y reejecuta |
 | `Load key …/github.pub: invalid format` y `ssh-add -L` dice `No such file or directory` | `SSH_AUTH_SOCK` apunta a un socket inexistente (p. ej. el proxy de herdr `herdr.sock.agent`); `integrations.zsh` lo reapunta a Bitwarden al abrir un shell nuevo |

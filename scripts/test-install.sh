@@ -11,6 +11,8 @@ trap 'rm -rf "${TMP}"' EXIT
 
 fail() { echo "FAIL: $*"; exit 1; }
 
+# Sin la config de git de la máquina: sus commits no deben pedir firma.
+export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 export GIT_AUTHOR_NAME=t GIT_AUTHOR_EMAIL=t@t GIT_COMMITTER_NAME=t GIT_COMMITTER_EMAIL=t@t
 
 # Repo origen falso.

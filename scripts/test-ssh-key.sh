@@ -47,6 +47,20 @@ out="$(link_ssh_key)"
 [[ "${out}" == *"github.pub"* ]] || fail "no avisa del archivo real: ${out}"
 echo "OK: link_ssh_key"
 
+# 4b. zsh repone el enlace si falta o está roto, y no pisa un archivo real
+if command -v zsh >/dev/null 2>&1; then
+  heal() { HOME="${HOME}" zsh -f -c 'HOST=Box.local; source "$1"' _ "${REPO}/zsh/.config/zsh/integrations.zsh" >/dev/null 2>&1 || true; }
+  rm "${LINK}"; heal
+  [[ "$(readlink "${LINK}")" == "${HOME}/.ssh/box.pub" ]] || fail "zsh no repuso github.pub"
+  ln -sfn "${HOME}/.ssh/vieja.pub" "${LINK}"; heal
+  [[ "$(readlink "${LINK}")" == "${HOME}/.ssh/box.pub" ]] || fail "zsh no reparó el enlace roto"
+  rm "${LINK}"; echo "mia" >"${LINK}"; heal
+  [[ ! -L "${LINK}" && "$(<"${LINK}")" == "mia" ]] || fail "zsh pisó un archivo real"
+  echo "OK: zsh repone github.pub"
+else
+  echo "AVISO: sin zsh; no se prueba la reposición de github.pub"
+fi
+
 # 5. allowed_signers contiene la clave de cada .pub versionado
 signers="${REPO}/ssh/.ssh/allowed_signers"
 for pub in "${REPO}"/ssh/.ssh/*.pub; do

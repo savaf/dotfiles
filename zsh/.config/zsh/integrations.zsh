@@ -52,6 +52,14 @@ command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"
 # ---- SSH agent bridge (WSL -> Bitwarden en Windows) ----
 [[ -r ~/.ssh/wsl-agent.sh ]] && source ~/.ssh/wsl-agent.sh
 
+# ---- Llave de firma y SSH ----
+# github.pub -> <hostname>.pub lo crea el bootstrap; si falta (stow a mano, enlace
+# borrado o roto) git no puede firmar, así que se repone aquí. No pisa un archivo real.
+() {
+  local key=~/.ssh/${(L)HOST%%.*}.pub
+  [[ ! -e ~/.ssh/github.pub && -e $key ]] && ln -sfn $key ~/.ssh/github.pub
+}
+
 # ---- SSH agent (Omarchy -> Bitwarden) ----
 # herdr reescribe SSH_AUTH_SOCK a su proxy (herdr.sock.agent); si ese socket no
 # existe, ssh no ve ninguna llave. Recupera el agente de Bitwarden.
