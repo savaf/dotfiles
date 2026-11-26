@@ -24,6 +24,16 @@ run 1
 [[ "$(readlink -f "${TMP}/.config/chromium-flags.conf")" == "$(readlink -f "${CFG}/chromium-flags.nvidia.conf")" ]] || fail "chromium con NVIDIA"
 run 1  # idempotente
 run 0
-HOSTNAME_OVERRIDE=andrea FLAGS_HOME="${TMP}" bash "${SEL}"
-[[ "$(readlink -f "${TMP}/.config/brave-flags.conf")" == "$(readlink -f "${CFG}/brave-flags.nvidia.conf")" ]] || fail "hostname andrea debe enlazar la variante nvidia"
+# Sin forzar: manda lspci, no el hostname.
+mkdir -p "${TMP}/bin"
+printf '#!/bin/sh\necho andrea\n' >"${TMP}/bin/hostname"
+printf '#!/bin/sh\necho "VGA: Intel UHD Graphics 770"\n' >"${TMP}/bin/lspci"
+chmod +x "${TMP}/bin/"*
+detect() { env -u NVIDIA_FORCE PATH="${TMP}/bin:${PATH}" FLAGS_HOME="${TMP}" bash "${SEL}"; }
+run 1
+detect
+[[ "$(readlink -f "${TMP}/.config/brave-flags.conf")" == "$(readlink -f "${CFG}/brave-flags.conf")" ]] || fail "andrea sin NVIDIA debe enlazar la base"
+printf '#!/bin/sh\necho "VGA: NVIDIA Corporation GA102"\n' >"${TMP}/bin/lspci"
+detect
+[[ "$(readlink -f "${TMP}/.config/brave-flags.conf")" == "$(readlink -f "${CFG}/brave-flags.nvidia.conf")" ]] || fail "lspci con NVIDIA debe enlazar la variante nvidia"
 echo "OK: browser-flags-select"

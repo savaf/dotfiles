@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Enlaza ~/.config/{brave,chromium}-flags.conf al archivo versionado que toca en esta máquina:
 # `<nav>-flags.nvidia.conf` (con --use-gl=egl, arregla el video DRM negro en NVIDIA+Wayland, ver
-# docs/omarchy.md) donde hay NVIDIA (andrea), `<nav>-flags.conf` (base) en el resto. En Intel/AMD
+# docs/omarchy.md) donde `lspci` ve NVIDIA, `<nav>-flags.conf` (base) en el resto. En Intel/AMD
 # --use-gl=egl deja a Brave sin WebGL (Figma no abre).
 #
 # Se llama desde scripts/bootstrap.sh. Idempotente. NVIDIA_FORCE=1|0 fuerza la detección (pruebas);

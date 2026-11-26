@@ -15,15 +15,8 @@ spotify
 obsidian
 dbeaver
 slack-desktop
-# control RGB (NZXT, Lian Li Strimer, Keychron); sync con tema vía hook del paquete stow omarchy
-openrgb
-# refrigeración + NZXT Kraken (bomba/ventiladores) y su pantalla LCD; daemon coolercontrold
-# lo habilita el bootstrap. Deps opcionales liquidctl/lm_sensors en pacman-cli.txt
-coolercontrol
-# driver del Nuvoton NCT6687D-R (Super-I/O de la placa MSI Z690 FORCE WIFI) que
-# coolercontrold necesita para leer sus sensores/fan headers; no está en linux-omarchy.
-# ensure_nct6687 en install-packages.sh lo carga y persiste.
-nct6687d-dkms-git
+# openrgb, coolercontrol y nct6687d-dkms-git dependen del hardware: los instala
+# ensure_hardware_packages (scripts/install-packages.sh).
 # claude-code viene en el repo omarchy (o AUR en Arch puro); claude-desktop es el AUR
 # que reempaqueta la app oficial de Anthropic
 claude-code

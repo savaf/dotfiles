@@ -19,14 +19,33 @@ os_detect() {
   echo "unknown"
 }
 
-# ¿Esta máquina usa NVIDIA? Sí en "andrea" o si lspci ve una GPU NVIDIA. NVIDIA_FORCE=1|0 lo
-# fuerza (pruebas); HOSTNAME_OVERRIDE sustituye a `hostname` (pruebas).
+# ¿Hay GPU NVIDIA? Solo cuenta el hardware (lspci). NVIDIA_FORCE=1|0 lo fuerza (pruebas).
 has_nvidia_gpu() {
   [[ -n "${NVIDIA_FORCE:-}" ]] && { [[ "${NVIDIA_FORCE}" == 1 ]]; return; }
-  local host="${HOSTNAME_OVERRIDE:-$(hostname 2>/dev/null)}"
-  host="${host%%.*}"
-  [[ "${host,,}" == "andrea" ]] && return 0
-  exists lspci && lspci 2>/dev/null | grep -qi nvidia
+  # Sin grep -q: cortar la tubería haría fallar a lspci bajo pipefail.
+  exists lspci && lspci 2>/dev/null | grep -i nvidia >/dev/null
+}
+
+# ¿Es seguro afirmar que NO hay NVIDIA? Falso si lspci no responde: ante la duda no se limpia.
+lacks_nvidia_gpu() {
+  ! has_nvidia_gpu && { [[ -n "${NVIDIA_FORCE:-}" ]] || lspci >/dev/null 2>&1; }
+}
+
+# Placa y USB se leen de sysfs (no hay lsusb). SYSFS_ROOT cambia la raíz (pruebas).
+has_msi_board() {
+  grep -qs 'Micro-Star' "${SYSFS_ROOT:-/sys}/class/dmi/id/board_vendor"
+}
+
+has_usb_nzxt() {
+  grep -qsix 1e71 "${SYSFS_ROOT:-/sys}"/bus/usb/devices/*/idVendor
+}
+
+# ¿Algo con RGB que maneje OpenRGB? NZXT, Lian Li (0cf2) o Keychron, este por texto:
+# un K2 se anuncia con el vendor de Apple (05ac).
+has_rgb_usb() {
+  local usb="${SYSFS_ROOT:-/sys}/bus/usb/devices"
+  has_usb_nzxt || grep -qsix 0cf2 "${usb}"/*/idVendor \
+    || grep -qsi keychron "${usb}"/*/manufacturer "${usb}"/*/product
 }
 
 is_wsl() { grep -qi microsoft /proc/version 2>/dev/null; }

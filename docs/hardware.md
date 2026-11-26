@@ -1,12 +1,13 @@
 # Hardware
 
-My machines, for reference.
+My machines, for reference. The bootstrap does not read this file: it
+[detects the hardware](omarchy.md#paquetes-según-el-hardware).
 
 - **Laptop:** Macbook M1 Pro 2021 · 16" · 16 GB RAM
 - **Case:** Corsair 4000D Airflow
-- **Motherboard:** MSI MPG Z690 FORCE WIFI ATX LGA1700
+- **Motherboard:** Gigabyte Z790 AORUS ELITE AX LGA1700
 - **CPU:** Intel Core i7-12700K 3.6 GHz
-- **GPU:** ZOTAC Gaming GeForce RTX™ 3080 Trinity OC White Edition LHR 10GB
+- **GPU:** Intel UHD Graphics 770 (integrated; no NVIDIA card)
 - **RAM:** Corsair Dominator Platinum RGB 64 GB (4 × 16 GB) DDR5-5200
 - **Cooling:** NZXT Kraken Z53 liquid CPU cooler, with LCD screen and its own external
   RGB connector · NZXT RGB & Fan Controller hub (channels `led1`, `led2`)

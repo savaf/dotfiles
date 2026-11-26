@@ -329,8 +329,9 @@ ensure_omarchy_zsh() {
 # migración) DESPUÉS de la última regeneración, la imagen queda desactualizada.
 # Aquí se detecta el caso inspeccionando el UKI real y se regenera si falta.
 ensure_omarchy_initramfs() {
-  local uki="/boot/EFI/Linux/omarchy_linux.efi"
-  [[ -f /etc/mkinitcpio.conf.d/nvidia.conf && -f "${uki}" ]] || return 0
+  local uki="${SYSTEM_ROOT:-}/boot/EFI/Linux/omarchy_linux.efi"
+  has_nvidia_gpu || return 0
+  [[ -f "${SYSTEM_ROOT:-}/etc/mkinitcpio.conf.d/nvidia.conf" && -f "${uki}" ]] || return 0
   exists limine-mkinitcpio || return 0
   local tmp
   tmp="$(mktemp)"
@@ -344,7 +345,7 @@ ensure_omarchy_initramfs() {
   rm -f "${tmp}"
 }
 
-# Userspace NVIDIA (nvidia-utils): solo donde hay GPU NVIDIA (o en "andrea"). En equipos
+# Userspace NVIDIA (nvidia-utils): solo donde hay GPU NVIDIA. En equipos
 # sin ella (p.ej. Intel) llega como dependencia indirecta (opengl-driver) y su vendor EGL
 # (10_nvidia.json) compite con mesa y puede dejar a Brave sin WebGL. mesa provee
 # opengl-driver, así que `pacman -R` (sin -dd) lo quita limpio y se niega si algo lo
@@ -354,6 +355,7 @@ ensure_nvidia_userspace() {
     sudo pacman -S --needed --noconfirm nvidia-utils
     return 0
   fi
+  lacks_nvidia_gpu || { log "No se pudo consultar lspci; no se toca nvidia-utils."; return 0; }
   local pkgs=() p
   for p in lib32-nvidia-utils nvidia-utils; do
     pacman -Qq "${p}" >/dev/null 2>&1 && pkgs+=("${p}")
@@ -364,31 +366,51 @@ ensure_nvidia_userspace() {
     || log "AVISO: no se pudo quitar ${pkgs[*]} (algo lo requiere); sigo."
 }
 
-# GPU (RTX 3080): opciones de modprobe de nvidia (KMS, fbdev, preservar VRAM).
-# El contenido versionado vive en system/etc/modprobe.d/; aquí solo se instala
-# si difiere y se regenera el initramfs (necesario: nvidia se carga temprano
-# vía el hook kms). Idempotente.
+# Opciones de modprobe de nvidia (KMS, fbdev, preservar VRAM). El contenido versionado vive en
+# system/etc/modprobe.d/; con GPU NVIDIA se instala si difiere y sin ella se borra, solo si es
+# idéntico al versionado (uno propio no se toca). Si cambia algo se regenera el initramfs
+# (nvidia se carga temprano vía el hook kms). Idempotente. SYSTEM_ROOT antepone raíz (pruebas).
+# La marca .pendiente (modprobe solo lee *.conf) sobrevive a una regeneración fallida para
+# que la siguiente pasada la reintente.
 ensure_nvidia_modprobe() {
   local src="${ROOT_DIR}/system/etc/modprobe.d/nvidia.conf"
-  local dst="/etc/modprobe.d/nvidia.conf"
+  local dst="${SYSTEM_ROOT:-}/etc/modprobe.d/nvidia.conf"
+  local pending="${dst}.pendiente"
   [[ -f "${src}" ]] || return 0
-  exists nvidia-smi || return 0
-  if [[ -f "${dst}" ]] && cmp -s "${src}" "${dst}"; then
-    log "Opciones de NVIDIA ya al día (${dst}); se omite."
-    return 0
+  if has_nvidia_gpu; then
+    if [[ -f "${dst}" ]] && cmp -s "${src}" "${dst}"; then
+      log "Opciones de NVIDIA ya al día (${dst}); se omite."
+    else
+      log "Instalando ${dst} (opciones del módulo nvidia)..."
+      sudo touch "${pending}"
+      sudo cp "${src}" "${dst}"
+    fi
+  elif lacks_nvidia_gpu && [[ -f "${dst}" ]] && cmp -s "${src}" "${dst}"; then
+    log "Sin GPU NVIDIA: borrando ${dst}..."
+    sudo touch "${pending}"
+    sudo rm -f "${dst}"
   fi
-  log "Instalando ${dst} (opciones del módulo nvidia)..."
-  sudo cp "${src}" "${dst}"
+  [[ -e "${pending}" ]] || return 0
+  local regen=()
   if exists limine-mkinitcpio; then
-    log "Regenerando initramfs para que el cambio aplique desde el próximo arranque..."
-    sudo limine-mkinitcpio
+    regen=(limine-mkinitcpio)
+  elif exists mkinitcpio; then
+    regen=(mkinitcpio -P)
   fi
-  log "AVISO: reinicia para que las opciones de nvidia tomen efecto."
+  if (( ${#regen[@]} )); then
+    log "Regenerando initramfs para que el cambio aplique desde el próximo arranque..."
+    if ! sudo "${regen[@]}"; then
+      log "AVISO: no se pudo regenerar el initramfs; re-ejecuta el bootstrap para reintentar."
+      return 0
+    fi
+  fi
+  sudo rm -f "${pending}"
+  log "AVISO: reinicia para que el cambio de opciones de nvidia tome efecto."
 }
 
 # Copia system/<ruta> a /<ruta> si falta o difiere. Devuelve 0 solo si cambió algo.
 install_system_conf() {
-  local src="${ROOT_DIR}/system/$1" dst="/$1" mode="${2:-644}"
+  local src="${ROOT_DIR}/system/$1" dst="${SYSTEM_ROOT:-}/$1" mode="${2:-644}"
   [[ -f "${src}" ]] || return 1
   if [[ -f "${dst}" ]] && cmp -s "${src}" "${dst}"; then
     log "Ya al día (${dst}); se omite."
@@ -407,7 +429,7 @@ ensure_crash_resilience() {
     sudo systemctl restart systemd-journald
   fi
   # gpu-watchdog (fase 1: solo observa) únicamente donde hay GPU NVIDIA.
-  if exists nvidia-smi; then
+  if has_nvidia_gpu; then
     local changed=0
     install_system_conf usr/local/bin/gpu-watchdog 755 && changed=1
     install_system_conf etc/systemd/system/gpu-watchdog.service && changed=1
@@ -416,7 +438,23 @@ ensure_crash_resilience() {
       sudo systemctl enable gpu-watchdog.service
       sudo systemctl restart gpu-watchdog.service
     fi
+  elif lacks_nvidia_gpu; then
+    remove_gpu_watchdog
   fi
+}
+
+# Quita los restos de gpu-watchdog (la evidencia en /var/log/gpu-watchdog se conserva). Idempotente.
+remove_gpu_watchdog() {
+  local unit="${SYSTEM_ROOT:-}/etc/systemd/system/gpu-watchdog.service"
+  local bin="${SYSTEM_ROOT:-}/usr/local/bin/gpu-watchdog"
+  [[ -e "${unit}" || -e "${bin}" ]] || return 0
+  log "Sin GPU NVIDIA: quitando gpu-watchdog..."
+  if [[ -e "${unit}" ]]; then
+    sudo systemctl disable --now gpu-watchdog.service \
+      || log "AVISO: no se pudo deshabilitar gpu-watchdog; sigo."
+  fi
+  sudo rm -f "${unit}" "${bin}"
+  sudo systemctl daemon-reload
 }
 
 # Webapps de Omarchy (equivalente a casks sin buen paquete Linux). Lista en
@@ -441,13 +479,49 @@ ensure_omarchy_webapps() {
   done < "${OMARCHY_WEBAPPS}"
 }
 
+# Paquetes que solo tienen sentido con su hardware (por eso no están en los manifiestos).
+# Nada se desinstala si el hardware no está: puede estar solo desconectado.
+ensure_hardware_packages() {
+  local repo=() aur=()
+  if has_usb_nzxt; then
+    repo+=(liquidctl); aur+=(coolercontrol)
+  else
+    log "Sin USB NZXT: se omiten coolercontrol y liquidctl."
+  fi
+  if has_rgb_usb; then
+    repo+=(openrgb i2c-tools)
+  else
+    log "Sin USB NZXT, Lian Li ni Keychron: se omiten openrgb e i2c-tools."
+  fi
+  if has_msi_board; then
+    aur+=(nct6687d-dkms-git)
+  else
+    log "Sin placa MSI: se omite nct6687d-dkms-git."
+  fi
+  # pacman -T deja solo lo que falta contando provides: --needed compara nombres y un
+  # coolercontrol-git instalado chocaría con coolercontrol.
+  if (( ${#repo[@]} )); then mapfile -t repo < <(pacman -T "${repo[@]}"); fi
+  if (( ${#aur[@]} )); then mapfile -t aur < <(pacman -T "${aur[@]}"); fi
+  if (( ${#repo[@]} )); then
+    sudo pacman -S --needed --noconfirm "${repo[@]}" \
+      || log "AVISO: no se pudo instalar ${repo[*]}; sigo."
+  fi
+  (( ${#aur[@]} )) || return 0
+  if exists yay; then
+    yay -S --needed --noconfirm "${aur[@]}" || log "AVISO: no se pudo instalar ${aur[*]}; sigo."
+  else
+    log "yay no encontrado; omito ${aur[*]}. Instala yay y re-ejecuta."
+  fi
+}
+
 # CoolerControl controla el AIO NZXT Kraken (bomba/ventiladores + pantalla LCD) vía
-# su daemon. Se instala como paquete (arch-apps.txt) con sus deps opcionales
-# liquidctl y lm_sensors; aquí solo garantizamos el servicio activo. Idempotente.
+# su daemon. Lo instala ensure_hardware_packages (con liquidctl) solo con USB NZXT;
+# aquí solo garantizamos el servicio activo. Idempotente.
 # Los perfiles/modos de temperatura y el watcher que cambia entre ellos según
 # la app en uso viven en el paquete stow `coolercontrol/` (ver
 # ensure_coolercontrol_mode_watcher en bootstrap.sh y docs/omarchy.md).
 ensure_coolercontrol() {
+  has_usb_nzxt || { log "Sin USB NZXT: se omite coolercontrold."; return 0; }
   exists systemctl || return 0
   if systemctl is-enabled --quiet coolercontrold.service 2>/dev/null; then
     log "coolercontrold ya está habilitado; se omite."
@@ -461,7 +535,8 @@ ensure_coolercontrol() {
 # El módulo i2c-dev expone los buses SMBus que OpenRGB necesita para el RGB de
 # RAM y placa base. Se persiste en modules-load.d para que cargue en cada arranque.
 ensure_i2c_dev() {
-  local conf=/etc/modules-load.d/i2c-dev.conf
+  has_rgb_usb || { log "Sin USB NZXT, Lian Li ni Keychron: se omite i2c-dev."; return 0; }
+  local conf="${SYSTEM_ROOT:-}/etc/modules-load.d/i2c-dev.conf"
   if [[ -f "${conf}" ]]; then
     log "i2c-dev ya persistido (${conf}); se omite."
   else
@@ -473,13 +548,14 @@ ensure_i2c_dev() {
 
 # El Nuvoton NCT6687D-R de la placa (fan headers/sensores) no tiene driver en
 # linux-omarchy; coolercontrold lo detecta pero falla el modprobe ("Module
-# nct6687 not found"). nct6687d-dkms-git (arch-apps.txt) lo provee. Se persiste
+# nct6687 not found"). nct6687d-dkms-git lo provee (solo en placas MSI). Se persiste
 # en modules-load.d y, si coolercontrold ya estaba corriendo, se reinicia para
 # que lo detecte (si no, lo detecta solo en su próximo arranque).
 ensure_nct6687() {
+  has_msi_board || { log "Sin placa MSI: se omite nct6687."; return 0; }
   exists modinfo || return 0
   modinfo nct6687 >/dev/null 2>&1 || { log "nct6687 no disponible (¿falló el DKMS?); se omite."; return 0; }
-  local conf=/etc/modules-load.d/nct6687.conf just_loaded=0
+  local conf="${SYSTEM_ROOT:-}/etc/modules-load.d/nct6687.conf" just_loaded=0
   if [[ -f "${conf}" ]]; then
     log "nct6687 ya persistido (${conf}); se omite."
   else
@@ -527,6 +603,8 @@ install_arch() {
     fi
   fi
 
+  ensure_hardware_packages
+
   ensure_mise_tools
   ensure_nerd_font
 
@@ -544,6 +622,11 @@ install_arch() {
     ensure_i2c_dev
     ensure_nct6687
     ensure_coolercontrol
+  elif lacks_nvidia_gpu; then
+    # Arch puro: solo la limpieza de restos NVIDIA; instalar sigue siendo cosa de Omarchy.
+    ensure_nvidia_userspace
+    ensure_nvidia_modprobe
+    remove_gpu_watchdog
   fi
 }
 
@@ -579,4 +662,5 @@ main() {
   log "Done. Restart your terminal or run: source ~/.zshrc"
 }
 
-main "$@"
+# Sourced (pruebas): solo se definen las funciones.
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then main "$@"; fi

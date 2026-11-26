@@ -28,7 +28,8 @@ spec. Keep it in English on purpose: it's an API reference, not usage docs.
 - `coolercontrol/.config/systemd/user/coolercontrol-mode-watcher.service`.
 
 `scripts/modules/coolercontrol.sh:ensure_coolercontrol_mode_watcher()` (called from
-`bootstrap.sh` after stow) runs `coolercontrol-setup </dev/null`. Without a saved token it
+`bootstrap.sh` after stow) runs `coolercontrol-setup </dev/null`, only if an NZXT USB device
+is present. Without a saved token it
 fails without prompting and the bootstrap lists it in its final summary.
 
 ## Prerequisite: API token
@@ -59,7 +60,8 @@ This is how every quirk below was found. `strings -a /usr/bin/coolercontrold | g
 ## Devices (`GET /devices`)
 
 Resolve devices by `name` substring, not `uid` — the uid is a hash of hardware identity
-and changes if the Kraken moves USB ports or the GPU changes. On this machine:
+and changes if the Kraken moves USB ports or the GPU changes. Recorded on the desktop when it
+still had the RTX 3080 (since removed, see [hardware.md](hardware.md)):
 
 | name (as returned by the API) | role |
 |---|---|
@@ -154,8 +156,9 @@ Activate: `POST /modes-active/{uid}` (empty body). Read current: `GET /modes-act
 ## Rebuilding from scratch (fresh machine / after a CoolerControl reinstall)
 
 ```sh
-# 1. Package + service already handled by scripts/install-packages.sh:ensure_coolercontrol()
-#    and stow_packages (STOW_PACKAGES includes coolercontrol on Omarchy).
+# 1. With an NZXT USB device attached, scripts/install-packages.sh handles the package
+#    (ensure_hardware_packages) and the service (ensure_coolercontrol); stow_packages links
+#    the config (STOW_PACKAGES includes coolercontrol on Omarchy).
 cd ~/dotfiles && ./scripts/bootstrap.sh
 
 # 2. Create the API token from the GUI (Settings > Access Tokens, write access ON),

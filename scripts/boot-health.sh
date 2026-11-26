@@ -6,8 +6,9 @@
 # bootstrap lo invoca al final en Linux.
 set -uo pipefail
 
+# has_nvidia_gpu y exists; el log propio va después porque pisa el de common.sh.
+source "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
 log() { echo "[boot-health] $*"; }
-exists() { command -v "$1" >/dev/null 2>&1; }
 
 exists systemd-analyze || exit 0
 systemd-analyze time >/dev/null 2>&1 || exit 0 # boot aún no terminado, etc.
@@ -40,8 +41,9 @@ fi
 
 # 3. NVIDIA en el initramfs (mismo check que ensure_omarchy_initramfs en
 # install-packages.sh, pero solo aviso; el fix es sudo limine-mkinitcpio).
-uki="/boot/EFI/Linux/omarchy_linux.efi"
-if [[ -f /etc/mkinitcpio.conf.d/nvidia.conf && -f "${uki}" ]] && exists objcopy && exists lsinitcpio; then
+uki="${SYSTEM_ROOT:-}/boot/EFI/Linux/omarchy_linux.efi"
+if has_nvidia_gpu && [[ -f "${SYSTEM_ROOT:-}/etc/mkinitcpio.conf.d/nvidia.conf" && -f "${uki}" ]] \
+    && exists objcopy && exists lsinitcpio; then
   tmp="$(mktemp)"
   if objcopy -O binary --only-section=.initrd "${uki}" "${tmp}" 2>/dev/null \
       && lsinitcpio "${tmp}" 2>/dev/null | grep -q '/nvidia\.ko'; then

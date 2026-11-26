@@ -16,10 +16,9 @@ linux-headers
 xclip
 wl-clipboard
 fontconfig
-# deps opcionales de CoolerControl (Kraken) + soporte i2c para el RGB de RAM/placa (OpenRGB)
-liquidctl
+# sensores de temperatura y ventiladores. liquidctl e i2c-tools dependen del hardware
+# (ensure_hardware_packages en scripts/install-packages.sh)
 lm_sensors
-i2c-tools
 # dep de coolercontrol-mode-watcher: socat lee el socket de eventos de Hyprland (jq viene de mise)
 socat
 nginx
