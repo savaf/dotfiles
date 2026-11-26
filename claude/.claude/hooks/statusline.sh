@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # statusLine para Claude Code. Recibe por stdin el JSON de estado de la sesión e imprime:
-#   <dir> ⎇ <rama>[✱sucio][↑ahead↓behind] · ctx <pct>%<barra> · $<coste> · +add/-del · <modelo> <effort>[ <output_style>] · [cuenta del proxy] 5h <pct>%↻<hora> 7d <pct>%
+#   <dir> ⎇ <rama>[✱sucio][↑ahead↓behind] · ctx <pct>%<barra> · $<coste> · +add/-del · <modelo> <effort>[ <output_style>] · 5h <pct>%↻<hora> 7d <pct>%
 #
 # El modelo va al final y en color porque es el dato que esta línea existe para
 # recordar: sin él la sesión se queda en Opus por inercia (ver docs/claude-code.md).
@@ -81,33 +81,6 @@ fi
 out="${out} ${grey}·${reset} ${cyan}${model}${reset}"
 [[ -n "${effort}" ]] && out="${out} ${grey}${effort}${reset}"
 [[ -n "${style}" && "${style}" != "default" ]] && out="${out} ${grey}[${style}]${reset}"
-
-# --- proxy de failover (teamclaude): cuenta activa y su cuota; sin proxy, "directo" ---
-# Con proxy, la cuota de la cuenta activa sale del propio proxy (el JSON de la sesión no
-# sabe qué cuenta sirvió cada petición).
-base="${ANTHROPIC_BASE_URL:-}"
-if [[ "${base}" =~ :345[67]/?$ ]]; then
-  status="$(curl -fs -m 1 "${base%/}/teamclaude/status" 2>/dev/null)"
-  if [[ -n "${status}" ]]; then
-    IFS=$'\t' read -r acct p5 p7 < <(printf '%s' "${status}" | jq -r '
-      .currentAccount as $c | (.accounts[] | select(.name == $c)) |
-      [.name, ((.quota.unified5h // empty) * 100 | floor), ((.quota.unified7d // empty) * 100 | floor)] | @tsv' 2>/dev/null)
-    if [[ -n "${acct:-}" ]]; then
-      case "${acct#*@}" in
-        gmail.com) acct="personal" ;;
-        urbn.com) acct="ccw" ;;
-        *) acct="${acct%%@*}" ;;
-      esac
-      out="${out} ${grey}·${reset} ${yellow}⇄ ${acct}${reset}"
-      [[ -n "${p5:-}" ]] && rl_pct="${p5}"
-      [[ -n "${p7:-}" ]] && rl7_pct="${p7}"
-    fi
-  else
-    out="${out} ${grey}· proxy off${reset}"
-  fi
-else
-  out="${out} ${grey}· directo${reset}"
-fi
 
 # --- límites del plan (solo si se exponen): 5h con hora de reinicio, y semanal ---
 if [[ -n "${rl_pct}" ]]; then

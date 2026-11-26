@@ -167,7 +167,6 @@
   },
   "enabledPlugins": {
     "cloudflare@cloudflare": false,
-    "teamclaude-status@dotfiles-mods": true,
     "replay-theater@dotfiles-mods": true,
     "design@synced": false,
     "engineering@synced": false,
