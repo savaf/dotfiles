@@ -83,34 +83,23 @@ keep_only_skill_md() {
   done
 }
 
-# MCP servers live in each profile's own .claude.json, so they can't be
-# symlinked — register them once per config dir. "" = default profile
-# (~/.claude); the rest mirror CLAUDE_PROFILES in bootstrap.sh.
-CLAUDE_PROFILES=("" work)
-
+# MCP servers live in .claude.json, which stow can't link: register them in the
+# default config dir (Omarchy copies them into each account it adds).
 register_mcp() {
   if ! exists claude; then
     log "claude CLI not available; skipping MCP registration."
     return 0
   fi
-  local profile label
-  for profile in "${CLAUDE_PROFILES[@]}"; do
-    if [[ -n "${profile}" ]]; then
-      label="${profile}"
-      export CLAUDE_CONFIG_DIR="${HOME}/.claude-${profile}"
-    else
-      label="default"
-      unset CLAUDE_CONFIG_DIR
-    fi
-    if claude mcp get context7 >/dev/null 2>&1; then
-      log "MCP context7 already registered (${label})."
-    else
-      log "Registering MCP context7 (user scope, ${label})…"
-      claude mcp add --scope user --transport http context7 https://mcp.context7.com/mcp \
-        || log "Failed to register context7 for ${label} (continuing)."
-    fi
-  done
   unset CLAUDE_CONFIG_DIR
+  # En Omarchy el wrapper de claude elegiría la cuenta activa: vacío fija la primaria.
+  local -x OMARCHY_AGENT_CLAUDE_HOME=
+  if claude mcp get context7 >/dev/null 2>&1; then
+    log "MCP context7 already registered."
+  else
+    log "Registering MCP context7 (user scope)…"
+    claude mcp add --scope user --transport http context7 https://mcp.context7.com/mcp \
+      || log "Failed to register context7 (continuing)."
+  fi
 }
 
 # Sin argumentos corre todo; `pinned` corre solo el paso de tarballs verificados.

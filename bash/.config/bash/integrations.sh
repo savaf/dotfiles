@@ -57,3 +57,13 @@ command -v starship >/dev/null 2>&1 && eval "$(starship init bash)"
 
 # ---- SSH agent bridge (WSL -> Bitwarden en Windows) ----
 [[ -r ~/.ssh/wsl-agent.sh ]] && source ~/.ssh/wsl-agent.sh
+
+# ---- Llave de firma y SSH ----
+# github.pub -> <hostname>.pub lo crea el bootstrap; si falta (stow a mano, enlace
+# borrado o roto) git no puede firmar, así que se repone aquí. No pisa un archivo real.
+# `tr` y no ${var,,}: el bash de macOS es 3.2.
+if [[ ! -e ~/.ssh/github.pub ]]; then
+  _key=~/.ssh/$(printf '%s' "${HOSTNAME%%.*}" | tr '[:upper:]' '[:lower:]').pub
+  [[ -e $_key ]] && ln -sfn "$_key" ~/.ssh/github.pub
+  unset _key
+fi

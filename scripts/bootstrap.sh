@@ -6,7 +6,7 @@ set -euo pipefail
 #
 # Este script es solo el orquestador: detecta el OS y llama, en orden, a los
 # pasos instalables/opcionales, cada uno en su propio archivo bajo
-# scripts/modules/ (stow, herdr, perfiles de Claude, CoolerControl, discos,
+# scripts/modules/ (stow, herdr, CoolerControl, discos,
 # teclado, .wslconfig, lazygit en macOS, node). Las utilidades genéricas que
 # esos módulos comparten (log, os_detect, backup_if_real…) viven en
 # scripts/lib/. Añadir un paso nuevo es: crear su módulo y llamarlo en main().
@@ -89,7 +89,6 @@ main() {
   [[ "${OS}" == "omarchy" ]] && { "${ROOT_DIR}/omarchy/.local/bin/branding-select" || true; }
   # --use-gl=egl solo en equipos NVIDIA (rompe WebGL en Intel); ver browser-flags-select.
   [[ "${OS}" == "omarchy" ]] && { "${ROOT_DIR}/omarchy/.local/bin/browser-flags-select" || true; }
-  link_claude_profiles
   ensure_clef
   ensure_coolercontrol_mode_watcher
   ensure_sync_config_watcher

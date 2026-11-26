@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # statusLine para Claude Code. Recibe por stdin el JSON de estado de la sesión e imprime:
-#   <dir> ⎇ <rama>[✱sucio][↑ahead↓behind] · ctx <pct>%<barra> · $<coste> · +add/-del · <modelo> <effort>[ <output_style>] · [cuenta del proxy] 5h <pct>%↻<hora> 7d <pct>%
+#   <dir> ⎇ <rama>[✱sucio][↑ahead↓behind] · ctx <pct>%<barra> · $<coste> · +add/-del · <modelo> <effort>[ <output_style>][ · <cuenta>] 5h <pct>%↻<hora> 7d <pct>%
 #
 # El modelo va al final y en color porque es el dato que esta línea existe para
 # recordar: sin él la sesión se queda en Opus por inercia (ver docs/claude-code.md).
@@ -82,31 +82,16 @@ out="${out} ${grey}·${reset} ${cyan}${model}${reset}"
 [[ -n "${effort}" ]] && out="${out} ${grey}${effort}${reset}"
 [[ -n "${style}" && "${style}" != "default" ]] && out="${out} ${grey}[${style}]${reset}"
 
-# --- proxy de failover (teamclaude): cuenta activa y su cuota; sin proxy, "directo" ---
-# Con proxy, la cuota de la cuenta activa sale del propio proxy (el JSON de la sesión no
-# sabe qué cuenta sirvió cada petición).
-base="${ANTHROPIC_BASE_URL:-}"
-if [[ "${base}" =~ :345[67]/?$ ]]; then
-  status="$(curl -fs -m 1 "${base%/}/teamclaude/status" 2>/dev/null)"
-  if [[ -n "${status}" ]]; then
-    IFS=$'\t' read -r acct p5 p7 < <(printf '%s' "${status}" | jq -r '
-      .currentAccount as $c | (.accounts[] | select(.name == $c)) |
-      [.name, ((.quota.unified5h // empty) * 100 | floor), ((.quota.unified7d // empty) * 100 | floor)] | @tsv' 2>/dev/null)
-    if [[ -n "${acct:-}" ]]; then
-      case "${acct#*@}" in
-        gmail.com) acct="personal" ;;
-        urbn.com) acct="ccw" ;;
-        *) acct="${acct%%@*}" ;;
-      esac
-      out="${out} ${grey}·${reset} ${yellow}⇄ ${acct}${reset}"
-      [[ -n "${p5:-}" ]] && rl_pct="${p5}"
-      [[ -n "${p7:-}" ]] && rl7_pct="${p7}"
-    fi
-  else
-    out="${out} ${grey}· proxy off${reset}"
-  fi
-else
-  out="${out} ${grey}· directo${reset}"
+# --- cuenta de la sesión según el swap de Omarchy (sin registro o sin coincidencia, nada) ---
+# Manda CLAUDE_CONFIG_DIR, no la cuenta activa; ausente o ~/.claude es la primaria.
+registry="${XDG_STATE_HOME:-${HOME}/.local/state}/omarchy/agents/accounts/claude.json"
+if [[ -f "${registry}" ]]; then
+  home="${CLAUDE_CONFIG_DIR-}"
+  [[ "${home}" == "${HOME}/.claude" ]] && home=""
+  account="$(jq -r --arg home "${home}" \
+    'first(.accounts[] | select(if $home == "" then .primary else .home == $home end)) | .label // empty' \
+    "${registry}" 2>/dev/null)"
+  [[ -n "${account}" ]] && out="${out} ${grey}·${reset} ${grey}${account}${reset}"
 fi
 
 # --- límites del plan (solo si se exponen): 5h con hora de reinicio, y semanal ---

@@ -89,7 +89,7 @@ Claude Code pane per repo, no nvim:
 | Workspace | Repos | Claude |
 |-----------|-------|--------|
 | `dotfiles` | `~/dotfiles` | `claude` |
-| `SlipStream` | `~/Projects/urbn/SlipStream` | `claude-profile work` (`ccw`) |
+| `SlipStream` | `~/Projects/urbn/SlipStream` | `ccw` ([`urbn` account](claude-code.md#accounts-omarchy-swap)) |
 | `CNC` | `~/Projects/cnc/{vuf-portal,backoffice-vuf,b0-vuf-apis}`, one tab each | `claude` |
 
 - Idempotent: looks workspaces up by label and only creates the missing ones.

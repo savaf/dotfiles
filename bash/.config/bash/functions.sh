@@ -71,16 +71,21 @@ function backup() {
   cp "$1" "$1.backup.$(date +%Y%m%d_%H%M%S)"
 }
 
-# Claude Code con un config dir aislado: credenciales, sesiones, historial y MCP
-# propios por perfil. Sin perfil (`claude` a secas) se usa ~/.claude.
-#   uso: claude-profile <perfil> [args de claude...]
-function claude-profile() {
-  if (( $# == 0 )); then
-    echo "uso: claude-profile <perfil> [args de claude...]"
+# Claude Code con la cuenta `urbn` del swap de Omarchy, sea cual sea la activa
+# (`claude` a secas usa la activa; ver docs/claude-code.md).
+#   uso: ccw [args de claude...]
+function ccw() {
+  local home
+  if ! command -v omarchy-agent-account-state >/dev/null 2>&1; then
+    echo "ccw: requiere el swap de cuentas de Omarchy; no se abre Claude." >&2
     return 1
   fi
-  local profile="$1"; shift
-  CLAUDE_CONFIG_DIR="$HOME/.claude-$profile" command claude "$@"
+  home="$(omarchy-agent-account-state homes claude | awk -F'\t' '$1 == "urbn" { print $2 }')"
+  if [[ -z "$home" ]]; then
+    echo "ccw: no hay cuenta 'urbn' (créala con: omarchy agent account add claude urbn); no se abre Claude." >&2
+    return 1
+  fi
+  CLAUDE_CONFIG_DIR="$home" command claude "$@"
 }
 
 # ============================================================================

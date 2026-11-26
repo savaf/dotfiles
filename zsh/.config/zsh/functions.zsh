@@ -83,31 +83,21 @@ function backup() {
   cp "$1" "$1.backup.$(date +%Y%m%d_%H%M%S)"
 }
 
-# `claude` a secas pasa por el proxy de failover (teamclaude, ver docs/claude-code.md)
-# si está arriba; si no, va directo. claude-profile usa `command claude` y no pasa por aquí.
-function claude() {
-  if curl -fs -m 1 -o /dev/null http://127.0.0.1:3456/teamclaude/status; then
-    ANTHROPIC_BASE_URL=http://localhost:3456 command claude "$@"
-  else
-    command claude "$@"
-  fi
-}
-
-# Claude Code con un config dir aislado: credenciales, sesiones, historial y MCP
-# propios por perfil. Sin perfil (`claude` a secas) se usa ~/.claude.
-#   uso: claude-profile <perfil> [args de claude...]
-function claude-profile() {
-  if (( $# == 0 )); then
-    echo "uso: claude-profile <perfil> [args de claude...]"
+# Claude Code con la cuenta `urbn` del swap de Omarchy, sea cual sea la activa
+# (`claude` a secas usa la activa; ver docs/claude-code.md).
+#   uso: ccw [args de claude...]
+function ccw() {
+  local home
+  if ! command -v omarchy-agent-account-state >/dev/null 2>&1; then
+    echo "ccw: requiere el swap de cuentas de Omarchy; no se abre Claude." >&2
     return 1
   fi
-  local profile="$1"; shift
-  # Perfil work: proxy inverso (ccw primero, personal de respaldo) en :3457, si está arriba.
-  if [[ "$profile" == work ]] && curl -fs -m 1 -o /dev/null http://127.0.0.1:3457/teamclaude/status; then
-    ANTHROPIC_BASE_URL=http://localhost:3457 CLAUDE_CONFIG_DIR="$HOME/.claude-$profile" command claude "$@"
-    return
+  home="$(omarchy-agent-account-state homes claude | awk -F'\t' '$1 == "urbn" { print $2 }')"
+  if [[ -z "$home" ]]; then
+    echo "ccw: no hay cuenta 'urbn' (créala con: omarchy agent account add claude urbn); no se abre Claude." >&2
+    return 1
   fi
-  CLAUDE_CONFIG_DIR="$HOME/.claude-$profile" command claude "$@"
+  CLAUDE_CONFIG_DIR="$home" command claude "$@"
 }
 
 # Workspaces de trabajo en herdr: un panel de claude por repo, a pantalla completa.
@@ -135,12 +125,12 @@ function _hw_workspace() {
 
 # usage: hw   (sin argumentos)
 #   Abre en herdr los workspaces de trabajo que falten, en este orden:
-#     dotfiles, SlipStream (urbn, perfil work) y CNC (una tab por repo).
+#     dotfiles, SlipStream (urbn, con ccw) y CNC (una tab por repo).
 #   herdr no tiene grupos de workspaces: CNC es un workspace con una tab por repo.
 #   Idempotente; termina enfocando dotfiles. Fuera de herdr attachea el cliente.
 function hw() {
   _hw_workspace dotfiles    claude                  ~/dotfiles
-  _hw_workspace SlipStream  'claude-profile work'   ~/Projects/urbn/SlipStream
+  _hw_workspace SlipStream  ccw                     ~/Projects/urbn/SlipStream
   _hw_workspace CNC         claude                  ~/Projects/cnc/{vuf-portal,backoffice-vuf,b0-vuf-apis}
 
   herdr workspace focus "$(herdr workspace list | jq -r '.result.workspaces[] | select(.label == "dotfiles") | .workspace_id')" >/dev/null

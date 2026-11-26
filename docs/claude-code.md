@@ -1,46 +1,45 @@
 # Claude Code
 
-## Profiles (multiple accounts)
+## Accounts (Omarchy swap)
 
-Claude Code has no native profile switch: `CLAUDE_CONFIG_DIR` (default `~/.claude`) relocates
-*all* of its state, and the credential store is namespaced per config dir, so two accounts can
-run side by side without touching each other.
+Omarchy manages the Claude subscriptions. The login in `~/.claude` is the primary account. Each
+added account gets its own home under `~/.local/state/omarchy/agents/accounts/claude/<id>/`,
+which holds its login and links settings, `CLAUDE.md`, agents, skills, hooks, themes, history
+and transcripts back to `~/.claude`.
 
-| Profile | Config dir | How to launch |
-|---|---|---|
-| personal (default) | `~/.claude` | `claude` |
-| work | `~/.claude-work` | `ccw`, `claude-profile work` |
+| Command | Account |
+|---|---|
+| `claude` | the active one in the swap |
+| `ccw [args...]` | always `urbn`, whichever is active |
 
-`claude-profile <name>` (in `zsh/.config/zsh/functions.zsh`) just runs `claude` with
-`CLAUDE_CONFIG_DIR=~/.claude-<name>`. `ccw` / `claude-work` are aliases for the work profile;
-plain `claude` stays on the default dir.
+`ccw` is a zsh and bash function. It reads the `urbn` home from
+`omarchy-agent-account-state homes claude` and runs `claude` with `CLAUDE_CONFIG_DIR` set to it.
+Without Omarchy, or without an `urbn` account, it says why and does not open Claude.
 
-**Per profile** (never shared): `.credentials.json`, `.claude.json` (MCP servers, per-project
-trust, history), `sessions/`, `projects/` (transcripts + auto-memory), `plans/`, `plugins/`.
+### Using the swap
 
-**Shared** across profiles: `settings.json`, `CLAUDE.md`, `agents/` — symlinked from this repo —
-plus `skills/`. Stow only links into `~/.claude`; `link_claude_profiles()` in
-`scripts/bootstrap.sh` replicates the same symlinks into every extra profile listed in
-`CLAUDE_PROFILES`. The real skills live in `~/.claude/skills` (that's where `npx skills add -g`
-writes them); extra profiles get a symlink to it.
+```sh
+omarchy agent account add claude urbn              # sign in to another subscription
+omarchy agent account list claude                  # accounts and their limits
+omarchy agent account use claude urbn              # account for new sessions
+omarchy agent account mode claude auto 95          # switch near a limit, or `manual`
+omarchy agent account rename claude main Personal  # display name of the primary
+```
 
-MCP servers can't be symlinked — they live inside each profile's `.claude.json` — so
-`scripts/install-claude-skills.sh` registers `context7` once per profile.
-
-To add a profile: append it to `CLAUDE_PROFILES` in both
-`scripts/modules/claude-profiles.sh` and `scripts/install-claude-skills.sh`, re-run the
-bootstrap, add an alias in
-`zsh/.config/zsh/aliases.zsh`, then `claude-profile <name>` → `/login`.
-
-`/status` shows which account the current session is on — worth checking when several panes are
-open.
+- Running sessions keep their account. `use` only affects new ones.
+- `auto` currently never switches to or from `urbn`, because Anthropic does not return its
+  limits (`Claude limits unavailable`). Pick it with `ccw` or `use`.
+- MCP servers live in each account's `.claude.json`. Omarchy copies them from the primary when
+  an account is added. `scripts/install-claude-skills.sh` registers `context7` in `~/.claude`
+  only, so an account added before that needs its own `ccw mcp add`.
+- `/status` shows which account a session is on.
 
 ## Versioned config
 
-Versioned pieces (stow package `claude/`, linked into `~/.claude/` and into each extra profile):
+Versioned pieces (stow package `claude/`, linked into `~/.claude/`):
 
 - `claude/.claude/settings.json` — user settings (model, theme). Local/runtime state
-  (sessions, cache, plugins, the profile's `.claude.json`) is NOT versioned; stow links per file
+  (sessions, cache, plugins, `.claude.json`) is NOT versioned; stow links per file
   (`--no-folding`), so it stays untouched.
 
   `"theme": "custom:omarchy"` hace que Claude Code siga al tema de Omarchy: el archivo de
@@ -51,7 +50,7 @@ Versioned pieces (stow package `claude/`, linked into `~/.claude/` and into each
 
   > **No ejecutes `omarchy-theme-set-claude --activate`.** Ese flag escribe el `theme` con un
   > `mv` sobre `settings.json`, lo que reemplazaría el symlink de stow por un archivo real y
-  > desconectaría el perfil del repo. La activación ya está versionada aquí.
+  > desconectaría la config del repo. La activación ya está versionada aquí.
 - `claude/.claude/CLAUDE.md` — global memory loaded in every session. Keep it tiny:
   every line costs tokens in every conversation.
 - `claude/.claude/agents/*.md` — subagent definitions. User-level agents override the
@@ -59,11 +58,6 @@ Versioned pieces (stow package `claude/`, linked into `~/.claude/` and into each
 - `claude/.claude/hooks/` — guardrails and session-start context, wired from `settings.json`.
 - `claude/.claude/skills/` — skills written here rather than installed from a repo.
 - `claude/.claude/docs/` — contracts the agents share, e.g. the review output format.
-
-Extra profiles get `settings.json`, `CLAUDE.md`, and each `agents/*.md` symlinked by
-`link_claude_profiles()`. They need no copy of `hooks/` or `docs/`: `settings.json` points at
-`$HOME/.claude/hooks/` and the agents at `~/.claude/docs/`, both absolute, and `skills/` is
-already a symlink to the default profile's.
 
 ## Project-agnostic AI layer
 
@@ -75,7 +69,7 @@ Three pieces, all versioned in `claude/.claude/` and linked by stow.
 
 ### Hooks
 
-`claude/.claude/hooks/`, wired in `settings.json`. They run in every project, on every profile.
+`claude/.claude/hooks/`, wired in `settings.json`. They run in every project, on every account.
 
 | Hook | Event | What it does |
 |---|---|---|
@@ -265,7 +259,10 @@ transcript parsing needed):
 - session cost and lines added/removed
 - output style, when it isn't `default`, and the effort level
 - plan limits, on plans that expose them: 5-hour usage with its reset time, and weekly usage
-- failover proxy: active account (`⇄ personal` / `⇄ ccw`) with its 5h/7d quota read from the proxy, `directo` when the session doesn't go through it, `proxy off` if it's down
+- the session's account label (`Personal`, `URBN`), resolved from `CLAUDE_CONFIG_DIR` (unset means
+  primary) against Omarchy's registry,
+  `${XDG_STATE_HOME:-~/.local/state}/omarchy/agents/accounts/claude.json`, so a later swap doesn't
+  change it; nothing outside Omarchy or for an unregistered home
 - context color: yellow from 50% (where the model degrades), red from 75%
 
 Relies on `jq`, which every platform manifest in `packages/*.txt` installs as a base package.
@@ -387,8 +384,8 @@ for a commit or push in a repo that set `AI_GUARD_PROTECT_BRANCHES`.
 (`~/.claude/skills/`) by `scripts/install-claude-skills.sh` (run by the bootstrap) via
 `npx skills@<pinned version> add <repo> -g -a claude-code -s <names> -y`; a manifest line may add a comma-separated skill list, the default is every skill in the repo. The CLI version is pinned in the script.
 A line with two extra columns (`owner/repo#<commit> <skill> <path-in-repo> <sha256>`) skips the CLI and goes through the verified tarball step (see `impeccable` below). The same script registers the
-`context7` MCP server (library docs) at user scope with `claude mcp add`, once per profile; that
-lands in each profile's `.claude.json`, which is runtime state and can't be stowed.
+`context7` MCP server (library docs) at user scope with `claude mcp add`; that
+lands in `~/.claude.json`, which is runtime state and can't be stowed.
 
 Security note: third-party skills are instructions injected into the agent. Before adding a
 repo to the manifest:
@@ -542,7 +539,6 @@ que la congele.
 | `cloudflare@cloudflare` | plugin | marketplace `cloudflare/skills` | `1.0.0`, commit `f96bff754e42` | Deshabilitado (`false`) |
 | `image-preview@better-claude` | plugin | marketplace `midudev/better-claude` | `0.2.2`, commit `5abacf0ff67a` | Habilitado; el marketplace tiene `autoUpdate`, **sin fijar** |
 | `quick-peek@better-claude` | plugin | marketplace `midudev/better-claude` | `0.2.0`, commit `5abacf0ff67a` | Habilitado; **sin fijar**, igual que arriba |
-| `teamclaude-status@dotfiles-mods` | plugin propio | `claude-mods/` de este repo (directorio local) | `0.3.0` | Propio; versionado con este repo |
 | `replay-theater@dotfiles-mods` | plugin propio | `claude-mods/` de este repo (directorio local) | `0.1.0` | Propio; versionado con este repo |
 | `design`, `engineering`, `productivity`, `figma`, `humanizer`, `brightdata-plugin` (`@synced`) | plugins de la cuenta | sincronizados por la cuenta de claude.ai; no hay marketplace local | — | Deshabilitados (`false`); sin origen ni versión que verificar |
 | `context7` | servidor MCP | `https://mcp.context7.com/mcp` (HTTP remoto) | — | Remoto: no hay versión que fijar |
@@ -661,64 +657,12 @@ So the levers that matter, in order:
 `CLAUDE.md` is *not* on this list: at ~100 tokens it's 0.04% of consumption. Keep it short for
 signal-to-noise, not for savings.
 
-## Failover personal → ccw (teamclaude)
-
-`cfo` (= `teamclaude run`) lanza Claude Code a través de un proxy local
-([`@karpeleslab/teamclaude`](https://www.npmjs.com/package/@karpeleslab/teamclaude), fijado a
-**1.1.24**) que usa la cuenta personal y salta a ccw cuando recibe el 429 de cuota. `claude` y
-`ccw` siguen yendo directos. Auditoría y pruebas: `.scratch/claude-failover-proxy/research/`.
-
-Reglas de seguridad (de la auditoría):
-
-- Instalar solo el paquete con scope, sin scripts: `npm i -g --ignore-scripts @karpeleslab/teamclaude@1.1.24`.
-  `teamclaude` sin scope es otro proyecto.
-- `TEAMCLAUDE_DISABLE_AUTOUPDATE=1` (en `exports.zsh`) y `"autoUpdate": false` en la config.
-- Nunca `teamclaude callback login` (sube todos los tokens) ni `teamclaude alias --install`
-  (reescribe `~/.zshrc` y rompe el symlink de Stow).
-- `~/.config/teamclaude.json` guarda los tokens: **no se versiona** ni se enlaza con Stow.
-- Login con `teamclaude login --name <cuenta>` por cuenta (no `import`: compartiría el refresh
-  token con Claude Code y se invalidarían entre sí).
-- Config: `priority` 0 la personal, 1 ccw, y `switchThreshold: 1` para cambiar solo al agotarse.
-
-### Replicar en otra máquina
-
-1. `scripts/bootstrap.sh`: `packages/global-node-packages.txt` instala `@karpeleslab/teamclaude@1.1.24`,
-   stow enlaza la función `claude` y el alias `cfo`, y `settings.json` (compartido) declara el
-   marketplace local `claude-mods/` (`~/dotfiles/claude-mods`, el plugin `teamclaude-status` de la
-   barra de estado) y lo activa en todos los perfiles.
-2. `scripts/setup-teamclaude.sh` (a mano, es interactivo): logins de `personal` y `ccw`, cada uno en una
-   sesión de navegador **distinta** (`scripts/teamclaude-browser.sh` hace de `xdg-open`/`open` solo durante el
-   login) para que la segunda cuenta no herede la sesión de claude.ai de la primera. Prefiere **Brave**, un
-   perfil por cuenta con sus extensiones (Bitwarden/passkeys): `personal` usa el perfil `Default` y `ccw`
-   el `Profile 1` (Brave lo crea vacío la primera vez: instala Bitwarden ahí una vez; cámbialos con
-   `TC_BRAVE_PROFILE_PERSONAL` / `TC_BRAVE_PROFILE_CCW`). Sin Brave, Chrome/Edge con un perfil limpio. Cierra
-   cada ventana al terminar. Luego fija prioridades, `switchThreshold: 1`, modo `base-url`, sin auto-update e instalación del servicio
-   de usuario. Para que siga vivo sin sesión abierta: `loginctl enable-linger $USER` (Linux).
-3. Abre una terminal nueva: `claude` pasa por el proxy `:3456` si está arriba, o va directo.
-
-La función `claude` usa `curl`, y el servicio `systemd --user` (o launchd en macOS) lo registra
-`teamclaude service install`. La segunda instancia inversa para `ccw` (`:3457`) aún no está
-scriptada.
-
-### Failover inverso para `ccw` (segunda instancia)
-
-`claude` va por el proxy `:3456` (personal → ccw). `ccw` / `claude-profile work` va por un
-segundo proxy en `:3457` con prioridades invertidas (ccw → personal), si está arriba; si no,
-directo. Un solo proxy no basta: `TC_ACCT` fija una cuenta pero nunca hace failover.
-
-- Config propia: `TEAMCLAUDE_CONFIG=~/.config/teamclaude-work.json`, con **logins propios**
-  (no copiar tokens del otro config: dos procesos refrescando el mismo refresh token se
-  invalidan). Mismas reglas de seguridad que arriba.
-- Contrapartida: cuando ccw se agota, el código y prompts de trabajo van a la cuenta personal,
-  con otras condiciones de retención.
-
 ## Mods (`claude-mods/`)
 
-Marketplace local `dotfiles-mods` (declarado en `settings.json`, ruta `~/dotfiles/claude-mods`), activo en todos los perfiles. Se leen desde la carpeta: edita y `/reload-plugins`.
+Marketplace local `dotfiles-mods` (declarado en `settings.json`, ruta `~/dotfiles/claude-mods`), activo en todas las cuentas. Se leen desde la carpeta: edita y `/reload-plugins`.
 
 | Mod | Qué hace |
 |---|---|
-| `teamclaude-status` | Toast cuando el proxy cambia de cuenta (los prompts pasan a otra org). La barra de estado con cuenta y cuota la dibuja `statusline.sh`; un mod no puede lanzar avisos desde ahí |
 | `replay-theater` | `/replay`: recorre uno a uno los diffs de los archivos que Claude editó en el último turno. Vendorizado del mod de ejemplo de [anthropics/claude-code-playground](https://github.com/anthropics/claude-code-playground) (commit `569c528`); solo lee archivos |
 
 Regla para mods ajenos: se **copian** al repo y se revisan (qué `$.*` llaman; `claude plugin
