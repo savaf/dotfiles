@@ -91,6 +91,8 @@ register_mcp() {
     return 0
   fi
   unset CLAUDE_CONFIG_DIR
+  # En Omarchy el wrapper de claude elegiría la cuenta activa: vacío fija la primaria.
+  local -x OMARCHY_AGENT_CLAUDE_HOME=
   if claude mcp get context7 >/dev/null 2>&1; then
     log "MCP context7 already registered."
   else

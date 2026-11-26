@@ -471,7 +471,7 @@ crea con `filter-chain` + RNNoise la fuente virtual **"Noise Canceling source"**
 
   Los hooks propios van en `~/.config/omarchy/hooks/theme-set.d/`; `omarchy-theme-set`
   los ejecuta todos al final de cada cambio de tema (`omarchy-hook theme-set <slug>`).
-  El paquete stow `omarchy` aporta dos: `openrgb` y `claude`.
+  El paquete stow `omarchy` aporta uno: `openrgb`.
 - RGB: el paquete stow `omarchy` instala `~/.local/bin/rgb`, que apaga todo el RGB
   del PC o lo devuelve al color accent del tema activo.
   - `rgb toggle` (por defecto) alterna. Es lo que invoca la fila **Appearance → RGB** del

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Cuentas de Claude sobre el swap de Omarchy: `ccw` abre siempre la cuenta `urbn`, en zsh y bash,
-# y la statusline dice qué cuenta usa la sesión.
+# la statusline dice qué cuenta usa la sesión y el instalador registra el MCP en la primaria.
 # Omarchy y claude son stubs, con PATH cerrado y HOME temporal: no toca cuentas reales.
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
@@ -138,3 +138,20 @@ status
 [[ "${OUT}" == "${BASE} ${LIMITS}" ]] || fail "statusline con registro corrupto: ${OUT}"
 
 echo "OK: statusline"
+
+# --- install-claude-skills.sh: el MCP se registra en la cuenta primaria ---
+# Con el manifiesto vacío solo queda register_mcp. El stub anota el entorno que ve claude: el wrapper
+# de Omarchy elige la cuenta activa salvo que exista OMARCHY_AGENT_CLAUDE_HOME (vacía = primaria).
+cat >"${BIN}/claude" <<EOF
+#!/bin/sh
+echo "\$2 config=\${CLAUDE_CONFIG_DIR-unset} pin=\${OMARCHY_AGENT_CLAUDE_HOME-unset}" >>"${LOG}"
+[ "\$2" != get ]
+EOF
+rm -f "${LOG}"
+OUT="$(HOME="${TMP}/home" PATH="${BIN}:${PATH}" SKILLS_LIST=/dev/null CLAUDE_CONFIG_DIR=/heredado \
+  OMARCHY_AGENT_CLAUDE_HOME=/otra bash "${REPO}/scripts/install-claude-skills.sh" 2>&1)" \
+  || fail "register_mcp: el instalador falló: ${OUT}"
+[[ "$(<"${LOG}")" == $'get config=unset pin=\nadd config=unset pin=' ]] \
+  || fail "register_mcp: no fija la cuenta primaria: $(<"${LOG}")"
+
+echo "OK: register_mcp"
