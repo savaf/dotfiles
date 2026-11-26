@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Cuentas de Claude sobre el swap de Omarchy: `ccw` abre siempre la cuenta `urbn`, en zsh y bash.
+# Cuentas de Claude sobre el swap de Omarchy: `ccw` abre siempre la cuenta `urbn`, en zsh y bash,
+# y la statusline dice qué cuenta usa la sesión.
 # Omarchy y claude son stubs, con PATH cerrado y HOME temporal: no toca cuentas reales.
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
@@ -76,3 +77,64 @@ for sh in bash zsh; do
 
   echo "OK: ccw (${sh})"
 done
+
+# --- statusline: etiqueta de la cuenta de la sesión ---
+STATE="${TMP}/state"
+URBN="${TMP}/cuentas con espacio/urbn"
+INPUT="{\"workspace\":{\"current_dir\":\"${TMP}\"},\"model\":{\"display_name\":\"Opus\"},\"rate_limits\":{\"five_hour\":{\"used_percentage\":12},\"seven_day\":{\"used_percentage\":34}}}"
+
+# registry <state home>: la activa es urbn a propósito; la sesión no depende de ella
+registry() {
+  mkdir -p "$1/omarchy/agents/accounts"
+  cat >"$1/omarchy/agents/accounts/claude.json" <<EOF
+{"active":"urbn","accounts":[
+  {"id":"main","label":"Personal","home":"","primary":true},
+  {"id":"urbn","label":"URBN","home":"${URBN}","primary":false}
+]}
+EOF
+}
+
+# status [args de env...]: deja en OUT la línea sin colores; falla si hay error o stderr
+status() {
+  OUT="$(printf '%s' "${INPUT}" \
+    | env -u CLAUDE_CONFIG_DIR HOME="${TMP}/home" XDG_STATE_HOME="${STATE}" \
+      env "$@" bash "${REPO}/claude/.claude/hooks/statusline.sh" 2>"${TMP}/err")" \
+    || fail "statusline: salió con error"
+  [[ ! -s "${TMP}/err" ]] || fail "statusline: escribió en stderr: $(<"${TMP}/err")"
+  OUT="$(printf '%s' "${OUT}" | sed $'s/\033\\[[0-9;]*m//g')"
+}
+BASE="$(basename "${TMP}") · Opus"
+LIMITS="5h 12% 7d 34%"
+
+# 4. sin registro (fuera de Omarchy): no muestra cuenta, y los límites siguen
+status
+[[ "${OUT}" == "${BASE} ${LIMITS}" ]] || fail "statusline sin registro: ${OUT}"
+
+registry "${STATE}"
+# 5. sin CLAUDE_CONFIG_DIR, vacío o apuntando a ~/.claude: la primaria
+status
+[[ "${OUT}" == "${BASE} · Personal ${LIMITS}" ]] || fail "statusline primaria: ${OUT}"
+for cfg in "" "${TMP}/home/.claude"; do
+  status "CLAUDE_CONFIG_DIR=${cfg}"
+  [[ "${OUT}" == "${BASE} · Personal ${LIMITS}" ]] || fail "statusline primaria (${cfg:-vacío}): ${OUT}"
+done
+
+# 6. con el home de una cuenta añadida: su etiqueta
+status "CLAUDE_CONFIG_DIR=${URBN}"
+[[ "${OUT}" == "${BASE} · URBN ${LIMITS}" ]] || fail "statusline urbn: ${OUT}"
+
+# 7. home que no está en el registro: nada
+status "CLAUDE_CONFIG_DIR=${TMP}/otra"
+[[ "${OUT}" == "${BASE} ${LIMITS}" ]] || fail "statusline sin coincidencia: ${OUT}"
+
+# 8. sin XDG_STATE_HOME usa ~/.local/state
+registry "${TMP}/home/.local/state"
+status -u XDG_STATE_HOME
+[[ "${OUT}" == "${BASE} · Personal ${LIMITS}" ]] || fail "statusline sin XDG_STATE_HOME: ${OUT}"
+
+# 9. registro corrupto: no muestra cuenta ni errores
+echo '{roto' >"${STATE}/omarchy/agents/accounts/claude.json"
+status
+[[ "${OUT}" == "${BASE} ${LIMITS}" ]] || fail "statusline con registro corrupto: ${OUT}"
+
+echo "OK: statusline"

@@ -259,7 +259,10 @@ transcript parsing needed):
 - session cost and lines added/removed
 - output style, when it isn't `default`, and the effort level
 - plan limits, on plans that expose them: 5-hour usage with its reset time, and weekly usage
-- failover proxy: active account (`⇄ personal` / `⇄ ccw`) with its 5h/7d quota read from the proxy, `directo` when the session doesn't go through it, `proxy off` if it's down
+- the session's account label (`Personal`, `URBN`), resolved from `CLAUDE_CONFIG_DIR` (unset means
+  primary) against Omarchy's registry,
+  `${XDG_STATE_HOME:-~/.local/state}/omarchy/agents/accounts/claude.json`, so a later swap doesn't
+  change it; nothing outside Omarchy or for an unregistered home
 - context color: yellow from 50% (where the model degrades), red from 75%
 
 Relies on `jq`, which every platform manifest in `packages/*.txt` installs as a base package.

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # statusLine para Claude Code. Recibe por stdin el JSON de estado de la sesión e imprime:
-#   <dir> ⎇ <rama>[✱sucio][↑ahead↓behind] · ctx <pct>%<barra> · $<coste> · +add/-del · <modelo> <effort>[ <output_style>] · 5h <pct>%↻<hora> 7d <pct>%
+#   <dir> ⎇ <rama>[✱sucio][↑ahead↓behind] · ctx <pct>%<barra> · $<coste> · +add/-del · <modelo> <effort>[ <output_style>][ · <cuenta>] 5h <pct>%↻<hora> 7d <pct>%
 #
 # El modelo va al final y en color porque es el dato que esta línea existe para
 # recordar: sin él la sesión se queda en Opus por inercia (ver docs/claude-code.md).
@@ -81,6 +81,18 @@ fi
 out="${out} ${grey}·${reset} ${cyan}${model}${reset}"
 [[ -n "${effort}" ]] && out="${out} ${grey}${effort}${reset}"
 [[ -n "${style}" && "${style}" != "default" ]] && out="${out} ${grey}[${style}]${reset}"
+
+# --- cuenta de la sesión según el swap de Omarchy (sin registro o sin coincidencia, nada) ---
+# Manda CLAUDE_CONFIG_DIR, no la cuenta activa; ausente o ~/.claude es la primaria.
+registry="${XDG_STATE_HOME:-${HOME}/.local/state}/omarchy/agents/accounts/claude.json"
+if [[ -f "${registry}" ]]; then
+  home="${CLAUDE_CONFIG_DIR-}"
+  [[ "${home}" == "${HOME}/.claude" ]] && home=""
+  account="$(jq -r --arg home "${home}" \
+    'first(.accounts[] | select(if $home == "" then .primary else .home == $home end)) | .label // empty' \
+    "${registry}" 2>/dev/null)"
+  [[ -n "${account}" ]] && out="${out} ${grey}·${reset} ${grey}${account}${reset}"
+fi
 
 # --- límites del plan (solo si se exponen): 5h con hora de reinicio, y semanal ---
 if [[ -n "${rl_pct}" ]]; then
