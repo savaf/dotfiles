@@ -14,7 +14,13 @@ mkdir -p "${TMP}/bin"
 fake() { printf '#!/usr/bin/env bash\n%s\n' "$2" >"${TMP}/bin/$1"; chmod +x "${TMP}/bin/$1"; }
 # sudo falso: ejecuta sin privilegios (una ruta real de /etc fallaría, nunca se escribe).
 fake sudo 'echo "sudo $*" >>"$CALLS"; "$@"'
-for c in systemctl sysctl limine-mkinitcpio; do fake "$c" "echo \"$c \$*\" >>\"\$CALLS\""; done
+for c in systemctl sysctl yay mkinitcpio; do fake "$c" "echo \"$c \$*\" >>\"\$CALLS\""; done
+fake limine-mkinitcpio 'echo "limine-mkinitcpio $*" >>"$CALLS"; [[ -z "${LIMINE_FAILS:-}" ]]'
+# Arranque falso: UKI sin módulos NVIDIA.
+fake objcopy 'exit 0'
+fake lsinitcpio 'echo usr/lib/modules/ext4.ko'
+fake systemd-analyze 'echo "Startup finished in 2.000s (kernel) = 2.000s"'
+fake journalctl 'exit 0'
 # shellcheck disable=SC2016 # se expande dentro del falso, no aquí
 fake pacman 'echo "pacman $*" >>"$CALLS"
 case "$1" in
@@ -88,3 +94,64 @@ run ensure_nvidia_userspace; called 'pacman -Rns' && fail "quitó nvidia-utils s
 run ensure_nvidia_modprobe; [[ -f "${CONF}" ]] || fail "borró la modprobe sin lspci"
 run ensure_crash_resilience; [[ -f "${BIN}" ]] || fail "borró gpu-watchdog sin lspci"
 echo "OK: sin lspci no se limpia"
+
+# 7. En Arch puro también se limpia, sin los pasos propios de Omarchy ni instalar nada NVIDIA.
+# shellcheck disable=SC2329 # las funciones falsas las llama install_arch
+arch() {
+  ensure_mise_tools() { :; }; ensure_nerd_font() { :; }; ensure_zsh() { :; }; ensure_bash_installed() { :; }
+  OS=arch; install_arch
+}
+export SYSFS_ROOT="${TMP}/sys"
+leftovers() {
+  reset; mkdir -p "$(dirname "${BIN}")" "$(dirname "${UNIT}")"; touch "${BIN}" "${UNIT}"
+  cp "${ROOT_DIR}/system/etc/modprobe.d/nvidia.conf" "${CONF}"; echo nvidia-utils >"${PKGS}"
+}
+gpu "Intel Corporation UHD Graphics 770"; leftovers
+run arch
+called 'pacman -Rns --noconfirm nvidia-utils' || fail "Arch: no quitó nvidia-utils"
+[[ ! -e "${CONF}" && ! -e "${BIN}" && ! -e "${UNIT}" ]] || fail "Arch: quedaron restos"
+called 'limine-mkinitcpio' || fail "Arch: no regeneró el initramfs"
+called 'sysctl\|systemd-journald' && fail "Arch: ejecutó pasos de Omarchy"
+gpu "NVIDIA Corporation GA102"; reset
+run arch
+called 'nvidia-utils\|gpu-watchdog' && fail "Arch: instaló cosas NVIDIA"
+[[ ! -e "${CONF}" ]] || fail "Arch: instaló la modprobe"
+echo "OK: Arch puro limpia"
+
+# 8. Si regenerar el initramfs falla, la limpieza sigue y la siguiente pasada reintenta.
+gpu "Intel Corporation UHD Graphics 770"; leftovers
+LIMINE_FAILS=1 run arch || fail "limine fallido abortó"
+grep -q 'AVISO.*initramfs' "${TMP}/out" || fail "no avisó del initramfs"
+[[ ! -e "${BIN}" ]] || fail "no siguió con la limpieza"
+run ensure_nvidia_modprobe
+called 'limine-mkinitcpio' || fail "no reintentó el initramfs"
+run ensure_nvidia_modprobe
+[[ ! -s "${CALLS}" ]] || fail "regeneró otra vez tras el éxito"
+gpu "NVIDIA Corporation GA102"; reset
+LIMINE_FAILS=1 run ensure_nvidia_modprobe || fail "limine fallido abortó con GPU"
+run ensure_nvidia_modprobe
+called 'limine-mkinitcpio' || fail "con GPU no reintentó el initramfs"
+# Sin limine (Arch puro) se usa mkinitcpio.
+# shellcheck disable=SC2329 # exists falso, lo llama ensure_nvidia_modprobe
+no_limine() { exists() { [[ "$1" != limine-mkinitcpio ]] && command -v "$1" >/dev/null; }; ensure_nvidia_modprobe; }
+gpu "Intel Corporation UHD Graphics 770"; leftovers
+run no_limine
+called '^mkinitcpio -P' || fail "sin limine no usó mkinitcpio"
+echo "OK: el initramfs se reintenta"
+
+# 9. El drop-in de mkinitcpio no basta: sin GPU NVIDIA no se mira ni regenera el initramfs.
+reset
+mkdir -p "${SYSTEM_ROOT}/etc/mkinitcpio.conf.d" "${SYSTEM_ROOT}/boot/EFI/Linux"
+touch "${SYSTEM_ROOT}/etc/mkinitcpio.conf.d/nvidia.conf" "${SYSTEM_ROOT}/boot/EFI/Linux/omarchy_linux.efi"
+health() { bash "${ROOT_DIR}/scripts/boot-health.sh"; }
+gpu "Intel Corporation UHD Graphics 770"
+run ensure_omarchy_initramfs
+called 'limine-mkinitcpio' && fail "sin GPU regeneró el initramfs"
+run health
+grep -q 'NVIDIA' "${TMP}/out" && fail "boot-health habló de NVIDIA sin GPU"
+gpu "NVIDIA Corporation GA102"
+run ensure_omarchy_initramfs
+called 'limine-mkinitcpio' || fail "con GPU no regeneró el initramfs"
+run health
+grep -q 'AVISO: initramfs SIN módulos NVIDIA' "${TMP}/out" || fail "boot-health no avisó con GPU"
+echo "OK: el initramfs NVIDIA exige GPU"

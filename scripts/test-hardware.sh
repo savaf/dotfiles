@@ -14,7 +14,18 @@ mkdir -p "${TMP}/bin" "${HOME}/.local/bin"
 fake() { printf '#!/usr/bin/env bash\n%s\n' "$2" >"${TMP}/bin/$1"; chmod +x "${TMP}/bin/$1"; }
 # sudo falso: ejecuta sin privilegios (una ruta real de /etc fallaría, nunca se escribe).
 fake sudo 'echo "sudo $*" >>"$CALLS"; "$@"'
-for c in pacman yay modprobe; do fake "$c" "echo \"$c \$*\" >>\"\$CALLS\""; done
+for c in yay modprobe limine-mkinitcpio; do fake "$c" "echo \"$c \$*\" >>\"\$CALLS\""; done
+# pacman -T imprime lo no satisfecho (PROVIDED = ya cubierto, p.ej. por un -git).
+# PACMAN_FAILS hace fallar la instalación de openrgb.
+fake pacman 'if [[ "$1" == -T ]]; then
+  shift; rc=0
+  for p in "$@"; do [[ " ${PROVIDED:-} " == *" $p "* ]] || { echo "$p"; rc=127; }; done
+  exit "$rc"
+fi
+echo "pacman $*" >>"$CALLS"
+[[ "$1" != -S || -z "${PACMAN_FAILS:-}" || " $* " != *" openrgb "* ]]'
+# install_arch en Arch puro también limpia NVIDIA: que no dependa de la GPU de esta máquina.
+export NVIDIA_FORCE=0
 fake modinfo 'exit 0'
 fake lsmod 'exit 0'
 # is-enabled/is-active responden "no" para que se vea el enable.
@@ -105,3 +116,22 @@ usb 1-2 1e71 NZXT "NZXT Kraken Z"
 run watcher
 called coolercontrol-setup || fail "watcher no activado con NZXT"
 echo "OK: watcher solo con NZXT"
+
+# 6. Un paquete ya cubierto por provides (coolercontrol-git) no se reinstala: chocaría.
+reset; usb 1-2 1e71 NZXT "NZXT Kraken Z"
+PROVIDED="coolercontrol liquidctl" run ensure_hardware_packages
+called 'coolercontrol\|liquidctl' && fail "reinstaló lo ya satisfecho"
+called 'pacman -S --needed --noconfirm openrgb i2c-tools$' || fail "no instaló lo que faltaba"
+PROVIDED="coolercontrol liquidctl openrgb i2c-tools" run ensure_hardware_packages
+[[ ! -s "${CALLS}" ]] || fail "todo satisfecho y aun así instaló"
+echo "OK: lo satisfecho por provides se omite"
+
+# 7. Una instalación fallida avisa y sigue.
+reset; board "Micro-Star International Co., Ltd."; usb 1-2 1e71 NZXT "NZXT Kraken Z"
+PACMAN_FAILS=1 run ensure_hardware_packages || fail "pacman fallido abortó"
+called 'yay -S --needed --noconfirm coolercontrol nct6687d-dkms-git$' || fail "no siguió con AUR"
+grep -q 'AVISO' "${TMP}/out" || fail "pacman fallido sin aviso"
+fake yay 'exit 1'
+run ensure_hardware_packages || fail "yay fallido abortó"
+grep -q 'AVISO' "${TMP}/out" || fail "yay fallido sin aviso"
+echo "OK: una instalación fallida avisa y sigue"

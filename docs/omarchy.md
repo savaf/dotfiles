@@ -410,7 +410,8 @@ crea con `filter-chain` + RNNoise la fuente virtual **"Noise Canceling source"**
 - NVIDIA + LUKS: a black screen at the boot password prompt means the
   initramfs is missing the nvidia modules (an Omarchy update can create
   `/etc/mkinitcpio.conf.d/nvidia.conf` after the last image rebuild). The
-  bootstrap detects this and regenerates via `limine-mkinitcpio`; manual fix:
+  bootstrap detects this (only with an NVIDIA GPU) and regenerates via
+  `limine-mkinitcpio`; manual fix:
   `sudo limine-mkinitcpio`.
 - NVIDIA GSP crash (Xid 120): el firmware GSP del driver `nvidia-open`
   crasheaba bajo carga 3D sostenida (`NVRM: Xid ... 120, GSP task exception:
@@ -454,7 +455,9 @@ crea con `filter-chain` + RNNoise la fuente virtual **"Noise Canceling source"**
   `nvidia-utils`/`lib32-nvidia-utils` (si algo los requiere, avisa y sigue), borra
   `/etc/modprobe.d/nvidia.conf` solo si es idéntico al versionado (y solo entonces regenera el
   initramfs), deshabilita y borra `gpu-watchdog` (la evidencia de `/var/log/gpu-watchdog/` se
-  conserva) y enlaza los flags base del navegador. Si `lspci` no responde, no se borra nada. El
+  conserva) y enlaza los flags base del navegador (esto último solo en Omarchy; el resto también
+  en Arch puro). Si la regeneración del initramfs falla, avisa y la siguiente pasada la reintenta
+  (marca `/etc/modprobe.d/nvidia.conf.pendiente`). Si `lspci` no responde, no se borra nada. El
   desktop `andrea` ya no tiene la RTX 3080 (ver [hardware.md](hardware.md)): las notas de
   NVIDIA de esta página aplican a un equipo con esa GPU.
 - Cuelgue total jugando (artefactos en pantalla → freeze → reset a mano, **sin

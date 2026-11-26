@@ -329,8 +329,9 @@ ensure_omarchy_zsh() {
 # migración) DESPUÉS de la última regeneración, la imagen queda desactualizada.
 # Aquí se detecta el caso inspeccionando el UKI real y se regenera si falta.
 ensure_omarchy_initramfs() {
-  local uki="/boot/EFI/Linux/omarchy_linux.efi"
-  [[ -f /etc/mkinitcpio.conf.d/nvidia.conf && -f "${uki}" ]] || return 0
+  local uki="${SYSTEM_ROOT:-}/boot/EFI/Linux/omarchy_linux.efi"
+  has_nvidia_gpu || return 0
+  [[ -f "${SYSTEM_ROOT:-}/etc/mkinitcpio.conf.d/nvidia.conf" && -f "${uki}" ]] || return 0
   exists limine-mkinitcpio || return 0
   local tmp
   tmp="$(mktemp)"
@@ -369,26 +370,41 @@ ensure_nvidia_userspace() {
 # system/etc/modprobe.d/; con GPU NVIDIA se instala si difiere y sin ella se borra, solo si es
 # idéntico al versionado (uno propio no se toca). Si cambia algo se regenera el initramfs
 # (nvidia se carga temprano vía el hook kms). Idempotente. SYSTEM_ROOT antepone raíz (pruebas).
+# La marca .pendiente (modprobe solo lee *.conf) sobrevive a una regeneración fallida para
+# que la siguiente pasada la reintente.
 ensure_nvidia_modprobe() {
   local src="${ROOT_DIR}/system/etc/modprobe.d/nvidia.conf"
   local dst="${SYSTEM_ROOT:-}/etc/modprobe.d/nvidia.conf"
+  local pending="${dst}.pendiente"
   [[ -f "${src}" ]] || return 0
   if has_nvidia_gpu; then
     if [[ -f "${dst}" ]] && cmp -s "${src}" "${dst}"; then
       log "Opciones de NVIDIA ya al día (${dst}); se omite."
-      return 0
+    else
+      log "Instalando ${dst} (opciones del módulo nvidia)..."
+      sudo touch "${pending}"
+      sudo cp "${src}" "${dst}"
     fi
-    log "Instalando ${dst} (opciones del módulo nvidia)..."
-    sudo cp "${src}" "${dst}"
-  else
-    lacks_nvidia_gpu && [[ -f "${dst}" ]] && cmp -s "${src}" "${dst}" || return 0
+  elif lacks_nvidia_gpu && [[ -f "${dst}" ]] && cmp -s "${src}" "${dst}"; then
     log "Sin GPU NVIDIA: borrando ${dst}..."
+    sudo touch "${pending}"
     sudo rm -f "${dst}"
   fi
+  [[ -e "${pending}" ]] || return 0
+  local regen=()
   if exists limine-mkinitcpio; then
-    log "Regenerando initramfs para que el cambio aplique desde el próximo arranque..."
-    sudo limine-mkinitcpio
+    regen=(limine-mkinitcpio)
+  elif exists mkinitcpio; then
+    regen=(mkinitcpio -P)
   fi
+  if (( ${#regen[@]} )); then
+    log "Regenerando initramfs para que el cambio aplique desde el próximo arranque..."
+    if ! sudo "${regen[@]}"; then
+      log "AVISO: no se pudo regenerar el initramfs; re-ejecuta el bootstrap para reintentar."
+      return 0
+    fi
+  fi
+  sudo rm -f "${pending}"
   log "AVISO: reinicia para que el cambio de opciones de nvidia tome efecto."
 }
 
@@ -482,10 +498,17 @@ ensure_hardware_packages() {
   else
     log "Sin placa MSI: se omite nct6687d-dkms-git."
   fi
-  if (( ${#repo[@]} )); then sudo pacman -S --needed --noconfirm "${repo[@]}"; fi
+  # pacman -T deja solo lo que falta contando provides: --needed compara nombres y un
+  # coolercontrol-git instalado chocaría con coolercontrol.
+  if (( ${#repo[@]} )); then mapfile -t repo < <(pacman -T "${repo[@]}"); fi
+  if (( ${#aur[@]} )); then mapfile -t aur < <(pacman -T "${aur[@]}"); fi
+  if (( ${#repo[@]} )); then
+    sudo pacman -S --needed --noconfirm "${repo[@]}" \
+      || log "AVISO: no se pudo instalar ${repo[*]}; sigo."
+  fi
   (( ${#aur[@]} )) || return 0
   if exists yay; then
-    yay -S --needed --noconfirm "${aur[@]}"
+    yay -S --needed --noconfirm "${aur[@]}" || log "AVISO: no se pudo instalar ${aur[*]}; sigo."
   else
     log "yay no encontrado; omito ${aur[*]}. Instala yay y re-ejecuta."
   fi
@@ -599,6 +622,11 @@ install_arch() {
     ensure_i2c_dev
     ensure_nct6687
     ensure_coolercontrol
+  elif lacks_nvidia_gpu; then
+    # Arch puro: solo la limpieza de restos NVIDIA; instalar sigue siendo cosa de Omarchy.
+    ensure_nvidia_userspace
+    ensure_nvidia_modprobe
+    remove_gpu_watchdog
   fi
 }
 
