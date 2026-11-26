@@ -1,6 +1,7 @@
 # Hardware
 
-My machines, for reference.
+My machines, for reference. The bootstrap does not read this file: it
+[detects the hardware](omarchy.md#paquetes-según-el-hardware).
 
 - **Laptop:** Macbook M1 Pro 2021 · 16" · 16 GB RAM
 - **Case:** Corsair 4000D Airflow

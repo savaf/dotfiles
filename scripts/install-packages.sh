@@ -463,13 +463,42 @@ ensure_omarchy_webapps() {
   done < "${OMARCHY_WEBAPPS}"
 }
 
+# Paquetes que solo tienen sentido con su hardware (por eso no están en los manifiestos).
+# Nada se desinstala si el hardware no está: puede estar solo desconectado.
+ensure_hardware_packages() {
+  local repo=() aur=()
+  if has_usb_nzxt; then
+    repo+=(liquidctl); aur+=(coolercontrol)
+  else
+    log "Sin USB NZXT: se omiten coolercontrol y liquidctl."
+  fi
+  if has_rgb_usb; then
+    repo+=(openrgb i2c-tools)
+  else
+    log "Sin USB NZXT, Lian Li ni Keychron: se omiten openrgb e i2c-tools."
+  fi
+  if has_msi_board; then
+    aur+=(nct6687d-dkms-git)
+  else
+    log "Sin placa MSI: se omite nct6687d-dkms-git."
+  fi
+  if (( ${#repo[@]} )); then sudo pacman -S --needed --noconfirm "${repo[@]}"; fi
+  (( ${#aur[@]} )) || return 0
+  if exists yay; then
+    yay -S --needed --noconfirm "${aur[@]}"
+  else
+    log "yay no encontrado; omito ${aur[*]}. Instala yay y re-ejecuta."
+  fi
+}
+
 # CoolerControl controla el AIO NZXT Kraken (bomba/ventiladores + pantalla LCD) vía
-# su daemon. Se instala como paquete (arch-apps.txt) con sus deps opcionales
-# liquidctl y lm_sensors; aquí solo garantizamos el servicio activo. Idempotente.
+# su daemon. Lo instala ensure_hardware_packages (con liquidctl) solo con USB NZXT;
+# aquí solo garantizamos el servicio activo. Idempotente.
 # Los perfiles/modos de temperatura y el watcher que cambia entre ellos según
 # la app en uso viven en el paquete stow `coolercontrol/` (ver
 # ensure_coolercontrol_mode_watcher en bootstrap.sh y docs/omarchy.md).
 ensure_coolercontrol() {
+  has_usb_nzxt || { log "Sin USB NZXT: se omite coolercontrold."; return 0; }
   exists systemctl || return 0
   if systemctl is-enabled --quiet coolercontrold.service 2>/dev/null; then
     log "coolercontrold ya está habilitado; se omite."
@@ -483,7 +512,8 @@ ensure_coolercontrol() {
 # El módulo i2c-dev expone los buses SMBus que OpenRGB necesita para el RGB de
 # RAM y placa base. Se persiste en modules-load.d para que cargue en cada arranque.
 ensure_i2c_dev() {
-  local conf=/etc/modules-load.d/i2c-dev.conf
+  has_rgb_usb || { log "Sin USB NZXT, Lian Li ni Keychron: se omite i2c-dev."; return 0; }
+  local conf="${SYSTEM_ROOT:-}/etc/modules-load.d/i2c-dev.conf"
   if [[ -f "${conf}" ]]; then
     log "i2c-dev ya persistido (${conf}); se omite."
   else
@@ -495,13 +525,14 @@ ensure_i2c_dev() {
 
 # El Nuvoton NCT6687D-R de la placa (fan headers/sensores) no tiene driver en
 # linux-omarchy; coolercontrold lo detecta pero falla el modprobe ("Module
-# nct6687 not found"). nct6687d-dkms-git (arch-apps.txt) lo provee. Se persiste
+# nct6687 not found"). nct6687d-dkms-git lo provee (solo en placas MSI). Se persiste
 # en modules-load.d y, si coolercontrold ya estaba corriendo, se reinicia para
 # que lo detecte (si no, lo detecta solo en su próximo arranque).
 ensure_nct6687() {
+  has_msi_board || { log "Sin placa MSI: se omite nct6687."; return 0; }
   exists modinfo || return 0
   modinfo nct6687 >/dev/null 2>&1 || { log "nct6687 no disponible (¿falló el DKMS?); se omite."; return 0; }
-  local conf=/etc/modules-load.d/nct6687.conf just_loaded=0
+  local conf="${SYSTEM_ROOT:-}/etc/modules-load.d/nct6687.conf" just_loaded=0
   if [[ -f "${conf}" ]]; then
     log "nct6687 ya persistido (${conf}); se omite."
   else
@@ -548,6 +579,8 @@ install_arch() {
       log "yay no encontrado; omito apps GUI (packages/arch-apps.txt). Instala yay y re-ejecuta."
     fi
   fi
+
+  ensure_hardware_packages
 
   ensure_mise_tools
   ensure_nerd_font

@@ -13,6 +13,7 @@ COOLERCONTROL_ISSUES=()
 
 ensure_coolercontrol_mode_watcher() {
   [[ "${OS}" == "omarchy" ]] || return 0
+  has_usb_nzxt || { log "Sin USB NZXT: se omite el watcher de CoolerControl."; return 0; }
   exists systemctl || return 0
   log "Configurando CoolerControl (curvas + watcher Silencio ⇄ Rendimiento)…"
   if ! "${HOME}/.local/bin/coolercontrol-setup" </dev/null; then

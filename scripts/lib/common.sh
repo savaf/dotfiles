@@ -31,6 +31,23 @@ lacks_nvidia_gpu() {
   ! has_nvidia_gpu && { [[ -n "${NVIDIA_FORCE:-}" ]] || lspci >/dev/null 2>&1; }
 }
 
+# Placa y USB se leen de sysfs (no hay lsusb). SYSFS_ROOT cambia la raíz (pruebas).
+has_msi_board() {
+  grep -qs 'Micro-Star' "${SYSFS_ROOT:-/sys}/class/dmi/id/board_vendor"
+}
+
+has_usb_nzxt() {
+  grep -qsix 1e71 "${SYSFS_ROOT:-/sys}"/bus/usb/devices/*/idVendor
+}
+
+# ¿Algo con RGB que maneje OpenRGB? NZXT, Lian Li (0cf2) o Keychron, este por texto:
+# un K2 se anuncia con el vendor de Apple (05ac).
+has_rgb_usb() {
+  local usb="${SYSFS_ROOT:-/sys}/bus/usb/devices"
+  has_usb_nzxt || grep -qsix 0cf2 "${usb}"/*/idVendor \
+    || grep -qsi keychron "${usb}"/*/manufacturer "${usb}"/*/product
+}
+
 is_wsl() { grep -qi microsoft /proc/version 2>/dev/null; }
 
 # Shared backup dir for this run; created lazily on first real file moved.

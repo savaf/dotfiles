@@ -127,6 +127,9 @@ restricted with `os` in the config (eza and btop) and stay in the system manifes
 What remains in the manifests below is what mise cannot provide (git, zsh, stow, curl,
 compilers, nginx, wget…).
 
+Hardware-specific packages are not in the manifests either: on Arch/Omarchy they are installed
+according to the detected hardware ([docs/omarchy.md](docs/omarchy.md#paquetes-según-el-hardware)).
+
 Reproducible package manifests live in `packages/`:
 
 ```sh

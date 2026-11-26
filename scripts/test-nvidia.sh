@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2016,SC2031 # falsos: $ se expande dentro; ROOT_DIR no cambia en la subshell
 set -euo pipefail
 
 # NVIDIA según hardware: comandos falsos al frente del PATH y SYSTEM_ROOT temporal. Sin GPU ni root.

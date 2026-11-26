@@ -39,6 +39,8 @@ cd ~/dotfiles
 This installs the packages from [`packages/pacman-cli.txt`](../packages/pacman-cli.txt)
 with `pacman -S --needed` (already-installed packages are skipped), stows the
 config packages, and sets zsh as the default shell (bash stays available: `./scripts/switch-shell.sh bash`).
+Hardware-specific packages are not in the manifests: see
+[Paquetes según el hardware](#paquetes-según-el-hardware).
 
 Omarchy already ships neovim (LazyVim), lazygit, fzf, ripgrep and zoxide, and
 keeps its own configs in `~/.config` — any that collide with a stow package
@@ -46,6 +48,23 @@ keeps its own configs in `~/.config` — any that collide with a stow package
 before linking, so nothing is lost.
 
 Open a new terminal (or `exec zsh`) to load everything.
+
+### Paquetes según el hardware
+
+`ensure_hardware_packages` (`scripts/install-packages.sh`, Omarchy y Arch puro) decide por lo
+detectado; la placa y los USB se leen de sysfs. El resto de la configuración usa la misma detección,
+solo en Omarchy.
+
+| Detección | Paquetes | Configuración |
+|---|---|---|
+| Placa MSI (el fabricante en DMI contiene `Micro-Star`) | `nct6687d-dkms-git` (AUR) | persiste y carga `nct6687` |
+| USB NZXT (vendor `1e71`) | `coolercontrol` (AUR), `liquidctl` | servicio `coolercontrold`, watcher de modos |
+| USB NZXT, Lian Li (`0cf2`) o Keychron (texto de manufacturer/product: un K2 usa el vendor de Apple) | `openrgb`, `i2c-tools` | persiste `i2c-dev` |
+
+Sin el hardware, el paso se omite con un log y no se desinstala ni deshabilita nada (un periférico
+puede estar solo desconectado); la excepción es NVIDIA. Los paquetes stow se enlazan igual. Tras
+conectar un dispositivo nuevo, vuelve a correr el bootstrap. `lm_sensors`, `linux-headers` y `socat`
+se instalan siempre.
 
 ## 4. The default shell (zsh)
 
@@ -507,7 +526,7 @@ crea con `filter-chain` + RNNoise la fuente virtual **"Noise Canceling source"**
   cada cambio y `~/.config/hypr/autostart.lua` al arrancar. Los overrides de color por
   tema están en el `case` de la función `accent()` de `rgb`. El módulo `i2c-dev`
   (RGB de RAM/placa por SMBus) lo persiste el bootstrap en
-  `/etc/modules-load.d/i2c-dev.conf`.
+  `/etc/modules-load.d/i2c-dev.conf` (ver [detección](#paquetes-según-el-hardware)).
 - Menú: la extensión `~/.config/omarchy/extensions/omarchy-menu.jsonc` añade
   **Appearance → RGB** (`appearance.rgb`, alias antiguo `style`) y **System → Work
   workspaces** (`system.hw`), que abre `hw` en una terminal nueva con
@@ -517,20 +536,20 @@ crea con `filter-chain` + RNNoise la fuente virtual **"Noise Canceling source"**
   `omarchy branding about|screensaver text|image` escribe en el archivo versionado
   (se ve en `git diff`). **`omarchy branding reset` lo pisa** con el logo por defecto de
   Omarchy: revisa el diff o restaura con git después.
-- Refrigeración y Kraken (CoolerControl): `coolercontrol` (en `arch-apps.txt`)
-  controla el AIO NZXT Kraken —bomba, ventiladores y **pantalla LCD**— vía su
+- Refrigeración y Kraken (CoolerControl): `coolercontrol` (solo con
+  [USB NZXT](#paquetes-según-el-hardware)) controla el AIO NZXT Kraken —bomba, ventiladores y **pantalla LCD**— vía su
   daemon `coolercontrold`, que el bootstrap habilita (`systemctl enable --now`).
-  Deps opcionales `liquidctl` y `lm_sensors` (en `pacman-cli.txt`) le dan acceso
-  a más sensores. El **contenido de la LCD** (temperatura de líquido/CPU, imagen,
+  Las deps opcionales `liquidctl` (también solo con NZXT) y `lm_sensors` (siempre) le
+  dan acceso a más sensores. El **contenido de la LCD** (temperatura de líquido/CPU, imagen,
   reloj) se configura desde la **GUI de CoolerControl**; esa config vive en el
   daemon (root, fuera de `$HOME`) y no se gestiona por stow. Para exponer todos
   los sensores del sistema, opcionalmente: `sudo sensors-detect --auto`.
   `coolercontrold` posee por USB tanto el Kraken como el hub NZXT: OpenRGB lista el
   hub pero no puede escribirle, así que su iluminación va por `liquidctl`.
-  El Nuvoton NCT6687D-R de la placa (fan headers/sensores) no tiene driver en
+  En placas MSI, el Nuvoton NCT6687D-R (fan headers/sensores) no tiene driver en
   `linux-omarchy`; sin él, `coolercontrold` loguea `Failed to load module nct6687`
-  al arrancar. Lo provee `nct6687d-dkms-git` (AUR, en `arch-apps.txt`); el bootstrap
-  lo carga y persiste con `ensure_nct6687` en `install-packages.sh`.
+  al arrancar. Lo provee `nct6687d-dkms-git` (AUR); el bootstrap
+  lo instala, y `ensure_nct6687` (`install-packages.sh`) lo carga y persiste.
 
 - **Perfiles de temperatura y modo Rendimiento automático** (paquete stow
   `coolercontrol/`): recién instalado, `coolercontrold` detecta todo el
