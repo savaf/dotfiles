@@ -5,10 +5,6 @@
   },
   "plugins": [
     {
-      "name": "teamclaude-status",
-      "source": "./teamclaude-status"
-    },
-    {
       "name": "replay-theater",
       "source": "./replay-theater"
     }
