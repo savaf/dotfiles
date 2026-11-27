@@ -89,7 +89,7 @@ export default class Board extends View {
     };
     list = list.filter(match);
     // Work or a question brings a settled agent back.
-    for (const a of list) if (this.settled[a.address] && (a.status === "working" || a.status === "blocked")) delete this.settled[a.address];
+    for (const a of all) if (this.settled[a.address] && (a.status === "working" || a.status === "blocked")) delete this.settled[a.address];
     const pinned = list.filter((a) => this.pins.includes(a.address)).sort((x, y) => this.pins.indexOf(x.address) - this.pins.indexOf(y.address));
     const rest = list.filter((a) => !this.pins.includes(a.address));
     const isSettled = (a) => Boolean(this.settled[a.address]) && a.status !== "working" && a.status !== "blocked";
