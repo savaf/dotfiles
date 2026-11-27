@@ -94,6 +94,23 @@ Repo's `AGENTS.md`.
   one (`$HERDR_ENV` set): no nested attach.
 - A project by hand: `prefix shift+c` (new workspace).
 
+## Desktop app (`herdr-app`)
+
+A separate program from the TUI: its own window, its own core (`hc`, herdr-core), config in
+`~/.config/herdr-app`. It does not share workspaces or agents with the TUI.
+
+| | TUI (`herdr`) | App |
+|---|---|---|
+| Create | `herdr workspace create` | `herdr-app do space.new` |
+| Agents (prompt, wait, read) | `herdr agent …` | `hc …` |
+| Detect from an agent | `HERDR_ENV=1` | `HC_TERMINAL_ID` |
+
+- `hw` is TUI-only; the app does not need it.
+- Base spaces: `scripts/herdr-app-spaces.sh` in the Home Repo creates one space per base repo.
+- Move a TUI agent over: `herdr-app do space.new --name <n> --folder <cwd> --argv '["env","CLAUDE_CONFIG_DIR=<home>","claude","--resume","<session-id>"]'`.
+  The session id comes from `herdr agent list` (`agent_session.value`). Account homes share `projects/`, so no copy is needed.
+- Agent instructions for both live in the Home Repo's `AGENTS.md`.
+
 ## Updating herdr
 
 - All platforms: `herdr update`. The binary lives in `~/.local/bin`.
