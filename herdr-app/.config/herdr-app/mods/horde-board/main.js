@@ -63,7 +63,7 @@ export default class Board extends View {
     this.title = null;
     this.search = InputState.new({ placeholder: "Filter agents…" });
     this.search.on("change", (_e, cx) => { this.query = this.search.value().trim().toLowerCase(); cx.notify(); });
-    // Keyboard: the sidebar copy takes the keys when pane.go or board.focus reaches it.
+    // Keyboard: the sidebar copy takes the keys when pane.go or horde-board.focus reaches it.
     this.typing = false;
     this.cursor = null;
     this.nav = [];

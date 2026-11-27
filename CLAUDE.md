@@ -21,6 +21,7 @@ repo entero.
 | nvim (LazyVim) | `docs/nvim.md` |
 | tmux | `docs/tmux.md` |
 | herdr, `hw` | `docs/herdr.md` |
+| herdr desktop app (`herdr-app`, `hc`), layouts y mods, el board | `docs/herdr-app.md` (receta de la UI: `docs/herdr-app/RECIPE.md`) |
 | git / ssh | `docs/git-and-ssh.md` |
 | lazygit | `docs/lazygit.md` |
 | VS Code | `docs/vscode.md` |

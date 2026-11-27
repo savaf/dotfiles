@@ -96,98 +96,10 @@ Repo's `AGENTS.md`.
 
 ## Desktop app (`herdr-app`)
 
-A separate program from the TUI: its own window, its own core (`hc`, herdr-core), config in
-`~/.config/herdr-app`. It does not share workspaces or agents with the TUI.
-
-| | TUI (`herdr`) | App |
-|---|---|---|
-| Create | `herdr workspace create` | `herdr-app do space.new` |
-| Agents (prompt, wait, read) | `herdr agent …` | `hc …` |
-| Detect from an agent | `HERDR_ENV=1` | `HC_TERMINAL_ID` |
-
-### Install and restore on a new machine
-
-1. `scripts/bootstrap.sh` does it all. `ensure_herdr_app` (`scripts/modules/herdr.sh`) runs the official
-   installer, `curl -fsSL https://releases.herdr.dev/app/install.sh | sh`: the app goes to
-   `~/.local/share/herdr-app` (Linux) or `~/Applications/Herdr.app` (macOS), with the launcher entry, the icon
-   and herdr-core (`hc`) if missing. Running it again updates the app; the app also updates itself.
-   It is skipped on WSL and on systems without a build. By hand: run that line.
-2. Not through mise: the registry's `herdr` is only the TUI (`aqua:herdrdev/herdr`), and the app and the core
-   publish no GitHub releases. There is no pacman, AUR or brew package either, so it is not in
-   `packages/*.txt`; `packages/arch-apps.txt` carries a comment that points here.
-3. `stow_packages` links the `herdr-app` package into `~/.config/herdr-app` (my layouts and mods, see below).
-4. `ensure_herdr_app_keys` adds `ctrl-shift-a` under `layout:board-v` in `~/.config/herdr-app/keys.json`
-   (the user's file, not stowed; it needs the app to have run once, else it is skipped until the next run).
-5. Open the app once and pick the `board-v` layout (`ctrl-shift-l` cycles, or Settings > Look).
-6. Statusline numbers (cost, tokens, account limits) need `hooks/statusline.sh`, stowed with the `claude` package.
-7. Base spaces and agent instructions live in the Home Repo: `scripts/herdr-app-spaces.sh`, `AGENTS.md`.
-8. Check: `herdr-app status` (no `errors`), `herdr-app check ~/.config/herdr-app/mods/board`, `scripts/test-herdr-app.sh`.
-
-### Notes
-
-- `hw` is TUI-only; the app does not need it.
-- Base spaces: `scripts/herdr-app-spaces.sh` in the Home Repo creates one space per base repo.
-- Move a TUI agent over: `herdr-app do space.new --name <n> --folder <cwd> --argv '["env","CLAUDE_CONFIG_DIR=<home>","claude","--resume","<session-id>"]'`.
-  The session id comes from `herdr agent list` (`agent_session.value`). Account homes share `projects/`, so no copy is needed.
-- Agent instructions for both live in the Home Repo's `AGENTS.md`.
-- My layouts and mods live in the `herdr-app` stow package, file by file: `layouts/board*.json`,
-  `mods/board`, `mods/tabs-stats`, `mods/herdrdev-board`. The folder `~/.config/herdr-app` itself is not
-  stowed: the app rewrites its shipped mods and layouts at every start and owns `settings.json` and its state,
-  so only my own files are linked. The window does not see edits made through the symlinks: after changing a mod,
-  switch layout and back (`herdr-app do layout.switch --name main`, then `--name board-v`) to reload it.
-  Edit in place, never with `sed -i` (it replaces the symlink with a real file).
-- `board-v` is the daily layout: spaces on the left, a vertical agent board (Pinned, Needs you, Working, Done,
-  Settled; folding sections), tabs with working time, cost and tokens. Cost and tokens come from
-  `hooks/statusline.sh`, which writes `~/.cache/claude-session-stats/<session>.json` on every refresh.
-- Keyboard on the `board-v` board: `ctrl-shift-a` (bound in `keys.json` under `layout:board-v`) or `alt-h` / `alt-left`
-  from the terminal puts the keyboard on the board. Then `up` / `down` (or `k` / `j`) move, `enter` opens the agent
-  (or folds a section), `left` / `right` fold, `p` pins, `s` settles, `z` snoozes for 1h (`shift+z` for 4h; again to
-  wake), `u` undoes the last pin, settle or snooze, `/` searches,
-  `escape` returns to the terminal. `alt-up` / `alt-down` (agent.prev / agent.next) follow the board's order.
-- `herdrdev-board` is the `herdrdev/board` layout from herdr.dev in a dark theme (renamed; `board` is mine).
-  Installed from its recipe (herdr.dev/layouts/herdrdev/board); the T3 layout (`JinJieBeWater/herdr-t3`) was not:
-  it targets macOS, writes labels onto agents with `hc label` and rewrites its own JSON.
-
-### The `board-v` board
-
-- **Sections:** Pinned, Needs you, Working, Done (finished, not looked at yet), Idle (quiet; folded by default) and
-  Settled (put away; folded). Headers fold on click or key. The fold state, pins and settled agents are kept in the
-  mod's own `localStorage`, not on the agents; a settled agent comes back by itself when it works or needs you.
-- **Rows:** space, title, branch with a `worktree` tag when the folder is under `~/.herdr/worktrees`, cost, tokens,
-  `ctx %`, and time in the current state. Blocked rows say why (`Approval`, `Input`, `Failed`, else `Needs you`;
-  the field is read defensively and was not tested with a real blocked agent). Hover shows pin and settle.
-- **Header:** totals, one usage line per account (Pro: 5h and 7d limits; contracted Enterprise: no counters, so
-  the spend and live sessions), account chips (All, URBN, Personal) and a search over name, title, branch and
-  program. The window title carries `(N) Herdr` while N agents need you. Sound and toast alerts come from
-  Settings > Alerts.
-- **Tabs (`tabs-stats`):** working time, cost and tokens per tab, plus the Files and Changes panel buttons
-  (always on: the welcome flow left `workspace.panels` empty, which hid them).
-- **Data:** `hooks/statusline.sh` writes cost, tokens, `ctx`, model, lines, account and limits per session to
-  `~/.cache/claude-session-stats/<session>.json`; `tabs-stats` maps terminal to claude pid to session
-  (`~/.claude/sessions/<pid>.json`, any account home) and shares it as `shared("agent.stats")`.
-  Only Claude Code agents report; other programs show no numbers.
-- **Account types:** the URBN account is Claude Enterprise (contracted billing, extra usage on), the personal one
-  is Pro. Org-wide spend is not available from the CLI; it lives in the admin console.
-- **Working time:** exact. `tabs-stats` reads `status_ms` (when core last changed the status) with `hc get` every
-  15s and shares it as `shared("agent.since")`; the tab and the working/blocked rows use it, so it survives
-  restarting the window. Done and Idle rows still show the time since the window first saw them in that state
-  (looking at a finished agent changes its status, so core's stamp would restart the clock).
-- **Sub-agents:** a row with live children shows a chevron and their count; the children (programs and agents it
-  started, nested with tree lines) fold under it. They come from core's parent link (`parent` on each terminal),
-  so they are what an agent starts with `hc run`; click focuses an agent or peeks a plain program. That is
-  herdr's own definition (`~/.config/herdr-app/AGENTS.md`: sub-agents are terminals an agent started with
-  `hc run`), so Claude Code's built-in sub-agents (the Agent tool) are not herdr sub-agents and never show
-  there (`sub_agents` stays empty); there is no hook to fix. Agents the Home agent opens with
-  `herdr-app do space.new` are separate spaces, not children; `hc run --bg` would make them children.
-  Tested with a real child terminal, not with a Claude sub-agent.
-- **Snooze and Settle all:** `z` or the clock button hides a finished agent for an hour in a Snoozed section;
-  it comes back at that time (with a notification), or at once if it works or needs you. Done and Idle headers
-  have a Settle all button. Both live in the mod's own storage and `u` undoes them.
-- **Reordering pins:** press on a pinned row, move over another one and release; a line shows where it will land
-  and `u` undoes it. The target comes from the measured row heights and the pointer position in the Pinned list.
-  Not tested with a real drag (nothing here can press a mouse button); the Pinned list itself was checked.
-- **Limits:** the working time can lag up to 15s at the start of a turn; the spend line counts only live
-  sessions; the keyboard does not walk into the children, and there is no keyboard way to reorder pins.
+The desktop app is a separate program (its own window, its own core `hc`, config in `~/.config/herdr-app`) and
+has its own document: [`herdr-app.md`](herdr-app.md): install and restore, the stow package, my layouts and mods,
+the `horde` UI, how agents use it, commands and troubleshooting. To copy the UI to another setup:
+[`herdr-app/RECIPE.md`](herdr-app/RECIPE.md).
 
 ## Updating herdr
 

@@ -40,7 +40,7 @@
               "id": "agents",
               "type": "block",
               "content": {
-                "mod": "board",
+                "mod": "horde-board",
                 "props": {
                   "vertical": true
                 }
@@ -82,7 +82,7 @@
           "id": "tabs",
           "type": "block",
           "content": {
-            "mod": "tabs-stats"
+            "mod": "horde-tabs"
           },
           "size": {
             "px": 42

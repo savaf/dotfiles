@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" font-family="Inter, Helvetica, Arial, sans-serif">
+  <!-- Horde: a schematic of the layout with made-up names. Not a screenshot. -->
+  <rect width="1200" height="760" fill="#131619"/>
+  <!-- sidebar -->
+  <rect width="268" height="760" fill="#17191c"/>
+  <rect x="268" width="1" height="760" fill="#25282c"/>
+  <text x="16" y="29" font-size="13" font-weight="600" fill="#e8e9eb">Herdr</text>
+  <text x="16" y="72" font-size="11" fill="#8b8f95">Spaces</text>
+  <g font-size="13" fill="#e8e9eb">
+    <rect x="8" y="82" width="252" height="30" rx="8" fill="#202225"/>
+    <rect x="16" y="89" width="16" height="16" rx="4" fill="#2aa198"/><text x="40" y="102">api-server</text>
+    <rect x="16" y="123" width="16" height="16" rx="4" fill="#cb7a45"/><text x="40" y="136">web-app</text>
+    <rect x="16" y="157" width="16" height="16" rx="4" fill="#6c71c4"/><text x="40" y="170">docs</text>
+  </g>
+  <line x1="0" x2="268" y1="238" y2="238" stroke="#25282c"/>
+  <text x="16" y="262" font-size="11" fill="#8b8f95">Agents</text>
+  <text x="252" y="262" font-size="11" fill="#8b8f95" text-anchor="end">7 · 2 working</text>
+  <text x="16" y="282" font-size="11" fill="#8b8f95">Personal · 5h 42% · 7d 47%</text>
+  <text x="16" y="298" font-size="11" fill="#8b8f95">Team · $9.13 · 4 sessions</text>
+  <rect x="16" y="310" width="36" height="22" rx="11" fill="#264f78"/><text x="34" y="325" font-size="11" fill="#e8e9eb" text-anchor="middle">All</text>
+  <rect x="58" y="310" width="52" height="22" rx="11" fill="#ffffff14"/><text x="84" y="325" font-size="11" fill="#a9adb3" text-anchor="middle">Team</text>
+  <rect x="16" y="340" width="236" height="28" rx="6" fill="#ffffff14"/><text x="26" y="358" font-size="12" fill="#8b8f95">Filter agents…</text>
+  <!-- sections -->
+  <g font-size="11.5" font-weight="500">
+    <text x="30" y="394" fill="#e0a04a">Needs you</text><rect x="86" y="382" width="20" height="16" rx="8" fill="#e0a04a26"/><text x="96" y="394" fill="#e0a04a" text-anchor="middle">1</text>
+  </g>
+  <rect x="8" y="404" width="252" height="70" rx="8" fill="#17191c"/><rect x="8" y="404" width="3" height="70" fill="#e0a04a"/>
+  <text x="34" y="424" font-size="13" font-weight="600" fill="#e8e9eb">api-server</text>
+  <rect x="198" y="412" width="52" height="18" rx="5" fill="#e0a04a26"/><text x="224" y="425" font-size="10.5" font-weight="600" fill="#e0a04a" text-anchor="middle">Approval</text>
+  <text x="34" y="442" font-size="11.5" fill="#a9adb3">Migrate the users table</text>
+  <text x="34" y="458" font-size="11" fill="#8b8f95">feat/users-migration · worktree</text>
+  <text x="34" y="472" font-size="11" fill="#8b8f95">$1.59 · 172k tok · ctx 34%</text>
+  <g font-size="11.5" font-weight="500">
+    <text x="30" y="502" fill="#8b7df0">Working</text><rect x="78" y="490" width="20" height="16" rx="8" fill="#8b7df026"/><text x="88" y="502" fill="#8b7df0" text-anchor="middle">2</text>
+  </g>
+  <rect x="8" y="512" width="252" height="70" rx="8" fill="#264f78"/><rect x="8" y="512" width="3" height="70" fill="#8b7df0"/>
+  <text x="34" y="532" font-size="13" font-weight="600" fill="#e8e9eb">web-app</text>
+  <text x="226" y="532" font-size="11" fill="#8b8f95">3m</text>
+  <circle cx="246" cy="528" r="5" fill="none" stroke="#8b7df0" stroke-width="2" stroke-dasharray="14 8"/>
+  <text x="34" y="550" font-size="11.5" fill="#a9adb3">Fix the cart total rounding</text>
+  <text x="34" y="566" font-size="11" fill="#8b8f95">fix/cart-total · worktree</text>
+  <text x="34" y="580" font-size="11" fill="#8b8f95">$0.84 · 96k tok · ctx 21%</text>
+  <g font-size="11.5" font-weight="500">
+    <text x="30" y="612" fill="#45b891">Done</text><rect x="60" y="600" width="20" height="16" rx="8" fill="#45b89126"/><text x="70" y="612" fill="#45b891" text-anchor="middle">1</text>
+    <text x="30" y="644" fill="#8b9096">Idle</text><rect x="56" y="632" width="20" height="16" rx="8" fill="#ffffff14"/><text x="66" y="644" fill="#8b9096" text-anchor="middle">3</text>
+    <text x="30" y="676" fill="#8b9096">Settled</text><rect x="80" y="664" width="20" height="16" rx="8" fill="#ffffff14"/><text x="90" y="676" fill="#8b9096" text-anchor="middle">2</text>
+  </g>
+  <g fill="none" stroke="#8b8f95" stroke-width="1.5"><path d="M14 608l4 4 4-4"/><path d="M16 636l4 4-4 4"/><path d="M16 668l4 4-4 4"/></g>
+  <text x="252" y="612" font-size="11" fill="#8b8f95" text-anchor="end">Settle all</text>
+  <line x1="0" x2="268" y1="691" y2="691" stroke="#25282c"/>
+  <text x="16" y="720" font-size="12" fill="#a9adb3">Settings</text>
+  <text x="16" y="742" font-size="12" fill="#a9adb3">+ Add machine</text>
+  <!-- tab bar -->
+  <rect x="269" width="931" height="42" fill="#17191c"/>
+  <rect x="269" y="41" width="931" height="1" fill="#25282c"/>
+  <rect x="284" y="6" width="330" height="30" rx="7" fill="#202225" stroke="#25282c"/>
+  <rect x="294" y="14" width="14" height="14" rx="3" fill="#cb7a45"/>
+  <text x="316" y="25" font-size="12.5" fill="#e8e9eb">Fix the cart total…</text>
+  <text x="438" y="25" font-size="11.5" fill="#8b7df0">3m</text>
+  <text x="466" y="25" font-size="11" fill="#8b8f95">$0.84 · 96k tok</text>
+  <circle cx="586" cy="21" r="5" fill="none" stroke="#8b7df0" stroke-width="2" stroke-dasharray="14 8"/>
+  <text x="1090" y="25" font-size="12" fill="#a9adb3">+</text>
+  <text x="1112" y="25" font-size="12" fill="#a9adb3">Files</text>
+  <text x="1150" y="25" font-size="12" fill="#a9adb3">Changes</text>
+  <!-- terminal -->
+  <rect x="278" y="52" width="912" height="676" rx="10" fill="#17191c" stroke="#25282c"/>
+  <rect x="278" y="52" width="912" height="30" rx="10" fill="#1b1e22"/>
+  <text x="310" y="72" font-size="12" fill="#e8e9eb">Claude Code</text>
+  <g font-family="ui-monospace, Menlo, monospace" font-size="12.5" fill="#c9ccd1">
+    <text x="300" y="116">❯ fix the cart total rounding</text>
+    <text x="300" y="142" fill="#8b8f95">● Reading src/cart/total.ts</text>
+    <text x="300" y="164" fill="#8b8f95">● Editing the rounding to cents</text>
+    <text x="300" y="186" fill="#8b8f95">● Running the cart tests…</text>
+  </g>
+  <!-- status bar -->
+  <rect x="269" y="732" width="931" height="28" fill="#17191c"/>
+  <text x="284" y="750" font-size="11.5" fill="#8b8f95">This computer   ⎇ fix/cart-total   · 7 agents</text>
+  <text x="1186" y="750" font-size="11.5" fill="#8b8f95" text-anchor="end">Ctrl+Shift+P commands</text>
+</svg>
