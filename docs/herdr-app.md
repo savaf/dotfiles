@@ -144,33 +144,26 @@ are separate spaces, not children; `hc run --bg` would make them children.
 
 ## Copy this UI
 
-[`herdr-app/RECIPE.md`](herdr-app/RECIPE.md) is the brief to rebuild `board-v` from an empty folder, in the format
-herdr.dev uses for shared layouts (what you see, how it behaves, built from, watch out, done when), with a schematic
-[`preview.svg`](herdr-app/preview.svg). To hand it to an agent on another setup, paste this message (it works once
-the recipe is on `main` of the public repo):
+`board-v` is published as a Herdr gallery layout in its own public repo,
+[`savaf/herdr-layouts`](https://github.com/savaf/herdr-layouts) (folder `board-v/`, topic `herdr-layout`, so it
+shows up at `herdr.dev/layouts/savaf/board-v` within the hour). To add it to any Herdr setup, paste this to the
+agent:
 
 ```text
-Read ~/.config/herdr-app/AGENTS.md first. Then build a Herdr layout and its mods for me from this brief:
-https://raw.githubusercontent.com/savaf/dotfiles/main/docs/herdr-app/RECIPE.md
-Read the whole recipe before writing anything.
-
-How to work:
-- Name the layout `board-v` and the mods `board` and `tabs-stats`. If a name is taken, rename the new one
-  everywhere (the layout file, the `mod` names in the layout, the mods' own paths). Never overwrite my files and
-  never edit Herdr's shipped layouts or mods: clone them (`layout.clone`, `mod.clone`).
-- Start from `layout.clone {"name":"main","as":"board-v"}` and `mod.clone {"name":"tabs","as":"tabs-stats"}`.
-- Follow the recipe's "Done when". Run `herdr-app check` on each mod, then `layout.switch`, then take a screenshot
-  and compare it with the recipe's description. Do not commit screenshots: they show my terminals.
-- Cost, tokens and plan limits per agent come from Claude Code's statusline. If I use Claude Code, show me the
-  exact change you would make to its statusline script and wait for my OK. Without that data file, everything
-  else must still work.
-- The key that gives the board the keyboard (`ctrl-shift-a` -> `board.focus`, under `layout:board-v` in
-  `keys.json`) is my file: show me the change and wait for my OK.
-- Tell me what you could not test. Do not say the keyboard, the drag or the snooze work unless you tried them.
+Read ~/.config/herdr-app/AGENTS.md, then add this layout: https://github.com/savaf/herdr-layouts/tree/main/board-v
 ```
 
-To add the stow package, the install module and the statusline hook that feed it, use the whole dotfiles repo
-(see Install and restore); the recipe alone gives you the UI.
+The folder carries the layout, its two mods (`board`, `tabs-stats`), a `keys.json` with the one key it needs, the
+brief ([`RECIPE.md`](herdr-app/RECIPE.md): what you see, how it behaves, built from, watch out, done when), a
+`preview.png`, and an optional `extras/statusline-snippet.sh` that feeds cost, tokens and plan limits from Claude
+Code's statusline (without it everything else works). By hand, the README of that repo has the five commands.
+
+- The repo is a copy: this dotfiles repo is where the layout is worked on (`herdr-app/.config/herdr-app/`) and
+  where `docs/herdr-app/RECIPE.md` lives. After changing the layout or the mods, copy the files into
+  `~/Projects/lab/herdr-layouts/board-v/` (rename nothing; drop `cloned_from` from the JSON files; the layout's
+  `preview` is `layouts/board-v.svg`), re-render `preview.png` if the UI changed, and push.
+- The repo's recipe says `Team` where this one's examples use real account names; keep it generic there.
+- Do not put screenshots of the real window in the repo: they show the terminals.
 
 ## Agents and the app
 
