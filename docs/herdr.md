@@ -176,8 +176,11 @@ A separate program from the TUI: its own window, its own core (`hc`, herdr-core)
   so they are what an agent starts with `hc run`; click focuses an agent or peeks a plain program. Claude Code's own
   sub-agents (the Agent tool) are not there: the tracked hook only reports `SessionStart`, so the app never sees
   them (`sub_agents` stays empty). Tested with a real child terminal, not with a Claude sub-agent.
+- **Reordering pins:** press on a pinned row, move over another one and release; a line shows where it will land
+  and `u` undoes it. The target comes from the measured row heights and the pointer position in the Pinned list.
+  Not tested with a real drag (nothing here can press a mouse button); the Pinned list itself was checked.
 - **Limits:** the working time can lag up to 15s at the start of a turn; the spend line counts only live
-  sessions; pins cannot be dragged and the keyboard does not walk into the children.
+  sessions; the keyboard does not walk into the children, and there is no keyboard way to reorder pins.
 
 ## Updating herdr
 

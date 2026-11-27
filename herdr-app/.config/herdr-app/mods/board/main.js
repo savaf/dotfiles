@@ -2,7 +2,7 @@
 
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex, InputState, Input } from "gpui-base";
-import { agents, spaces, terminals, run, theme, props, shared, setWindowTitle, setAgentOrder, nextCommand } from "herdr";
+import { agents, spaces, terminals, run, theme, props, shared, settings, setWindowTitle, setAgentOrder, nextCommand } from "herdr";
 
 const COLUMNS = [
   { id: "blocked", label: "Needs you", match: (s) => s === "blocked" },
@@ -66,6 +66,9 @@ export default class Board extends View {
     this.nav = [];
     this.undo = null;
     this.kidFold = new Set();
+    // Dragging a pinned row: which one, and the row it is over. rowH: measured height of each row (px).
+    this.drag = null;
+    this.rowH = {};
     this.search.on("focus", (_e, cx) => { this.typing = true; cx.notify(); });
     this.search.on("blur", (_e, cx) => { this.typing = false; cx.notify(); });
     if (props()?.vertical) {
@@ -258,10 +261,19 @@ export default class Board extends View {
       const key = `row:${a.address}`;
       nav.push({ key, kind: "row", a });
       const cursor = focused && this.cursor === key;
+      // Pinned rows can be dragged to reorder: press on one, move over another, release.
+      const pinnedRow = g.id === "pinned";
+      const dragging = Boolean(this.drag) && this.drag.addr === a.address;
+      const dropHere = Boolean(this.drag) && this.drag.over === a.address && this.drag.addr !== a.address;
+      const dropBelow = dropHere && this.pins.indexOf(this.drag.addr) < this.pins.indexOf(a.address);
       const rowEl = h_flex().id(`vrow-${a.address}`).flex_none().px(10).py(8).gap(9).rounded(8).items_start()
         .bg(a.focused ? t.selected : t.chrome)
         .border_l(3).border_color(g.color)
         .when(cursor, (el) => el.bg(t.raised).border_t(1).border_b(1).border_r(1).border_color(t.accent))
+        .when(dragging, (el) => el.bg(t.hover))
+        .when(dropHere && !dropBelow, (el) => el.border_t(2).border_color(t.accent))
+        .when(dropHere && dropBelow, (el) => el.border_b(2).border_color(t.accent))
+        .when(pinnedRow, (el) => el.on_mouse_down("left", (_e, cx) => { this.drag = { addr: a.address, over: a.address }; cx.notify(); }))
         .cursor_pointer().hover((s) => s.bg(a.focused ? t.selected : t.hover))
         .on_hover((on, cx) => { if (on) this.hovered = a.address; else if (this.hovered === a.address) this.hovered = null; cx.notify(); })
         .on_click(() => run("pane.focus", { pane: a.pane }))
@@ -287,7 +299,8 @@ export default class Board extends View {
             .child(div().min_w(0).truncate().child(branch))
             .when(worktree, (el) => el.child(div().flex_none().px(5).rounded(4).bg(t.hover).child("worktree")))))
           .when(bits.length > 0, (el) => el.child(div().text_size(11).text_color(t.dim).child(bits.join(" · ")))));
-      return kids.length ? v_flex().flex_none().gap(2).child(rowEl).children(kidsOpen ? kids.map(kidRow) : []) : rowEl;
+      const out = kids.length ? v_flex().id(`vwrap-${a.address}`).flex_none().gap(2).child(rowEl).children(kidsOpen ? kids.map(kidRow) : []) : rowEl;
+      return out.on_size_change((size) => { this.rowH[a.address] = size.height; });
     };
 
     // Per account: plan limits when the account exposes them (Pro), else what the live sessions spent
@@ -331,6 +344,38 @@ export default class Board extends View {
           .child(svg(`mods/workspace-chrome/chevron-${open ? "down" : "right"}.svg`).size(11).flex_none().text_color(t.dim))
           .child(div().text_color(g.color).child(g.label))
           .child(div().px(6).rounded(8).bg(g.items.length ? g.color + "26" : t.hover).text_color(g.items.length ? g.color : t.dim).child(String(g.items.length)));
+        if (g.id === "pinned" && open) {
+          // The container tracks the pointer while a pinned row is dragged: which row is it over (by the
+          // measured heights), and on release move the dragged pin to that place.
+          const order = g.items.map((a) => a.address);
+          return [header, v_flex().id("pinned-list").flex_none().gap(4)
+            .on_window_mouse_move((e, cx) => {
+              if (!this.drag) return;
+              if (e.pressed_button !== "left") { this.drag = null; cx.notify(); return; }
+              const y = e.local_position.y / (settings().zoom || 1);
+              let acc = 0, over = order[order.length - 1];
+              for (const addr of order) {
+                const h = (this.rowH[addr] ?? 60) + 4;
+                if (y < acc + h) { over = addr; break; }
+                acc += h;
+              }
+              if (over !== this.drag.over) { this.drag.over = over; cx.notify(); }
+            })
+            .on_window_mouse_up("left", (_e, cx) => {
+              const d = this.drag;
+              if (!d) return;
+              this.drag = null;
+              const from = this.pins.indexOf(d.addr), to = this.pins.indexOf(d.over);
+              if (d.over && d.over !== d.addr && from >= 0 && to >= 0) {
+                this.undo = this.snapshot();
+                this.pins.splice(from, 1);
+                this.pins.splice(to, 0, d.addr);
+                this.save();
+              }
+              cx.notify();
+            })
+            .children(g.items.map((a) => row(a, g)))];
+        }
         return [header, ...(!open ? [] : g.items.length ? g.items.map((a) => row(a, g)) : [div().px(26).py(4).text_size(11.5).text_color(t.dim).child("Nothing here")])];
       })));
     this.nav = nav;
