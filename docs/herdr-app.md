@@ -145,22 +145,22 @@ are separate spaces, not children; `hc run --bg` would make them children.
 ## Copy this UI
 
 `horde` is published as a Herdr gallery layout in its own public repo,
-[`savaf/herdr-layouts`](https://github.com/savaf/herdr-layouts) (folder `horde/`, topic `herdr-layout`, so it
+[`savaf/horde`](https://github.com/savaf/horde) (the layout sits at the repo root, topic `herdr-layout`, so it
 shows up at `herdr.dev/layouts/savaf/horde` within the hour). To add it to any Herdr setup, paste this to the
 agent:
 
 ```text
-Read ~/.config/herdr-app/AGENTS.md, then add this layout: https://github.com/savaf/herdr-layouts/tree/main/horde
+Read ~/.config/herdr-app/AGENTS.md, then add this layout: https://github.com/savaf/horde
 ```
 
-The folder carries the layout, its two mods (`horde-board`, `horde-tabs`), a `keys.json` with the one key it needs, the
+The repo carries the layout, its two mods (`horde-board`, `horde-tabs`), a `keys.json` with the one key it needs, the
 brief ([`RECIPE.md`](herdr-app/RECIPE.md): what you see, how it behaves, built from, watch out, done when), a
 `preview.png`, and an optional `extras/statusline-snippet.sh` that feeds cost, tokens and plan limits from Claude
 Code's statusline (without it everything else works). By hand, the README of that repo has the five commands.
 
 - The repo is a copy: this dotfiles repo is where the layout is worked on (`herdr-app/.config/herdr-app/`) and
   where `docs/herdr-app/RECIPE.md` lives. After changing the layout or the mods, copy the files into
-  `~/Projects/lab/herdr-layouts/horde/` (rename nothing; drop `cloned_from` from the JSON files; the layout's
+  `~/Projects/lab/horde/` (the repo root; rename nothing; drop `cloned_from` from the JSON files; the layout's
   `preview` is `layouts/horde.svg`), re-render `preview.png` if the UI changed, and push.
 - The repo's recipe says `Team` where this one's examples use real account names; keep it generic there.
 - Do not put screenshots of the real window in the repo: they show the terminals.
