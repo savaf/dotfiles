@@ -1,0 +1,4 @@
+# La app los genera dentro de cada mod (tipos y jsconfig); no son míos.
+mods/*/gpui-kit.d.ts
+mods/*/jsconfig.json
+mods/*/*.error
