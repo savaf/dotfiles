@@ -119,6 +119,10 @@ A separate program from the TUI: its own window, its own core (`hc`, herdr-core)
 - `board-v` is the daily layout: spaces on the left, a vertical agent board (Pinned, Needs you, Working, Done,
   Settled; folding sections), tabs with working time, cost and tokens. Cost and tokens come from
   `hooks/statusline.sh`, which writes `~/.cache/claude-session-stats/<session>.json` on every refresh.
+- Keyboard on the `board-v` board: `ctrl-shift-a` (bound in `keys.json` under `layout:board-v`) or `alt-h` / `alt-left`
+  from the terminal puts the keyboard on the board. Then `up` / `down` (or `k` / `j`) move, `enter` opens the agent
+  (or folds a section), `left` / `right` fold, `p` pins, `s` settles, `u` undoes the last pin or settle, `/` searches,
+  `escape` returns to the terminal. `alt-up` / `alt-down` (agent.prev / agent.next) follow the board's order.
 - `herdrdev-board` is the `herdrdev/board` layout from herdr.dev in a dark theme (renamed; `board` is mine).
 
 ## Updating herdr
