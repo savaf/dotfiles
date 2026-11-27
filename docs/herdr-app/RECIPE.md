@@ -128,7 +128,8 @@ hard-coded, so it follows light and dark.
 - Pin, settle and snooze are kept in the mod's storage, not on the agents; nothing is written with `hc label`.
 - An account's statusline may carry no `rate_limits` (contracted Enterprise): show spend instead of 5h / 7d.
 - Claude Code's built-in sub-agents are not Herdr sub-agents (those are terminals started with `hc run`).
-- Not tested with real input in the build this recipe came from: the keyboard, the drag, snooze waking on time,
+- Tested with real keys: moving, folding, `enter`, `p`, `s`, `z`, `u`, `/`, `escape`, `alt-h` and `ctrl-shift-a`.
+  Not tested with real input in the build this recipe came from: the drag, snooze waking on time,
   the blocked reason (`status.kind` was read defensively), and a window restart for the working time.
 - Working time can lag up to 15s at the start of a turn; the spend line counts only live sessions.
 
