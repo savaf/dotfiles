@@ -1,8 +1,8 @@
 // Agents as cards in three columns: Needs you, Working, Done (done and idle).
 
 import { View, div, image, svg } from "gpui-kit";
-import { v_flex, h_flex } from "gpui-base";
-import { agents, spaces, run, theme, props, shared } from "herdr";
+import { v_flex, h_flex, InputState, Input } from "gpui-base";
+import { agents, spaces, run, theme, props, shared, setWindowTitle } from "herdr";
 
 const COLUMNS = [
   { id: "blocked", label: "Needs you", match: (s) => s === "blocked" },
@@ -36,6 +36,12 @@ export default class Board extends View {
     if (!Array.isArray(this.pins)) this.pins = [];
     if (!this.settled || typeof this.settled !== "object" || Array.isArray(this.settled)) this.settled = {};
     this.hovered = null;
+    // Search over name, title, branch and program; account chip filters by Claude account.
+    this.query = "";
+    this.account = localStorage.getItem("account") || "";
+    this.title = null;
+    this.search = InputState.new({ placeholder: "Filter agents…" });
+    this.search.on("change", (_e, cx) => { this.query = this.search.value().trim().toLowerCase(); cx.notify(); });
     cx.timer.every(30000, (cx) => cx.notify());
   }
 
@@ -62,12 +68,28 @@ export default class Board extends View {
   }
 
   // The sidebar version: one column, folding sections, a row per agent.
-  vertical(t, list, now) {
+  vertical(t, all, now) {
+    let list = all;
     const seen = (a) => this.changed[a.address]?.at ?? 0;
     const stats = shared("agent.stats") ?? {};
     const bySpace = new Map(spaces().map((sp) => [sp.id, sp]));
+    // The window title carries how many agents need you, visible even when this window is behind others.
+    const needs = all.filter((a) => a.status === "blocked").length;
+    const wanted = needs ? `(${needs}) Herdr` : null;
+    if (wanted !== this.title) { this.title = wanted; setWindowTitle(wanted); }
+    const total = all.length, working = all.filter((a) => a.status === "working").length;
+    const accounts = [...new Set(Object.values(stats).map((v) => v?.account).filter(Boolean))];
+    if (this.account && !accounts.includes(this.account)) this.account = "";
+    const q = this.query;
+    const match = (a) => {
+      if (this.account && stats[a.address]?.account !== this.account) return false;
+      if (!q) return true;
+      const sp = bySpace.get(a.space);
+      return [a.space_name, a.pane_name, a.title, sp?.branch, a.program?.name].some((x) => (x ?? "").toLowerCase().includes(q));
+    };
+    list = list.filter(match);
     // Work or a question brings a settled agent back.
-    for (const a of list) if (this.settled[a.address] && (a.status === "working" || a.status === "blocked")) delete this.settled[a.address];
+    for (const a of all) if (this.settled[a.address] && (a.status === "working" || a.status === "blocked")) delete this.settled[a.address];
     const pinned = list.filter((a) => this.pins.includes(a.address)).sort((x, y) => this.pins.indexOf(x.address) - this.pins.indexOf(y.address));
     const rest = list.filter((a) => !this.pins.includes(a.address));
     const isSettled = (a) => Boolean(this.settled[a.address]) && a.status !== "working" && a.status !== "blocked";
@@ -133,9 +155,21 @@ export default class Board extends View {
     const usageLine = [...usage.entries()].map(([acc, v]) => `${acc} 5h ${v.five}%${v.week !== "" ? ` · 7d ${v.week}%` : ""}`).join("  |  ");
 
     return v_flex().size_full().min_h(0).bg(t.chrome).border_t(1).border_color(t.border)
-      .child(v_flex().px(16).pt(12).pb(2).flex_none().gap(2)
-        .child(div().text_size(11.5).font_medium().text_color(t.dim).child("Agents"))
-        .when(Boolean(usageLine), (el) => el.child(div().truncate().text_size(11).text_color(t.dim).child(usageLine))))
+      .child(v_flex().px(16).pt(12).pb(6).flex_none().gap(6)
+        .child(h_flex().items_center().gap(8)
+          .child(div().text_size(11.5).font_medium().text_color(t.dim).child("Agents"))
+          .child(div().flex_1())
+          .child(div().text_size(11).text_color(t.dim).child(`${total} · ${working} working${needs ? ` · ${needs} need you` : ""}`)))
+        .when(Boolean(usageLine), (el) => el.child(div().truncate().text_size(11).text_color(t.dim).child(usageLine)))
+        .when(accounts.length > 1, (el) => el.child(h_flex().gap(6).children(["", ...accounts].map((acc) => {
+          const on = this.account === acc;
+          return div().id(`acct-${acc || "all"}`).px(8).h(22).flex().items_center().rounded(11).text_size(11)
+            .bg(on ? t.selected : t.hover).text_color(on ? t.foreground : t.muted).cursor_pointer()
+            .on_click((_e, cx) => { this.account = acc; localStorage.setItem("account", acc); cx.notify(); })
+            .child(acc || "All");
+        }))))
+        .child(h_flex().h(28).px(8).items_center().rounded(6).bg(t.hover)
+          .child(Input.new(this.search).flex_1().h_full().text_size(12).text_color(t.foreground))))
       .child(v_flex().id("vboard").flex_1().min_h(0).px(8).pb(8).gap(4).overflow_y_scrollbar().children(groups.flatMap((g) => {
         if (g.id === "pinned" && g.items.length === 0) return [];
         if (g.id === "settled" && g.items.length === 0) return [];
