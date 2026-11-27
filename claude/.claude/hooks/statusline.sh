@@ -105,4 +105,16 @@ if [[ -n "${rl_pct}" ]]; then
 fi
 [[ -n "${rl7_pct}" ]] && out="${out} ${grey}7d ${rl7_pct}%${reset}"
 
+# Coste, tokens y límites de la cuenta, por session_id, para los mods de herdr-app.
+# Es mejor esfuerzo: si falla, la línea de estado sigue igual.
+sid="$(get '.session_id')"
+if [[ -n "${sid}" ]]; then
+  stats_dir="${XDG_CACHE_HOME:-${HOME}/.cache}/claude-session-stats"
+  if mkdir -p "${stats_dir}" 2>/dev/null; then
+    printf '%s' "${input}" | jq -c --arg account "${account:-}" --arg five "${rl_pct:-}" --arg week "${rl7_pct:-}" --arg reset "${rl_reset:-}" \
+      '{cost: (.cost.total_cost_usd // 0), input: (.context_window.total_input_tokens // 0), output: (.context_window.total_output_tokens // 0), account: $account, five: $five, week: $week, reset: $reset}' \
+      >"${stats_dir}/${sid}.tmp" 2>/dev/null && mv -f "${stats_dir}/${sid}.tmp" "${stats_dir}/${sid}.json" 2>/dev/null
+  fi
+fi
+
 printf '%b\n' "${out}"

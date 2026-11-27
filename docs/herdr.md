@@ -110,6 +110,14 @@ A separate program from the TUI: its own window, its own core (`hc`, herdr-core)
 - Move a TUI agent over: `herdr-app do space.new --name <n> --folder <cwd> --argv '["env","CLAUDE_CONFIG_DIR=<home>","claude","--resume","<session-id>"]'`.
   The session id comes from `herdr agent list` (`agent_session.value`). Account homes share `projects/`, so no copy is needed.
 - Agent instructions for both live in the Home Repo's `AGENTS.md`.
+- My layouts and mods live in the `herdr-app` stow package, file by file: `layouts/board*.json`,
+  `mods/board`, `mods/tabs-stats`, `mods/herdrdev-board`. The folder `~/.config/herdr-app` itself is not
+  stowed: the app rewrites its shipped mods and layouts at every start and owns `settings.json` and its state,
+  so only my own files are linked. Edit them through the symlinks; the window reloads on save.
+- `board-v` is the daily layout: spaces on the left, a vertical agent board (Pinned, Needs you, Working, Done,
+  Settled; folding sections), tabs with working time, cost and tokens. Cost and tokens come from
+  `hooks/statusline.sh`, which writes `~/.cache/claude-session-stats/<session>.json` on every refresh.
+- `herdrdev-board` is the `herdrdev/board` layout from herdr.dev in a dark theme (renamed; `board` is mine).
 
 ## Updating herdr
 
