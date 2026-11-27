@@ -5,6 +5,8 @@
 # (solo-macOS), docker-desktop (Omarchy trae docker+lazydocker).
 # Como webapp (ver omarchy-webapps.txt): discord, whatsapp, slack, telegram,
 # teams, outlook.
+# Herdr (app de escritorio) no está en pacman/AUR ni en mise: lo instala ensure_herdr_app
+# (scripts/modules/herdr.sh) con el instalador oficial. Igual en macOS (no hay cask).
 brave-bin
 google-chrome
 visual-studio-code-bin

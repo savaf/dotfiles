@@ -128,7 +128,7 @@ Or link packages manually:
 
 ```sh
 cd ~/dotfiles
-stow --no-folding zsh bash git starship nvim tmux herdr shell lazygit claude mise   # link everything
+stow --no-folding zsh bash git starship nvim tmux herdr herdr-app shell lazygit claude mise   # link everything
 stow --no-folding omarchy                                             # Omarchy only
 stow --no-folding nvim                                                # just one package
 stow -D nvim                                                          # unlink
@@ -156,7 +156,7 @@ Find every package file that is no longer a link to the repo:
 
 ```sh
 cd ~/dotfiles
-for pkg in zsh bash git starship nvim tmux herdr shell lazygit claude mise omarchy; do
+for pkg in zsh bash git starship nvim tmux herdr herdr-app shell lazygit claude mise omarchy; do
   [ -d "$pkg" ] || continue
   find "$pkg" -type f | while read -r f; do
     t="$HOME/${f#$pkg/}"

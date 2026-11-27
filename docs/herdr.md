@@ -105,6 +105,26 @@ A separate program from the TUI: its own window, its own core (`hc`, herdr-core)
 | Agents (prompt, wait, read) | `herdr agent …` | `hc …` |
 | Detect from an agent | `HERDR_ENV=1` | `HC_TERMINAL_ID` |
 
+### Install and restore on a new machine
+
+1. `scripts/bootstrap.sh` does it all. `ensure_herdr_app` (`scripts/modules/herdr.sh`) runs the official
+   installer, `curl -fsSL https://releases.herdr.dev/app/install.sh | sh`: the app goes to
+   `~/.local/share/herdr-app` (Linux) or `~/Applications/Herdr.app` (macOS), with the launcher entry, the icon
+   and herdr-core (`hc`) if missing. Running it again updates the app; the app also updates itself.
+   It is skipped on WSL and on systems without a build. By hand: run that line.
+2. Not through mise: the registry's `herdr` is only the TUI (`aqua:herdrdev/herdr`), and the app and the core
+   publish no GitHub releases. There is no pacman, AUR or brew package either, so it is not in
+   `packages/*.txt`; `packages/arch-apps.txt` carries a comment that points here.
+3. `stow_packages` links the `herdr-app` package into `~/.config/herdr-app` (my layouts and mods, see below).
+4. `ensure_herdr_app_keys` adds `ctrl-shift-a` under `layout:board-v` in `~/.config/herdr-app/keys.json`
+   (the user's file, not stowed; it needs the app to have run once, else it is skipped until the next run).
+5. Open the app once and pick the `board-v` layout (`ctrl-shift-l` cycles, or Settings > Look).
+6. Statusline numbers (cost, tokens, account limits) need `hooks/statusline.sh`, stowed with the `claude` package.
+7. Base spaces and agent instructions live in the Home Repo: `scripts/herdr-app-spaces.sh`, `AGENTS.md`.
+8. Check: `herdr-app status` (no `errors`), `herdr-app check ~/.config/herdr-app/mods/board`, `scripts/test-herdr-app.sh`.
+
+### Notes
+
 - `hw` is TUI-only; the app does not need it.
 - Base spaces: `scripts/herdr-app-spaces.sh` in the Home Repo creates one space per base repo.
 - Move a TUI agent over: `herdr-app do space.new --name <n> --folder <cwd> --argv '["env","CLAUDE_CONFIG_DIR=<home>","claude","--resume","<session-id>"]'`.
@@ -124,6 +144,31 @@ A separate program from the TUI: its own window, its own core (`hc`, herdr-core)
   (or folds a section), `left` / `right` fold, `p` pins, `s` settles, `u` undoes the last pin or settle, `/` searches,
   `escape` returns to the terminal. `alt-up` / `alt-down` (agent.prev / agent.next) follow the board's order.
 - `herdrdev-board` is the `herdrdev/board` layout from herdr.dev in a dark theme (renamed; `board` is mine).
+  Installed from its recipe (herdr.dev/layouts/herdrdev/board); the T3 layout (`JinJieBeWater/herdr-t3`) was not:
+  it targets macOS, writes labels onto agents with `hc label` and rewrites its own JSON.
+
+### The `board-v` board
+
+- **Sections:** Pinned, Needs you, Working, Done (finished, not looked at yet), Idle (quiet; folded by default) and
+  Settled (put away; folded). Headers fold on click or key. The fold state, pins and settled agents are kept in the
+  mod's own `localStorage`, not on the agents; a settled agent comes back by itself when it works or needs you.
+- **Rows:** space, title, branch with a `worktree` tag when the folder is under `~/.herdr/worktrees`, cost, tokens,
+  `ctx %`, and time in the current state. Blocked rows say why (`Approval`, `Input`, `Failed`, else `Needs you`;
+  the field is read defensively and was not tested with a real blocked agent). Hover shows pin and settle.
+- **Header:** totals, one usage line per account (Pro: 5h and 7d limits; contracted Enterprise: no counters, so
+  the spend and live sessions), account chips (All, URBN, Personal) and a search over name, title, branch and
+  program. The window title carries `(N) Herdr` while N agents need you. Sound and toast alerts come from
+  Settings > Alerts.
+- **Tabs (`tabs-stats`):** working time, cost and tokens per tab, plus the Files and Changes panel buttons
+  (always on: the welcome flow left `workspace.panels` empty, which hid them).
+- **Data:** `hooks/statusline.sh` writes cost, tokens, `ctx`, model, lines, account and limits per session to
+  `~/.cache/claude-session-stats/<session>.json`; `tabs-stats` maps terminal to claude pid to session
+  (`~/.claude/sessions/<pid>.json`, any account home) and shares it as `shared("agent.stats")`.
+  Only Claude Code agents report; other programs show no numbers.
+- **Account types:** the URBN account is Claude Enterprise (contracted billing, extra usage on), the personal one
+  is Pro. Org-wide spend is not available from the CLI; it lives in the admin console.
+- **Limits:** the working time starts when the app first sees `working` and resets on restart; the spend line
+  counts only live sessions; the board has no sub-agent tree and pins cannot be dragged.
 
 ## Updating herdr
 
