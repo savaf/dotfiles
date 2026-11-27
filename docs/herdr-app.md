@@ -168,10 +168,10 @@ Code's statusline (without it everything else works). By hand, the README of tha
 ## Agents and the app
 
 - A single agent (the Home agent) opens the rest. The rules, the detection by `HC_TERMINAL_ID` and the commands
-  live in the Home Repo's `AGENTS.md`: `herdr-app do space.new … --argv '["claude"]' --task "…"` to open one,
-  `hc wait`, `hc read`, `hc send` to follow it. URBN repos use the `urbn` account through `CLAUDE_CONFIG_DIR`.
+  live in the Home Repo's `AGENTS.md`: `herdr-app do space.new … --argv '["claude-9r"]' --task "…"` to open one,
+  `hc wait`, `hc read`, `hc send` to follow it. `claude-9r` runs Claude Code against 9router.
 - One worktree per issue, in `~/.herdr/worktrees/<repo>/<slug>`; the base spaces are for reading only.
-- Move a TUI agent over: `herdr-app do space.new --name <n> --folder <cwd> --argv '["env","CLAUDE_CONFIG_DIR=<home>","claude","--resume","<session-id>"]'`.
+- Move a TUI agent over: `herdr-app do space.new --name <n> --folder <cwd> --argv '["claude-9r","--resume","<session-id>"]'`.
   The session id comes from `herdr agent list` (`agent_session.value`). Account homes share `projects/`, so no
   copy is needed.
 
@@ -182,7 +182,7 @@ herdr-app ls                         # spaces > tabs > terminals, with agent sta
 herdr-app status                     # layout, focus, errors from mods and layouts
 herdr-app commands                   # every command and its arguments
 herdr-app do layout.switch --name horde
-herdr-app do space.new --name <n> --folder <dir> --argv '["claude"]' --task "<task>" --focus false
+herdr-app do space.new --name <n> --folder <dir> --argv '["claude-9r"]' --task "<task>" --focus false
 herdr-app check <mod folder>         # load a mod once and report errors
 herdr-app shot <file.png>            # save the current window (it shows your terminals: do not commit it)
 hc ls                                # every live terminal; hc get <t> for one (pid, status_ms, parent)
