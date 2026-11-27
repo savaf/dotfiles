@@ -2,7 +2,7 @@
 # Instala GNU stow si falta y enlaza los paquetes de config en $HOME.
 
 # Config packages that get symlinked into $HOME via stow.
-STOW_PACKAGES=(zsh bash git starship nvim tmux herdr shell lazygit claude mise ssh)
+STOW_PACKAGES=(zsh bash git starship nvim tmux herdr herdr-app shell lazygit claude mise ssh)
 
 ensure_stow() {
   exists stow && return 0
