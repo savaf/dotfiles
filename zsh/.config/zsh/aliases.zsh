@@ -114,3 +114,8 @@ alias ptree="eza --tree -L 2 -I 'node_modules|.git|dist'"
 # settings.json arranca en sonnet; `cco` sube a Opus ya desde el arranque, para
 # arquitectura o debugging difícil (ver docs/claude-code.md).
 alias cco='claude --model opus'
+
+# `claude` va contra 9router (https://9router.savaf.cloud) si existe el lanzador
+# local ~/.local/bin/claude-9r (la clave vive en ~/.config/9router.env, fuera del repo).
+# `command claude` salta el alias.
+[[ -x ~/.local/bin/claude-9r ]] && alias claude='claude-9r'
