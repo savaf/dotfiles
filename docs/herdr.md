@@ -141,7 +141,8 @@ A separate program from the TUI: its own window, its own core (`hc`, herdr-core)
   `hooks/statusline.sh`, which writes `~/.cache/claude-session-stats/<session>.json` on every refresh.
 - Keyboard on the `board-v` board: `ctrl-shift-a` (bound in `keys.json` under `layout:board-v`) or `alt-h` / `alt-left`
   from the terminal puts the keyboard on the board. Then `up` / `down` (or `k` / `j`) move, `enter` opens the agent
-  (or folds a section), `left` / `right` fold, `p` pins, `s` settles, `u` undoes the last pin or settle, `/` searches,
+  (or folds a section), `left` / `right` fold, `p` pins, `s` settles, `z` snoozes for 1h (`shift+z` for 4h; again to
+  wake), `u` undoes the last pin, settle or snooze, `/` searches,
   `escape` returns to the terminal. `alt-up` / `alt-down` (agent.prev / agent.next) follow the board's order.
 - `herdrdev-board` is the `herdrdev/board` layout from herdr.dev in a dark theme (renamed; `board` is mine).
   Installed from its recipe (herdr.dev/layouts/herdrdev/board); the T3 layout (`JinJieBeWater/herdr-t3`) was not:
@@ -173,9 +174,15 @@ A separate program from the TUI: its own window, its own core (`hc`, herdr-core)
   (looking at a finished agent changes its status, so core's stamp would restart the clock).
 - **Sub-agents:** a row with live children shows a chevron and their count; the children (programs and agents it
   started, nested with tree lines) fold under it. They come from core's parent link (`parent` on each terminal),
-  so they are what an agent starts with `hc run`; click focuses an agent or peeks a plain program. Claude Code's own
-  sub-agents (the Agent tool) are not there: the tracked hook only reports `SessionStart`, so the app never sees
-  them (`sub_agents` stays empty). Tested with a real child terminal, not with a Claude sub-agent.
+  so they are what an agent starts with `hc run`; click focuses an agent or peeks a plain program. That is
+  herdr's own definition (`~/.config/herdr-app/AGENTS.md`: sub-agents are terminals an agent started with
+  `hc run`), so Claude Code's built-in sub-agents (the Agent tool) are not herdr sub-agents and never show
+  there (`sub_agents` stays empty); there is no hook to fix. Agents the Home agent opens with
+  `herdr-app do space.new` are separate spaces, not children; `hc run --bg` would make them children.
+  Tested with a real child terminal, not with a Claude sub-agent.
+- **Snooze and Settle all:** `z` or the clock button hides a finished agent for an hour in a Snoozed section;
+  it comes back at that time (with a notification), or at once if it works or needs you. Done and Idle headers
+  have a Settle all button. Both live in the mod's own storage and `u` undoes them.
 - **Reordering pins:** press on a pinned row, move over another one and release; a line shows where it will land
   and `u` undoes it. The target comes from the measured row heights and the pointer position in the Pinned list.
   Not tested with a real drag (nothing here can press a mouse button); the Pinned list itself was checked.

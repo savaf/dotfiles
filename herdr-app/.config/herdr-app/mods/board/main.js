@@ -2,7 +2,7 @@
 
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex, InputState, Input } from "gpui-base";
-import { agents, spaces, terminals, run, theme, props, shared, settings, setWindowTitle, setAgentOrder, nextCommand } from "herdr";
+import { agents, spaces, terminals, run, theme, props, shared, settings, notify, setWindowTitle, setAgentOrder, nextCommand } from "herdr";
 
 const COLUMNS = [
   { id: "blocked", label: "Needs you", match: (s) => s === "blocked" },
@@ -51,6 +51,9 @@ export default class Board extends View {
     // and come back by themselves when the agent works or needs you again.
     try { this.pins = JSON.parse(localStorage.getItem("pins") ?? "[]"); } catch { this.pins = []; }
     try { this.settled = JSON.parse(localStorage.getItem("settled") ?? "{}"); } catch { this.settled = {}; }
+    // Snoozed: finished agents hidden until a time (ms); back sooner if they work or need you.
+    try { this.snoozed = JSON.parse(localStorage.getItem("snoozed") ?? "{}"); } catch { this.snoozed = {}; }
+    if (!this.snoozed || typeof this.snoozed !== "object" || Array.isArray(this.snoozed)) this.snoozed = {};
     if (!Array.isArray(this.pins)) this.pins = [];
     if (!this.settled || typeof this.settled !== "object" || Array.isArray(this.settled)) this.settled = {};
     this.hovered = null;
@@ -100,7 +103,7 @@ export default class Board extends View {
 
 
   snapshot() {
-    return { pins: [...this.pins], settled: { ...this.settled } };
+    return { pins: [...this.pins], settled: { ...this.settled }, snoozed: { ...this.snoozed } };
   }
 
   // One handler for every key the focused board understands.
@@ -140,14 +143,27 @@ export default class Board extends View {
       if (k === "p") {
         const on = this.pins.includes(a.address);
         this.pins = on ? this.pins.filter((x) => x !== a.address) : [...this.pins, a.address];
-        if (!on) delete this.settled[a.address];
+        if (!on) { delete this.settled[a.address]; delete this.snoozed[a.address]; }
       } else if (this.settled[a.address]) delete this.settled[a.address];
-      else { this.settled[a.address] = true; this.pins = this.pins.filter((x) => x !== a.address); }
+      else { this.settled[a.address] = true; delete this.snoozed[a.address]; this.pins = this.pins.filter((x) => x !== a.address); }
+      this.save();
+      cx.notify();
+    } else if ((k === "z" || k === "Z") && cur?.kind === "row") {
+      const a = cur.a;
+      if (a.status === "working" || a.status === "blocked") return;
+      this.undo = this.snapshot();
+      if (this.snoozed[a.address]) delete this.snoozed[a.address];
+      else {
+        this.snoozed[a.address] = Date.now() + (e.modifiers.shift || k === "Z" ? 4 : 1) * 3600000;
+        delete this.settled[a.address];
+        this.pins = this.pins.filter((x) => x !== a.address);
+      }
       this.save();
       cx.notify();
     } else if (k === "u" && this.undo) {
       this.pins = this.undo.pins;
       this.settled = this.undo.settled;
+      this.snoozed = this.undo.snoozed ?? {};
       this.undo = null;
       this.save();
       cx.notify();
@@ -158,6 +174,7 @@ export default class Board extends View {
   save() {
     localStorage.setItem("pins", JSON.stringify(this.pins));
     localStorage.setItem("settled", JSON.stringify(this.settled));
+    localStorage.setItem("snoozed", JSON.stringify(this.snoozed));
     localStorage.setItem("folded2", JSON.stringify([...this.folded]));
   }
 
@@ -184,12 +201,26 @@ export default class Board extends View {
     list = list.filter(match);
     // Work or a question brings a settled agent back.
     for (const a of all) if (this.settled[a.address] && (a.status === "working" || a.status === "blocked")) delete this.settled[a.address];
+    // A snooze ends at its time, or at once when the agent works or needs you; the time ending says so.
+    let woke = false;
+    for (const a of all) {
+      const until = this.snoozed[a.address];
+      if (!until) continue;
+      if (a.status === "working" || a.status === "blocked" || until <= now) {
+        if (until <= now && a.status !== "working" && a.status !== "blocked") notify({ title: "Snooze over", body: a.space_name || a.address, level: "info" });
+        delete this.snoozed[a.address];
+        woke = true;
+      }
+    }
+    if (woke) this.save();
     const pinned = list.filter((a) => this.pins.includes(a.address)).sort((x, y) => this.pins.indexOf(x.address) - this.pins.indexOf(y.address));
     const rest = list.filter((a) => !this.pins.includes(a.address));
     const isSettled = (a) => Boolean(this.settled[a.address]) && a.status !== "working" && a.status !== "blocked";
+    const isSnoozed = (a) => (this.snoozed[a.address] ?? 0) > now && a.status !== "working" && a.status !== "blocked";
     const groups = [
       { id: "pinned", label: "Pinned", color: t.accent, items: pinned },
-      ...VCOLUMNS.map((c) => ({ id: c.id, label: c.label, color: t[c.id] ?? t.dim, items: rest.filter((a) => c.match(a.status) && !((c.id === "done" || c.id === "idle") && isSettled(a))) })),
+      ...VCOLUMNS.map((c) => ({ id: c.id, label: c.label, color: t[c.id] ?? t.dim, items: rest.filter((a) => c.match(a.status) && !((c.id === "done" || c.id === "idle") && (isSettled(a) || isSnoozed(a)))) })),
+      { id: "snoozed", label: "Snoozed", color: t.dim, items: rest.filter(isSnoozed) },
       { id: "settled", label: "Settled", color: t.dim, items: rest.filter(isSettled) },
     ];
     for (const g of groups) if (g.id !== "pinned") g.items.sort((x, y) => seen(y) - seen(x) || y.seq - x.seq);
@@ -284,15 +315,19 @@ export default class Board extends View {
             .when(a.status === "working", (el) => el.child(svg("mods/workspace-chrome/spinner.svg").size(12).flex_none().text_color(t.working).spin(900)))
             .when(Boolean(foldChip), (el) => el.child(foldChip))
             .when(hot, (el) => el
+              .when(done, (el) => el.child(iconBtn(`snooze-${a.address}`, "clock", isSnoozed(a) ? "Wake now" : "Snooze 1h: hide it until then", () => {
+                if (this.snoozed[a.address]) delete this.snoozed[a.address];
+                else { this.snoozed[a.address] = Date.now() + 3600000; delete this.settled[a.address]; this.pins = this.pins.filter((x) => x !== a.address); }
+              })))
               .when(done, (el) => el.child(iconBtn(`settle-${a.address}`, "check", isSettled(a) ? "Bring back" : "Settle: put away until it works again", () => {
-                if (this.settled[a.address]) delete this.settled[a.address]; else { this.settled[a.address] = true; this.pins = this.pins.filter((x) => x !== a.address); }
+                if (this.settled[a.address]) delete this.settled[a.address]; else { this.settled[a.address] = true; delete this.snoozed[a.address]; this.pins = this.pins.filter((x) => x !== a.address); }
               })))
               .child(iconBtn(`pin-${a.address}`, isPinned ? "pin-off" : "pin", isPinned ? "Unpin" : "Pin to the top", () => {
                 this.pins = isPinned ? this.pins.filter((x) => x !== a.address) : [...this.pins, a.address];
-                if (!isPinned) delete this.settled[a.address];
+                if (!isPinned) { delete this.settled[a.address]; delete this.snoozed[a.address]; }
               })))
             .when(!hot && a.status === "blocked", (el) => el.child(div().flex_none().px(6).h(18).flex().items_center().rounded(5).bg(t.blocked + "26").text_size(10.5).font_semibold().text_color(t.blocked).child(needKind(a))))
-            .when(!hot && a.status !== "blocked" && Boolean(since), (el) => el.child(div().flex_none().text_size(11).text_color(t.dim).child(duration(now - since)))))
+            .when(!hot && a.status !== "blocked" && Boolean(since), (el) => el.child(div().flex_none().text_size(11).text_color(t.dim).child(isSnoozed(a) ? `wakes ${duration(this.snoozed[a.address] - now)}` : duration(now - since)))))
           .when(Boolean(detail), (el) => el.child(div().truncate().text_size(11.5).text_color(t.muted).child(detail)))
           .when(Boolean(branch), (el) => el.child(h_flex().gap(5).items_center().text_size(11).text_color(t.dim)
             .child(svg("mods/workspace-chrome/git-branch.svg").size(11).flex_none())
@@ -343,7 +378,17 @@ export default class Board extends View {
           .on_click((_e, cx) => { open ? this.folded.add(g.id) : this.folded.delete(g.id); this.save(); cx.notify(); })
           .child(svg(`mods/workspace-chrome/chevron-${open ? "down" : "right"}.svg`).size(11).flex_none().text_color(t.dim))
           .child(div().text_color(g.color).child(g.label))
-          .child(div().px(6).rounded(8).bg(g.items.length ? g.color + "26" : t.hover).text_color(g.items.length ? g.color : t.dim).child(String(g.items.length)));
+          .child(div().px(6).rounded(8).bg(g.items.length ? g.color + "26" : t.hover).text_color(g.items.length ? g.color : t.dim).child(String(g.items.length)))
+          .child(div().flex_1())
+          .when((g.id === "done" || g.id === "idle") && g.items.length > 0, (el) => el.child(div().id(`settle-all-${g.id}`).flex_none().px(6).h(20).flex().items_center().rounded(5)
+            .text_size(11).font_normal().text_color(t.dim).hover((s) => s.bg(t.hover).text_color(t.foreground)).tooltip(`Settle all ${g.items.length} (u undoes it)`)
+            .on_click((_e, cx) => {
+              cx.stop_propagation();
+              this.undo = this.snapshot();
+              for (const a of g.items) { this.settled[a.address] = true; delete this.snoozed[a.address]; }
+              this.save();
+              cx.notify();
+            }).child("Settle all")));
         if (g.id === "pinned" && open) {
           // The container tracks the pointer while a pinned row is dragged: which row is it over (by the
           // measured heights), and on release move the dragged pin to that place.
