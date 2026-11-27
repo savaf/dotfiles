@@ -65,6 +65,7 @@ export default class Board extends View {
     this.cursor = null;
     this.nav = [];
     this.undo = null;
+    this.kidFold = new Set();
     this.search.on("focus", (_e, cx) => { this.typing = true; cx.notify(); });
     this.search.on("blur", (_e, cx) => { this.typing = false; cx.notify(); });
     if (props()?.vertical) {
@@ -200,7 +201,42 @@ export default class Board extends View {
       .on_click((_e, cx) => { cx.stop_propagation(); this.undo = this.snapshot(); on(); this.save(); cx.notify(); })
       .child(svg(`mods/workspace-chrome/${file}.svg`).size(13));
 
+    // Live children of an agent (programs and agents it started, depth first), with their tree lines.
+    const terms = terminals();
+    const listed = new Set(all.map((a) => a.address));
+    const tree = (addr, lead = []) => terms.filter((k) => k.parent === addr && k.state === "live").flatMap((k, i, arr) => {
+      const last = i === arr.length - 1;
+      return [{ k, lines: [...lead, last ? "└" : "├"] }, ...tree(k.address, [...lead, last ? "" : "│"])];
+    });
+    const wordOf = (k) => {
+      const w = typeof k.status === "string" ? k.status : k.status?.state;
+      return w === "error" ? "blocked" : w === "done" ? "idle" : w;
+    };
+    const kidRow = ({ k, lines }) => {
+      const w = wordOf(k);
+      const pic = k.program?.icon
+        ? (k.program.tint ? svg(k.program.icon).size(12).flex_none().text_color(t.muted) : image(k.program.icon).w(12).h(12).flex_none())
+        : null;
+      return h_flex().id(`kid-${k.address}`).flex_none().h(24).pl(24).pr(8).gap(6).rounded(6).items_center().text_size(12)
+        .cursor_pointer().hover((s) => s.bg(t.hover))
+        .on_click(() => (listed.has(k.address) ? run("pane.focus", { terminal: k.address }) : run("terminal.peek", { terminal: k.address })))
+        .children(lines.map((l) => div().self_start().mt(-4).w(9).h(16).flex_none()
+          .when(Boolean(l), (el) => el.border_l(1.5).border_color(t.input))
+          .when(l === "└" || l === "├", (el) => el.border_b(1.5).rounded_bl(6))))
+        .when(Boolean(pic), (el) => el.child(pic))
+        .child(div().flex_1().min_w(0).truncate().text_color(t.muted).child(k.name || k.template || k.program?.name || k.agent || k.address))
+        .when(w === "working", (el) => el.child(svg("mods/workspace-chrome/spinner.svg").size(11).flex_none().text_color(t.working).spin(900)))
+        .when(w === "blocked", (el) => el.child(div().size(6).flex_none().rounded(3).bg(t.blocked)));
+    };
+
     const row = (a, g) => {
+      const kids = tree(a.address);
+      const kidsOpen = !this.kidFold.has(a.address);
+      const foldChip = kids.length ? div().id(`kids-${a.address}`).flex_none().px(4).h(18).flex().items_center().gap(3).rounded(4)
+        .text_size(11).text_color(t.dim).hover((s) => s.bg(t.hover).text_color(t.foreground)).tooltip(kidsOpen ? "Hide sub-agents" : "Show sub-agents")
+        .on_click((_e, cx) => { cx.stop_propagation(); kidsOpen ? this.kidFold.add(a.address) : this.kidFold.delete(a.address); cx.notify(); })
+        .child(svg(`mods/workspace-chrome/chevron-${kidsOpen ? "down" : "right"}.svg`).size(10).flex_none())
+        .child(String(kids.length)) : null;
       const pic = a.program?.icon
         ? (a.program.tint ? svg(a.program.icon).size(14).flex_none().text_color(t.muted) : image(a.program.icon).w(14).h(14).flex_none())
         : null;
@@ -222,7 +258,7 @@ export default class Board extends View {
       const key = `row:${a.address}`;
       nav.push({ key, kind: "row", a });
       const cursor = focused && this.cursor === key;
-      return h_flex().id(`vrow-${a.address}`).flex_none().px(10).py(8).gap(9).rounded(8).items_start()
+      const rowEl = h_flex().id(`vrow-${a.address}`).flex_none().px(10).py(8).gap(9).rounded(8).items_start()
         .bg(a.focused ? t.selected : t.chrome)
         .border_l(3).border_color(g.color)
         .when(cursor, (el) => el.bg(t.raised).border_t(1).border_b(1).border_r(1).border_color(t.accent))
@@ -234,6 +270,7 @@ export default class Board extends View {
           .child(h_flex().gap(6).items_center()
             .child(div().flex_1().min_w(0).truncate().text_size(13).font_semibold().text_color(t.foreground).child(a.space_name || a.program?.name || a.address))
             .when(a.status === "working", (el) => el.child(svg("mods/workspace-chrome/spinner.svg").size(12).flex_none().text_color(t.working).spin(900)))
+            .when(Boolean(foldChip), (el) => el.child(foldChip))
             .when(hot, (el) => el
               .when(done, (el) => el.child(iconBtn(`settle-${a.address}`, "check", isSettled(a) ? "Bring back" : "Settle: put away until it works again", () => {
                 if (this.settled[a.address]) delete this.settled[a.address]; else { this.settled[a.address] = true; this.pins = this.pins.filter((x) => x !== a.address); }
@@ -250,6 +287,7 @@ export default class Board extends View {
             .child(div().min_w(0).truncate().child(branch))
             .when(worktree, (el) => el.child(div().flex_none().px(5).rounded(4).bg(t.hover).child("worktree")))))
           .when(bits.length > 0, (el) => el.child(div().text_size(11).text_color(t.dim).child(bits.join(" · ")))));
+      return kids.length ? v_flex().flex_none().gap(2).child(rowEl).children(kidsOpen ? kids.map(kidRow) : []) : rowEl;
     };
 
     // Per account: plan limits when the account exposes them (Pro), else what the live sessions spent
