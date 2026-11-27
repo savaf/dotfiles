@@ -191,7 +191,9 @@ hc wait <t>   hc read --lines 100 <t>   hc send <t> "<text>"
 
 ## Known limits and what was not tested
 
-- Not tested with real input: the keyboard on the board, dragging pins, snooze waking by time, the reason shown on
+- Tested with real keys (see Testing the keyboard): moving, folding, `enter`, `p`, `s`, `z`, `shift+z`, `u`, `/`,
+  `escape`, `home` / `end`, `alt-h` and `ctrl-shift-a`.
+- Not tested with real input: dragging pins, snooze waking by time, the reason shown on
   blocked rows (`Approval`, `Input`, `Failed`), a window restart for the exact working time, and the real installer
   (`scripts/test-herdr-app.sh` uses a fake `curl`).
 - Working time can lag up to 15s at the start of a turn; Done and Idle rows time from when the window first saw
@@ -199,6 +201,25 @@ hc wait <t>   hc read --lines 100 <t>   hc send <t> "<text>"
 - The keyboard does not walk into children rows, and there is no keyboard way to reorder pins.
 - Left out on purpose from the T3 layout: a Home page after settling, Clean up and Review (the Changes panel covers
   the essentials).
+
+## Testing the keyboard
+
+On Hyprland the board's keys can be tested for real, with no one at the keyboard. Give the board the keyboard, then
+send keys to the app window; check the result in the mod's storage (`~/.config/herdr-app/data/horde-board/`) or with
+`herdr-app shot`:
+
+```sh
+herdr-app do horde-board.focus
+send() { hyprctl eval "hl.dispatch(hl.dsp.send_shortcut({ mods = \"${2:-}\", key = \"$1\", window = \"class:herdr-app\" }))"; }
+send Down            # a harmless first key: the cursor ring should appear on the first header
+send p               # pin; send z SHIFT for shift+z; send a "CTRL SHIFT" for ctrl-shift-a
+```
+
+- Keys go to whatever has the keyboard: if the board does not, they land in an agent's terminal. Start with `Down`
+  and look before sending letters or `Enter`; after `Enter` or `Escape` the keyboard is in a terminal.
+- Back up the store first and restore it after (copy it back, then switch layout and back): pins, settled and
+  snoozed persist. The account chip is the user's choice, so leave it alone.
+- Hyprland 0.56 uses Lua dispatchers (`hyprctl eval`); older versions take `hyprctl dispatch sendshortcut`.
 
 ## Troubleshooting
 

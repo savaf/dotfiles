@@ -1,8 +1,8 @@
 // Agents as cards in three columns: Needs you, Working, Done (done and idle).
 
 import { View, div, image, svg } from "gpui-kit";
-import { v_flex, h_flex, InputState, Input } from "gpui-base";
-import { agents, spaces, terminals, run, theme, props, shared, settings, notify, setWindowTitle, setAgentOrder, nextCommand } from "herdr";
+import { v_flex, h_flex, InputState, Input, ScrollHandle } from "gpui-base";
+import { agents, spaces, panes, terminals, run, theme, props, shared, settings, notify, setWindowTitle, setAgentOrder, nextCommand } from "herdr";
 
 const COLUMNS = [
   { id: "blocked", label: "Needs you", match: (s) => s === "blocked" },
@@ -69,6 +69,11 @@ export default class Board extends View {
     this.nav = [];
     this.undo = null;
     this.kidFold = new Set();
+    // The list scrolls to the cursor; cursorIndex keeps its place when its row moves out of sight;
+    // shownPane is where Escape sends the keyboard (the agent being shown).
+    this.scroll = ScrollHandle.new();
+    this.cursorIndex = 0;
+    this.shownPane = null;
     // Dragging a pinned row: which one, and the row it is over. rowH: measured height of each row (px).
     this.drag = null;
     this.rowH = {};
@@ -116,7 +121,15 @@ export default class Board extends View {
     const k = e.key;
     const nav = this.nav;
     let i = nav.findIndex((n) => n.key === this.cursor);
-    const go = (to) => { this.cursor = nav[to]?.key ?? null; cx.notify(); };
+    if (i >= 0) this.cursorIndex = i;
+    const go = (to) => {
+      this.cursor = nav[to]?.key ?? null;
+      this.cursorIndex = to;
+      if (nav[to]?.child != null) this.scroll.scroll_to_item(nav[to].child);
+      cx.notify();
+    };
+    // The keyboard has left the board: redraw once focus has moved so the cursor ring goes away.
+    const left = () => cx.timer.after(250, (cx) => cx.notify());
     const cur = nav[i];
     const fold = (id, open) => {
       open ? this.folded.delete(id) : this.folded.add(id);
@@ -131,7 +144,7 @@ export default class Board extends View {
     else if (k === "enter" || k === "space" || k === " ") {
       if (!cur) return;
       if (cur.kind === "head") fold(cur.id, this.folded.has(cur.id));
-      else run("pane.focus", { pane: cur.a.pane });
+      else { run("pane.focus", { pane: cur.a.pane }); left(); }
     } else if (k === "right" && cur?.kind === "head") fold(cur.id, true);
     else if (k === "left") {
       if (cur?.kind === "head") fold(cur.id, false);
@@ -168,7 +181,12 @@ export default class Board extends View {
       this.save();
       cx.notify();
     } else if (k === "/") { this.search.focus(); }
-    else if (k === "escape") { run("pane.go", { direction: "right" }); }
+    else if (k === "escape") {
+      // pane.go does nothing from a layout block: focus the pane of the agent being shown instead.
+      if (this.shownPane) run("pane.focus", { pane: this.shownPane });
+      else run("pane.go", { direction: "right" });
+      left();
+    }
   }
 
   save() {
@@ -179,7 +197,7 @@ export default class Board extends View {
   }
 
   // The sidebar version: one column, folding sections, a row per agent.
-  vertical(t, all, now) {
+  vertical(t, all, now, cx) {
     let list = all;
     const seen = (a) => this.changed[a.address]?.at ?? 0;
     const stats = shared("agent.stats") ?? {};
@@ -228,6 +246,11 @@ export default class Board extends View {
     // alt-up / alt-down (agent.prev / agent.next) walk the board top to bottom.
     setAgentOrder(groups.flatMap((g) => g.items.map((a) => a.address)));
     const nav = [];
+    // childCount numbers the direct children of the list, so the keyboard can scroll to a row.
+    let childCount = 0;
+    // With the keyboard on this block no agent is focused, so the shown pane comes from the active tab.
+    const shownTab = spaces().find((s) => s.active)?.tabs.find((tb) => tb.active);
+    this.shownPane = panes().find((p) => p.tab === shownTab?.id && p.terminal)?.pane ?? null;
     const focused = Boolean(this.handle?.is_focused());
 
     const iconBtn = (id, file, tip, on) => div().id(id).flex_none().p(3).rounded(5).text_color(t.dim).cursor_pointer()
@@ -290,7 +313,7 @@ export default class Board extends View {
       const done = a.status !== "working" && a.status !== "blocked";
       const hot = this.hovered === a.address;
       const key = `row:${a.address}`;
-      nav.push({ key, kind: "row", a });
+      nav.push({ key, kind: "row", a, child: g.id === "pinned" ? this.pinChild : childCount++ });
       const cursor = focused && this.cursor === key;
       // Pinned rows can be dragged to reorder: press on one, move over another, release.
       const pinnedRow = g.id === "pinned";
@@ -367,11 +390,11 @@ export default class Board extends View {
         }))))
         .child(h_flex().h(28).px(8).items_center().rounded(6).bg(t.hover)
           .child(Input.new(this.search).flex_1().h_full().text_size(12).text_color(t.foreground))))
-      .child(v_flex().id("vboard").flex_1().min_h(0).px(8).pb(8).gap(4).overflow_y_scrollbar().children(groups.flatMap((g) => {
+      .child(v_flex().id("vboard").flex_1().min_h(0).px(8).pb(8).gap(4).overflow_y_scrollbar().track_scroll(this.scroll).children(groups.flatMap((g) => {
         if (g.id === "pinned" && g.items.length === 0) return [];
-        if (g.id === "settled" && g.items.length === 0) return [];
+        if ((g.id === "settled" || g.id === "snoozed") && g.items.length === 0) return [];
         const open = !this.folded.has(g.id);
-        nav.push({ key: `head:${g.id}`, kind: "head", id: g.id });
+        nav.push({ key: `head:${g.id}`, kind: "head", id: g.id, child: childCount++ });
         const header = h_flex().id(`vhead-${g.id}`).px(8).mt(6).h(30).flex_none().gap(6).items_center().rounded(6)
           .text_size(11.5).font_medium().cursor_pointer().hover((s) => s.bg(t.hover))
           .when(focused && this.cursor === `head:${g.id}`, (el) => el.bg(t.raised).border(1).border_color(t.accent))
@@ -393,6 +416,7 @@ export default class Board extends View {
           // The container tracks the pointer while a pinned row is dragged: which row is it over (by the
           // measured heights), and on release move the dragged pin to that place.
           const order = g.items.map((a) => a.address);
+          this.pinChild = childCount++;
           return [header, v_flex().id("pinned-list").flex_none().gap(4)
             .on_window_mouse_move((e, cx) => {
               if (!this.drag) return;
@@ -421,9 +445,23 @@ export default class Board extends View {
             })
             .children(g.items.map((a) => row(a, g)))];
         }
-        return [header, ...(!open ? [] : g.items.length ? g.items.map((a) => row(a, g)) : [div().px(26).py(4).text_size(11.5).text_color(t.dim).child("Nothing here")])];
+        return [header, ...(!open ? [] : g.items.length ? g.items.map((a) => row(a, g)) : (childCount++, [div().px(26).py(4).text_size(11.5).text_color(t.dim).child("Nothing here")]))];
       })));
     this.nav = nav;
+    // A row can leave the list under the cursor (settled into a folded section, filtered out):
+    // the cursor stays at the same place in the list instead of getting lost.
+    if (this.cursor && !nav.some((n) => n.key === this.cursor)) {
+      // Prefer the nearest row (at the same place or after it, else before it) over a header,
+      // then redraw once so the ring shows on it.
+      const at = Math.min(this.cursorIndex ?? 0, nav.length - 1);
+      let pick = null;
+      for (let d = 0; d < nav.length && !pick; d++) {
+        pick = [at + d, at - d].map((j) => nav[j]).find((n) => n?.kind === "row") ?? null;
+      }
+      this.cursor = (pick ?? nav[at])?.key ?? null;
+      this.cursorIndex = Math.max(0, nav.findIndex((n) => n.key === this.cursor));
+      if (this.cursor) cx.timer.after(0, (cx) => cx.notify());
+    }
     if (this.handle) root.track_focus(this.handle).on_key_down((e, cx) => this.onKey(e, cx));
     return root;
   }
@@ -458,12 +496,12 @@ export default class Board extends View {
         .when(Boolean(since), (el) => el.child(div().child(duration(now - since)))));
   }
 
-  render(_cx) {
+  render(cx) {
     const t = theme();
     const list = agents();
     const now = Date.now();
     this.track(list, now);
-    if (props()?.vertical) return this.vertical(t, list, now);
+    if (props()?.vertical) return this.vertical(t, list, now, cx);
     // Newest change first inside each column.
     const seen = (a) => this.changed[a.address]?.at ?? 0;
     return h_flex().size_full().bg(t.canvas).p(10).gap(10).children(COLUMNS.map((col) => {
