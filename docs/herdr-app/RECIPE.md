@@ -1,13 +1,13 @@
-# Board V
+# Horde
 
 A Herdr layout for people who run many agents: spaces on the left, and under them a vertical agent board in
 folding sections (Pinned, Needs you, Working, Done, Idle, Snoozed, Settled) where each row shows the branch, cost,
 tokens and time in its state. Tabs on top show how long each agent has been working and what it costs. Click a row
 and its terminals fill the workspace; the keyboard can drive the whole board.
 
-![Board V](preview.svg)
+![Horde](preview.svg)
 
-This file is the brief: enough to build Board V from an empty folder. The files that came with it are one build of
+This file is the brief: enough to build Horde from an empty folder. The files that came with it are one build of
 it. If they do not work on your Herdr, or you want it different, build it again from here. Read
 `~/.config/herdr-app/AGENTS.md` first: it is the manual for layouts and mods.
 
@@ -17,11 +17,11 @@ Two columns, left to right, filling the window (no system title bar):
 
 1. **The sidebar**, 268px, `chrome` background, three bands:
    - The **brand bar**, 46px (`workspace-chrome`): app name, search and a collapse button.
-   - The **lists**: **Spaces** (weight 1: the shipped `spaces` mod) over the **Agents board** (weight 2: the `board`
+   - The **lists**: **Spaces** (weight 1: the shipped `spaces` mod) over the **Agents board** (weight 2: the `horde-board`
      mod in vertical mode).
    - The **footer**, 69px (`workspace-chrome`, `props.footer`): Settings and Add machine.
 2. **The workspace**, the rest, three bands:
-   - The **tab bar**, 42px (`tabs-stats`): tab pills with the agent's icon, title, **working time** (`3m`, in the
+   - The **tab bar**, 42px (`horde-tabs`): tab pills with the agent's icon, title, **working time** (`3m`, in the
      `working` color, only while it works), **cost and tokens** (`$1.59 · 172k tok`, dim) and a spinner or a dot
      for the status; on the right `+`, **Files** and **Changes**.
    - The **terminal area**: the active tab's panes as cards (the layout's `main` block, `tab: "active"`), with a
@@ -77,7 +77,7 @@ hard-coded, so it follows light and dark.
   last settle/pin/snooze (for undo) persist in the mod's `localStorage`.
 - **Search** filters rows by space name, pane name, title, branch and program (case-insensitive). The account
   chip filters by the account that wrote the agent's session stats.
-- **Keyboard** (the board must have it: bind `ctrl-shift-a` to `board.focus` under `layout:board-v` in
+- **Keyboard** (the board must have it: bind `ctrl-shift-a` to `horde-board.focus` under `layout:horde` in
   `keys.json`, or press `alt-h` from the terminal): `up`/`down` or `k`/`j` and `home`/`end` move a cursor (an accent
   border); `enter`/`space` opens the agent or folds the header; `left`/`right` fold; `p` pin; `s` settle; `z` snooze
   1h, `shift+z` 4h; `u` undo; `/` search; `escape` back to the terminal. The `alt-up` / `alt-down` agent keys
@@ -87,26 +87,26 @@ hard-coded, so it follows light and dark.
 
 ## Built from
 
-- **The layout** (`layouts/board-v.json`): a clone of Herdr's `main` layout. Root `row`, `titlebar: "none"`,
+- **The layout** (`layouts/horde.json`): a clone of Herdr's `main` layout. Root `row`, `titlebar: "none"`,
   `background: "canvas"`, `terminal_padding: [14, 12]`, a 1px `border` divider. Children: `sidebar` (column, 268px)
   with `brand` (block, 46px, `workspace-chrome`), `sidebar-lists` (column) holding `spaces` (block, weight 1,
-  `spaces`) and `agents` (block, weight 2, `board` with `props: { vertical: true }`), and `sidebar-footer` (block,
+  `spaces`) and `agents` (block, weight 2, `horde-board` with `props: { vertical: true }`), and `sidebar-footer` (block,
   69px, `workspace-chrome` with `props: { footer: true }`); then `work` (column) with `tabs` (block, 42px,
-  `tabs-stats`), `work-body` (row) holding `main` (block, `content: { tab: "active", pane: {…} }` with the
+  `horde-tabs`), `work-body` (row) holding `main` (block, `content: { tab: "active", pane: {…} }` with the
   shipped `pane` header mod) and `panel` (column, 368px, `hidden: true`, a `stack` `panel-body` with `files` and
   `changes` blocks), and `status` (block, 28px, `workspace-status`).
 - **Shipped mods used:** `workspace-chrome`, `spaces`, `pane`, `files`, `changes`, `workspace-status`.
-- **`mods/tabs-stats/`:** a clone of the shipped `tabs` mod (`mod.clone`) plus: a 15s timer that, per agent, runs
+- **`mods/horde-tabs/`:** a clone of the shipped `tabs` mod (`mod.clone`) plus: a 15s timer that, per agent, runs
   `hc get <terminal>` (reads `foreground.pid` and `status_ms`), reads
   `<account home>/sessions/<pid>.json` (`sessionId`; the homes come from
   `~/.local/state/omarchy/agents/accounts/claude.json`, else `~/.claude`) and
   `~/.cache/claude-session-stats/<sessionId>.json`; it shows working time, cost and tokens on each tab, forces the
   Files and Changes buttons on, and shares `agent.stats` (by terminal address) and `agent.since`
   (`{ state, ms }` by address) with `setShared`.
-- **`mods/board/`:** `mod.json` `{ "place": "none", "focusable": true }`. `main.js` default-exports a `View`; with
+- **`mods/horde-board/`:** `mod.json` `{ "place": "none", "focusable": true }`. `main.js` default-exports a `View`; with
   `props().vertical` it renders the sidebar board above, otherwise three columns. Uses `agents()`, `spaces()`,
   `terminals()` (for `parent`, `state`, `status`), `shared("agent.stats")`, `shared("agent.since")`, `settings()`,
-  `setAgentOrder`, `setWindowTitle`, `notify`, `nextCommand` (for `board.focus`), `localStorage`, an `InputState` +
+  `setAgentOrder`, `setWindowTitle`, `notify`, `nextCommand` (for `horde-board.focus`), `localStorage`, an `InputState` +
   `Input` for the search, a focus handle with `on_key_down`, and `on_window_mouse_move` / `on_window_mouse_up` for the
   drag. Commands it runs: `pane.focus`, `terminal.peek`, `pane.go`.
 - **The data file** (written by the Claude Code statusline script on each refresh, one JSON per session id):
@@ -134,7 +134,7 @@ hard-coded, so it follows light and dark.
 
 ## Done when
 
-- `herdr-app check` passes for `board` and `tabs-stats`, and `herdr-app status` shows no errors with the layout
+- `herdr-app check` passes for `horde-board` and `horde-tabs`, and `herdr-app status` shows no errors with the layout
   shown; switching away and back works.
 - Every agent is in the right section and the counts add up to the total in the header.
 - Clicking a row shows that agent's tab; a section header folds and stays folded after switching layouts.

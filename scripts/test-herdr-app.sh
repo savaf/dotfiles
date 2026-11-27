@@ -63,10 +63,10 @@ ensure_herdr_app_keys >/dev/null || fail "falló sin keys.json"
 [[ ! -e "${HERDR_APP_HOME}/keys.json" ]] || fail "creó keys.json"
 
 # 6. con keys.json: añade el atajo, conserva lo demás y es idempotente
-printf '{"global":{"alt-1":"space.select:1"},"layout:board-v":{"ctrl-x":"tab.new"}}\n' >"${HERDR_APP_HOME}/keys.json"
+printf '{"global":{"alt-1":"space.select:1"},"layout:horde":{"ctrl-x":"tab.new"}}\n' >"${HERDR_APP_HOME}/keys.json"
 ensure_herdr_app_keys >/dev/null
-jq -e '.["layout:board-v"]["ctrl-shift-a"] == "board.focus"' "${HERDR_APP_HOME}/keys.json" >/dev/null || fail "no añadió ctrl-shift-a"
-jq -e '.global["alt-1"] == "space.select:1" and .["layout:board-v"]["ctrl-x"] == "tab.new"' "${HERDR_APP_HOME}/keys.json" >/dev/null || fail "pisó otras teclas"
+jq -e '.["layout:horde"]["ctrl-shift-a"] == "horde-board.focus"' "${HERDR_APP_HOME}/keys.json" >/dev/null || fail "no añadió ctrl-shift-a"
+jq -e '.global["alt-1"] == "space.select:1" and .["layout:horde"]["ctrl-x"] == "tab.new"' "${HERDR_APP_HOME}/keys.json" >/dev/null || fail "pisó otras teclas"
 before="$(cksum <"${HERDR_APP_HOME}/keys.json")"
 ensure_herdr_app_keys >/dev/null
 [[ "$(cksum <"${HERDR_APP_HOME}/keys.json")" == "${before}" ]] || fail "no es idempotente"

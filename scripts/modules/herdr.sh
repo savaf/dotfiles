@@ -32,17 +32,17 @@ ensure_herdr_app() {
 }
 
 # keys.json de la app es del usuario (la app solo lo reescribe si no se toca) y no va en Stow:
-# aquí solo se añade, sin tocar el resto, el atajo que da el teclado al board (layout board-v).
+# aquí solo se añade, sin tocar el resto, el atajo que da el teclado al board (layout horde).
 # Si la app aún no se abrió no hay keys.json: se omite y se reintenta en la siguiente corrida.
 ensure_herdr_app_keys() {
   local keys="${HERDR_APP_HOME:-${HOME}/.config/herdr-app}/keys.json" tmp
   [[ -f "${keys}" ]] || { log "herdr-app: sin keys.json (abre la app una vez); atajo del board omitido."; return 0; }
   exists jq || { log "herdr-app: sin jq; atajo del board omitido."; return 0; }
-  jq -e '.["layout:board-v"]["ctrl-shift-a"] == "board.focus"' "${keys}" >/dev/null 2>&1 && return 0
+  jq -e '.["layout:horde"]["ctrl-shift-a"] == "horde-board.focus"' "${keys}" >/dev/null 2>&1 && return 0
   tmp="$(mktemp)"
-  if jq '.["layout:board-v"]["ctrl-shift-a"] = "board.focus"' "${keys}" >"${tmp}" 2>/dev/null; then
+  if jq '.["layout:horde"]["ctrl-shift-a"] = "horde-board.focus"' "${keys}" >"${tmp}" 2>/dev/null; then
     mv "${tmp}" "${keys}"
-    log "herdr-app: ctrl-shift-a enfoca el board en board-v."
+    log "herdr-app: ctrl-shift-a enfoca el board en horde."
   else
     command rm -f "${tmp}"
     log "herdr-app: no pude leer ${keys}; atajo del board omitido."

@@ -98,7 +98,7 @@ Repo's `AGENTS.md`.
 
 The desktop app is a separate program (its own window, its own core `hc`, config in `~/.config/herdr-app`) and
 has its own document: [`herdr-app.md`](herdr-app.md): install and restore, the stow package, my layouts and mods,
-the `board-v` UI, how agents use it, commands and troubleshooting. To copy the UI to another setup:
+the `horde` UI, how agents use it, commands and troubleshooting. To copy the UI to another setup:
 [`herdr-app/RECIPE.md`](herdr-app/RECIPE.md).
 
 ## Updating herdr

@@ -1,7 +1,7 @@
 # Herdr desktop app
 
 Everything about the desktop app (`herdr-app`): what it is, how it is installed and restored, where its
-files live, my layouts and mods, the `board-v` UI, how agents work with it, and how to copy the UI.
+files live, my layouts and mods, the `horde` UI, how agents work with it, and how to copy the UI.
 The terminal multiplexer (`herdr`, `hw`) is in [`herdr.md`](herdr.md).
 
 ## What it is
@@ -45,12 +45,12 @@ A separate program from the TUI: its own window, its own core (`hc`, herdr-core)
    publish no GitHub releases. There is no pacman, AUR or brew package either, so it is not in
    `packages/*.txt`; `packages/arch-apps.txt` carries a comment that points here.
 3. `stow_packages` links the `herdr-app` package into `~/.config/herdr-app` (my layouts and mods, see below).
-4. `ensure_herdr_app_keys` adds `ctrl-shift-a` under `layout:board-v` in `~/.config/herdr-app/keys.json`
+4. `ensure_herdr_app_keys` adds `ctrl-shift-a` under `layout:horde` in `~/.config/herdr-app/keys.json`
    (the user's file, not stowed; it needs the app to have run once, else it is skipped until the next run).
-5. Open the app once and pick the `board-v` layout (`ctrl-shift-l` cycles, or Settings > Look).
+5. Open the app once and pick the `horde` layout (`ctrl-shift-l` cycles, or Settings > Look).
 6. Statusline numbers (cost, tokens, account limits) need `hooks/statusline.sh`, stowed with the `claude` package.
 7. Base spaces and agent instructions live in the Home Repo: `scripts/herdr-app-spaces.sh`, `AGENTS.md`.
-8. Check: `herdr-app status` (no `errors`), `herdr-app check ~/.config/herdr-app/mods/board`,
+8. Check: `herdr-app status` (no `errors`), `herdr-app check ~/.config/herdr-app/mods/horde-board`,
    `scripts/test-herdr-app.sh`.
 
 ## My config: the `herdr-app` stow package
@@ -59,11 +59,11 @@ A separate program from the TUI: its own window, its own core (`hc`, herdr-core)
 
 | File | What |
 |---|---|
-| `layouts/board-v.json` | The daily layout (sidebar with spaces and the vertical board, tabs on top) |
+| `layouts/horde.json` | The daily layout (sidebar with spaces and the vertical board, tabs on top) |
 | `layouts/board.json` | Three columns (Needs you, Working, Done) with the tab bar and the terminal below |
 | `layouts/herdrdev-board.json` | `herdrdev/board` from herdr.dev, renamed and in a dark theme |
-| `mods/board/` | The agent board (vertical mode used by `board-v`, columns mode by `board`) |
-| `mods/tabs-stats/` | A clone of the shipped `tabs` bar: working time, cost, tokens and the Files / Changes buttons |
+| `mods/horde-board/` | The agent board (vertical mode used by `horde`, columns mode by `board`) |
+| `mods/horde-tabs/` | A clone of the shipped `tabs` bar: working time, cost, tokens and the Files / Changes buttons |
 | `mods/herdrdev-board/` | The mod of `herdrdev-board` |
 
 The folder itself is not stowed: the app rewrites its shipped mods and layouts at every start and owns
@@ -75,7 +75,7 @@ Working on it:
 - Edit the files in `~/dotfiles/herdr-app/.config/herdr-app/…`, in place. Never use `sed -i` there or in
   `~/.config/herdr-app`: it replaces the symlink with a real file.
 - The window does not see edits made through the symlinks. After changing a mod, switch layout and back:
-  `herdr-app do layout.switch --name main`, then `--name board-v`.
+  `herdr-app do layout.switch --name main`, then `--name horde`.
 - `herdr-app check <mod folder>` loads a mod once and reports errors. Run it after every change.
 - `~/dotfiles` must stay on a branch that contains the `herdr-app` package: the links point into the working
   tree, so on any other branch they dangle and the layout and mods break.
@@ -84,7 +84,7 @@ Working on it:
   then `layout.switch`. `herdrdev/board` was installed that way. The T3 layout (`JinJieBeWater/herdr-t3`) was not:
   it targets macOS, writes labels onto agents with `hc label` and rewrites its own JSON.
 
-## The `board-v` UI
+## The `horde` UI
 
 Spaces on the left, a vertical agent board under them, tabs on top, the active terminal in the middle, optional
 Files and Changes panels on the right, a status bar at the bottom. The recipe to rebuild it from scratch is
@@ -102,10 +102,10 @@ field is read defensively and was not tested with a real blocked agent). Hover s
 spend and live sessions), account chips (All, URBN, Personal) and a search over name, title, branch and program.
 The window title carries `(N) Herdr` while N agents need you. Sound and toast alerts come from Settings > Alerts.
 
-**Tabs (`tabs-stats`):** working time, cost and tokens per tab, plus the Files and Changes panel buttons (always
+**Tabs (`horde-tabs`):** working time, cost and tokens per tab, plus the Files and Changes panel buttons (always
 on: the welcome flow left `workspace.panels` empty, which hid them).
 
-**Keyboard:** `ctrl-shift-a` (bound in `keys.json` under `layout:board-v`) or `alt-h` / `alt-left` from the
+**Keyboard:** `ctrl-shift-a` (bound in `keys.json` under `layout:horde`) or `alt-h` / `alt-left` from the
 terminal puts the keyboard on the board.
 
 | Key | Does |
@@ -135,7 +135,7 @@ are separate spaces, not children; `hc run --bg` would make them children.
 
 - `hooks/statusline.sh` writes cost, tokens, `ctx`, model, lines, account and 5h / 7d limits per session to
   `~/.cache/claude-session-stats/<session>.json`.
-- `tabs-stats` maps each terminal to its Claude pid (`hc get`), to the session
+- `horde-tabs` maps each terminal to its Claude pid (`hc get`), to the session
   (`~/.claude/sessions/<pid>.json`, any account home) and to that file. It shares the result as
   `shared("agent.stats")` and, from `status_ms`, the exact time in each state as `shared("agent.since")`.
   Only Claude Code agents report; other programs show no numbers.
@@ -144,24 +144,24 @@ are separate spaces, not children; `hc run --bg` would make them children.
 
 ## Copy this UI
 
-`board-v` is published as a Herdr gallery layout in its own public repo,
-[`savaf/herdr-layouts`](https://github.com/savaf/herdr-layouts) (folder `board-v/`, topic `herdr-layout`, so it
-shows up at `herdr.dev/layouts/savaf/board-v` within the hour). To add it to any Herdr setup, paste this to the
+`horde` is published as a Herdr gallery layout in its own public repo,
+[`savaf/herdr-layouts`](https://github.com/savaf/herdr-layouts) (folder `horde/`, topic `herdr-layout`, so it
+shows up at `herdr.dev/layouts/savaf/horde` within the hour). To add it to any Herdr setup, paste this to the
 agent:
 
 ```text
-Read ~/.config/herdr-app/AGENTS.md, then add this layout: https://github.com/savaf/herdr-layouts/tree/main/board-v
+Read ~/.config/herdr-app/AGENTS.md, then add this layout: https://github.com/savaf/herdr-layouts/tree/main/horde
 ```
 
-The folder carries the layout, its two mods (`board`, `tabs-stats`), a `keys.json` with the one key it needs, the
+The folder carries the layout, its two mods (`horde-board`, `horde-tabs`), a `keys.json` with the one key it needs, the
 brief ([`RECIPE.md`](herdr-app/RECIPE.md): what you see, how it behaves, built from, watch out, done when), a
 `preview.png`, and an optional `extras/statusline-snippet.sh` that feeds cost, tokens and plan limits from Claude
 Code's statusline (without it everything else works). By hand, the README of that repo has the five commands.
 
 - The repo is a copy: this dotfiles repo is where the layout is worked on (`herdr-app/.config/herdr-app/`) and
   where `docs/herdr-app/RECIPE.md` lives. After changing the layout or the mods, copy the files into
-  `~/Projects/lab/herdr-layouts/board-v/` (rename nothing; drop `cloned_from` from the JSON files; the layout's
-  `preview` is `layouts/board-v.svg`), re-render `preview.png` if the UI changed, and push.
+  `~/Projects/lab/herdr-layouts/horde/` (rename nothing; drop `cloned_from` from the JSON files; the layout's
+  `preview` is `layouts/horde.svg`), re-render `preview.png` if the UI changed, and push.
 - The repo's recipe says `Team` where this one's examples use real account names; keep it generic there.
 - Do not put screenshots of the real window in the repo: they show the terminals.
 
@@ -181,7 +181,7 @@ Code's statusline (without it everything else works). By hand, the README of tha
 herdr-app ls                         # spaces > tabs > terminals, with agent status
 herdr-app status                     # layout, focus, errors from mods and layouts
 herdr-app commands                   # every command and its arguments
-herdr-app do layout.switch --name board-v
+herdr-app do layout.switch --name horde
 herdr-app do space.new --name <n> --folder <dir> --argv '["claude"]' --task "<task>" --focus false
 herdr-app check <mod folder>         # load a mod once and report errors
 herdr-app shot <file.png>            # save the current window (it shows your terminals: do not commit it)
