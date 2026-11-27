@@ -50,6 +50,12 @@ export default class Tabs extends View {
     this.swipe = { acc: 0, steps: 0, at: 0, last: 0 };
   }
 
+  // When this tab's agent started working: core's own stamp, read at the last refresh (at most 15s
+  // old, and only for agents that were working then), else what this window first observed.
+  startOf(id) {
+    return this.workingSince?.[id] ?? this.since[id];
+  }
+
   // Cost and tokens come from Claude Code's statusline (hooks/statusline.sh writes
   // ~/.cache/claude-session-stats/<session>.json): terminal -> claude pid -> session id.
   refresh(cx) {
@@ -63,10 +69,16 @@ export default class Tabs extends View {
         } catch {}
         this.homes = [...new Set(homes)];
       }
-      const next = {}, byAddr = {};
+      const next = {}, byAddr = {}, since = {}, workingSince = {};
       for (const a of agents()) {
         try {
-          const pid = JSON.parse((await hc(["get", a.address])).stdout)?.foreground?.pid;
+          const rec = JSON.parse((await hc(["get", a.address])).stdout);
+          // Core stamps when the status last changed (ms): exact, and it survives restarting this window.
+          if (rec?.status_ms) {
+            since[a.address] = { state: rec.status?.state, ms: rec.status_ms };
+            if (rec.status?.state === "working") workingSince[a.tab] = Math.min(workingSince[a.tab] ?? Infinity, rec.status_ms);
+          }
+          const pid = rec?.foreground?.pid;
           if (!pid) continue;
           for (const dir of this.homes) {
             const sess = await readTextFile(`${dir}/sessions/${pid}.json`);
@@ -78,8 +90,10 @@ export default class Tabs extends View {
         } catch {}
       }
       this.stats = next;
+      this.workingSince = workingSince;
       // The agent board reads the same numbers by address.
       if (JSON.stringify(shared("agent.stats") ?? {}) !== JSON.stringify(byAddr)) setShared("agent.stats", byAddr);
+      if (JSON.stringify(shared("agent.since") ?? {}) !== JSON.stringify(since)) setShared("agent.since", since);
       cx.notify();
     });
   }
@@ -172,7 +186,7 @@ export default class Tabs extends View {
         .on_mouse_down("right", (_e, cx) => { cx.stop_propagation(); openOverlay({ mod: "menu", kind: "popup", width: 200, props: { tab: "tab", target: { id: c.id, space: space.id } } }); })
         .when(Boolean(program?.icon), el => el.child(program.tint ? svg(program.icon).size(14).text_color(t.muted) : image(program.icon).size(14)))
         .child(div().max_w(170).truncate().child(c.zoomed ? `${name} Z` : name))
-        .when(c.status === "working" && this.since[c.id], el => el.child(div().flex_none().text_size(11.5).text_color(t.working).child(duration(now - this.since[c.id]))))
+        .when(c.status === "working" && Boolean(this.startOf(c.id)), el => el.child(div().flex_none().text_size(11.5).text_color(t.working).child(duration(now - this.startOf(c.id)))))
         .when(Boolean(this.stats[c.id]), el => {
           const st = this.stats[c.id];
           const bits = [];

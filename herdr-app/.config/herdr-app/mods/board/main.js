@@ -205,7 +205,9 @@ export default class Board extends View {
         ? (a.program.tint ? svg(a.program.icon).size(14).flex_none().text_color(t.muted) : image(a.program.icon).w(14).h(14).flex_none())
         : null;
       const detail = clean(a.pane_name || a.title);
-      const since = this.changed[a.address]?.at;
+      // Working and blocked use core's own stamp (exact, survives restarts); the rest the local observation.
+      const exact = shared("agent.since")?.[a.address];
+      const since = exact && exact.state === a.status && (a.status === "working" || a.status === "blocked") ? exact.ms : this.changed[a.address]?.at;
       const sp = bySpace.get(a.space);
       const branch = sp?.branch;
       const worktree = (sp?.folder ?? "").includes("/.herdr/worktrees/");
