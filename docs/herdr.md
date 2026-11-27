@@ -113,7 +113,9 @@ A separate program from the TUI: its own window, its own core (`hc`, herdr-core)
 - My layouts and mods live in the `herdr-app` stow package, file by file: `layouts/board*.json`,
   `mods/board`, `mods/tabs-stats`, `mods/herdrdev-board`. The folder `~/.config/herdr-app` itself is not
   stowed: the app rewrites its shipped mods and layouts at every start and owns `settings.json` and its state,
-  so only my own files are linked. Edit them through the symlinks; the window reloads on save.
+  so only my own files are linked. The window does not see edits made through the symlinks: after changing a mod,
+  switch layout and back (`herdr-app do layout.switch --name main`, then `--name board-v`) to reload it.
+  Edit in place, never with `sed -i` (it replaces the symlink with a real file).
 - `board-v` is the daily layout: spaces on the left, a vertical agent board (Pinned, Needs you, Working, Done,
   Settled; folding sections), tabs with working time, cost and tokens. Cost and tokens come from
   `hooks/statusline.sh`, which writes `~/.cache/claude-session-stats/<session>.json` on every refresh.

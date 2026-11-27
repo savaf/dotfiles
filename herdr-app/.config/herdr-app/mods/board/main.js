@@ -2,13 +2,31 @@
 
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex, InputState, Input } from "gpui-base";
-import { agents, spaces, run, theme, props, shared, setWindowTitle } from "herdr";
+import { agents, spaces, terminals, run, theme, props, shared, setWindowTitle } from "herdr";
 
 const COLUMNS = [
   { id: "blocked", label: "Needs you", match: (s) => s === "blocked" },
   { id: "working", label: "Working", match: (s) => s === "working" },
   { id: "done", label: "Done", match: (s) => s !== "blocked" && s !== "working" },
 ];
+
+// The sidebar splits Done (finished, not looked at yet) from Idle (seen, quiet).
+const VCOLUMNS = [
+  { id: "blocked", label: "Needs you", match: (s) => s === "blocked" },
+  { id: "working", label: "Working", match: (s) => s === "working" },
+  { id: "done", label: "Done", match: (s) => s === "done" },
+  { id: "idle", label: "Idle", match: (s) => s !== "blocked" && s !== "working" && s !== "done" },
+];
+
+// Why an agent needs you, when its report says: approval, a question, or a failure.
+function needKind(a) {
+  const t = terminals().find((x) => x.address === a.address);
+  const k = t?.status?.kind ?? t?.kind ?? t?.report?.kind;
+  if (t?.status?.state === "error" || t?.state === "error") return "Failed";
+  if (k === "permission") return "Approval";
+  if (k === "question") return "Input";
+  return "Needs you";
+}
 
 // Drops the status glyph or spinner an agent puts before its title.
 const clean = (s) => (s ?? "").replace(/^[^\p{L}\p{N}\p{Ps}\p{Pi}]+/u, "").trim();
@@ -28,7 +46,7 @@ export default class Board extends View {
     // Each agent's last state and when it changed (ms), kept across restarts.
     try { this.changed = JSON.parse(localStorage.getItem("changed") ?? "{}"); } catch { this.changed = {}; }
     if (!this.changed || typeof this.changed !== "object" || Array.isArray(this.changed)) this.changed = {};
-    try { this.folded = new Set(JSON.parse(localStorage.getItem("folded") ?? '["done","settled"]')); } catch { this.folded = new Set(["done", "settled"]); }
+    try { this.folded = new Set(JSON.parse(localStorage.getItem("folded2") ?? '["idle","settled"]')); } catch { this.folded = new Set(["idle", "settled"]); }
     // Pinned agents stay on top; settled ones (put away once finished) fold into their own section
     // and come back by themselves when the agent works or needs you again.
     try { this.pins = JSON.parse(localStorage.getItem("pins") ?? "[]"); } catch { this.pins = []; }
@@ -64,7 +82,7 @@ export default class Board extends View {
   save() {
     localStorage.setItem("pins", JSON.stringify(this.pins));
     localStorage.setItem("settled", JSON.stringify(this.settled));
-    localStorage.setItem("folded", JSON.stringify([...this.folded]));
+    localStorage.setItem("folded2", JSON.stringify([...this.folded]));
   }
 
   // The sidebar version: one column, folding sections, a row per agent.
@@ -95,7 +113,7 @@ export default class Board extends View {
     const isSettled = (a) => Boolean(this.settled[a.address]) && a.status !== "working" && a.status !== "blocked";
     const groups = [
       { id: "pinned", label: "Pinned", color: t.accent, items: pinned },
-      ...COLUMNS.map((c) => ({ id: c.id, label: c.label, color: t[c.id] ?? t.dim, items: rest.filter((a) => c.match(a.status) && !(c.id === "done" && isSettled(a))) })),
+      ...VCOLUMNS.map((c) => ({ id: c.id, label: c.label, color: t[c.id] ?? t.dim, items: rest.filter((a) => c.match(a.status) && !((c.id === "done" || c.id === "idle") && isSettled(a))) })),
       { id: "settled", label: "Settled", color: t.dim, items: rest.filter(isSettled) },
     ];
     for (const g of groups) if (g.id !== "pinned") g.items.sort((x, y) => seen(y) - seen(x) || y.seq - x.seq);
@@ -118,6 +136,7 @@ export default class Board extends View {
       const bits = [];
       if (st?.cost > 0) bits.push(`$${st.cost.toFixed(2)}`);
       if (st && st.input + st.output > 0) bits.push(`${tokens(st.input + st.output)} tok`);
+      if (st?.ctx != null) bits.push(`ctx ${Math.round(st.ctx)}%`);
       const isPinned = this.pins.includes(a.address);
       const done = a.status !== "working" && a.status !== "blocked";
       const hot = this.hovered === a.address;
@@ -140,7 +159,8 @@ export default class Board extends View {
                 this.pins = isPinned ? this.pins.filter((x) => x !== a.address) : [...this.pins, a.address];
                 if (!isPinned) delete this.settled[a.address];
               })))
-            .when(!hot && Boolean(since), (el) => el.child(div().flex_none().text_size(11).text_color(t.dim).child(duration(now - since)))))
+            .when(!hot && a.status === "blocked", (el) => el.child(div().flex_none().px(6).h(18).flex().items_center().rounded(5).bg(t.blocked + "26").text_size(10.5).font_semibold().text_color(t.blocked).child(needKind(a))))
+            .when(!hot && a.status !== "blocked" && Boolean(since), (el) => el.child(div().flex_none().text_size(11).text_color(t.dim).child(duration(now - since)))))
           .when(Boolean(detail), (el) => el.child(div().truncate().text_size(11.5).text_color(t.muted).child(detail)))
           .when(Boolean(branch), (el) => el.child(h_flex().gap(5).items_center().text_size(11).text_color(t.dim)
             .child(svg("mods/workspace-chrome/git-branch.svg").size(11).flex_none())
@@ -149,10 +169,18 @@ export default class Board extends View {
           .when(bits.length > 0, (el) => el.child(div().text_size(11).text_color(t.dim).child(bits.join(" · ")))));
     };
 
-    // Plan usage per account, from the newest numbers any session reported.
-    const usage = new Map();
-    for (const v of Object.values(stats)) if (v?.account && v.five !== "") usage.set(v.account, v);
-    const usageLine = [...usage.entries()].map(([acc, v]) => `${acc} 5h ${v.five}%${v.week !== "" ? ` · 7d ${v.week}%` : ""}`).join("  |  ");
+    // Per account: plan limits when the account exposes them (Pro), else what the live sessions spent
+    // (contracted Enterprise accounts have no 5h / 7d counters).
+    const per = new Map();
+    for (const v of Object.values(stats)) {
+      if (!v?.account) continue;
+      const e = per.get(v.account) ?? { cost: 0, n: 0, five: "", week: "" };
+      e.cost += v.cost || 0;
+      e.n += 1;
+      if (v.five !== "" && v.five != null) { e.five = v.five; e.week = v.week; }
+      per.set(v.account, e);
+    }
+    const usageLines = [...per.entries()].map(([acc, e]) => (e.five !== "" ? `${acc} · 5h ${e.five}%${e.week !== "" ? ` · 7d ${e.week}%` : ""}` : `${acc} · $${e.cost.toFixed(2)} · ${e.n} sessions`));
 
     return v_flex().size_full().min_h(0).bg(t.chrome).border_t(1).border_color(t.border)
       .child(v_flex().px(16).pt(12).pb(6).flex_none().gap(6)
@@ -160,7 +188,7 @@ export default class Board extends View {
           .child(div().text_size(11.5).font_medium().text_color(t.dim).child("Agents"))
           .child(div().flex_1())
           .child(div().text_size(11).text_color(t.dim).child(`${total} · ${working} working${needs ? ` · ${needs} need you` : ""}`)))
-        .when(Boolean(usageLine), (el) => el.child(div().truncate().text_size(11).text_color(t.dim).child(usageLine)))
+        .children(usageLines.map((line) => div().truncate().text_size(11).text_color(t.dim).child(line)))
         .when(accounts.length > 1, (el) => el.child(h_flex().gap(6).children(["", ...accounts].map((acc) => {
           const on = this.account === acc;
           return div().id(`acct-${acc || "all"}`).px(8).h(22).flex().items_center().rounded(11).text_size(11)
