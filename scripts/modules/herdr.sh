@@ -14,7 +14,7 @@ ensure_herdr() {
 # (herdrdev/herdr) y la app y el core no publican releases en GitHub. El instalador oficial
 # deja la app en ~/.local/share/herdr-app (Linux) o ~/Applications/Herdr.app (macOS), añade el
 # lanzador y el icono, instala herdr-core si falta y la app se actualiza sola. Correrlo otra vez
-# la actualiza. Sin build para WSL ni otros sistemas. Ver docs/herdr.md.
+# la actualiza. Sin build para WSL ni otros sistemas. Ver docs/herdr-app.md.
 ensure_herdr_app() {
   case "${OS:-$(os_detect)}" in
     macos | omarchy | arch | ubuntu | debian) ;;
