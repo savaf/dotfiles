@@ -171,8 +171,13 @@ A separate program from the TUI: its own window, its own core (`hc`, herdr-core)
   15s and shares it as `shared("agent.since")`; the tab and the working/blocked rows use it, so it survives
   restarting the window. Done and Idle rows still show the time since the window first saw them in that state
   (looking at a finished agent changes its status, so core's stamp would restart the clock).
+- **Sub-agents:** a row with live children shows a chevron and their count; the children (programs and agents it
+  started, nested with tree lines) fold under it. They come from core's parent link (`parent` on each terminal),
+  so they are what an agent starts with `hc run`; click focuses an agent or peeks a plain program. Claude Code's own
+  sub-agents (the Agent tool) are not there: the tracked hook only reports `SessionStart`, so the app never sees
+  them (`sub_agents` stays empty). Tested with a real child terminal, not with a Claude sub-agent.
 - **Limits:** the working time can lag up to 15s at the start of a turn; the spend line counts only live
-  sessions; the board has no sub-agent tree and pins cannot be dragged.
+  sessions; pins cannot be dragged and the keyboard does not walk into the children.
 
 ## Updating herdr
 
