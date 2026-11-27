@@ -167,8 +167,12 @@ A separate program from the TUI: its own window, its own core (`hc`, herdr-core)
   Only Claude Code agents report; other programs show no numbers.
 - **Account types:** the URBN account is Claude Enterprise (contracted billing, extra usage on), the personal one
   is Pro. Org-wide spend is not available from the CLI; it lives in the admin console.
-- **Limits:** the working time starts when the app first sees `working` and resets on restart; the spend line
-  counts only live sessions; the board has no sub-agent tree and pins cannot be dragged.
+- **Working time:** exact. `tabs-stats` reads `status_ms` (when core last changed the status) with `hc get` every
+  15s and shares it as `shared("agent.since")`; the tab and the working/blocked rows use it, so it survives
+  restarting the window. Done and Idle rows still show the time since the window first saw them in that state
+  (looking at a finished agent changes its status, so core's stamp would restart the clock).
+- **Limits:** the working time can lag up to 15s at the start of a turn; the spend line counts only live
+  sessions; the board has no sub-agent tree and pins cannot be dragged.
 
 ## Updating herdr
 
