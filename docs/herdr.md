@@ -9,8 +9,8 @@ macOS package managers — `scripts/bootstrap.sh` (`ensure_herdr`) installs it v
 `herdr.dev/install.sh` there. Same on Arch/Omarchy: one install in `~/.local/bin`,
 not the `herdr` pacman package (see [Updating herdr](#updating-herdr)).
 
-Adopted alongside tmux, not instead of it. The `hw` function opens the work
-workspaces; see
+Adopted alongside tmux, not instead of it. The `hw` function opens the
+home agent; see
 [`zsh/.config/zsh/functions.zsh`](../zsh/.config/zsh/functions.zsh).
 
 ## Concepts
@@ -41,7 +41,7 @@ both can run side by side.
 herdr                # attach the persistent session (starts it if needed)
 herdr status         # client + server status
 herdr workspace list # list workspaces (JSON)
-hw                   # open the work workspaces (see below)
+hw                   # open the home agent (see below)
 ```
 
 ## Keybindings (this config)
@@ -77,27 +77,22 @@ Agent alerts:
 - Test it with `herdr notification show prueba`; if nothing appears, use `delivery = "herdr"`.
 - The sidebar uses `status_indicators = "symbols"` and `agent_panel_sort = "priority"`.
 
-## `hw`: the work workspaces
+## `hw`: the home agent
 
 ```
 usage: hw   (no arguments)
 ```
 
-Opens, in this order, whichever of these workspaces is missing — one full-screen
-Claude Code pane per repo, no nvim:
+Opens one workspace, `home`, with one Claude Code pane in `~/Projects/home`
+(the [Home Repo](https://github.com/savaf/home)), and focuses it. That agent
+opens a workspace for each project it needs; how it does so lives in the Home
+Repo's `AGENTS.md`.
 
-| Workspace | Repos | Claude |
-|-----------|-------|--------|
-| `dotfiles` | `~/dotfiles` | `claude` |
-| `SlipStream` | `~/Projects/urbn/SlipStream` | `ccw` ([`urbn` account](claude-code.md#accounts-omarchy-swap)) |
-| `CNC` | `~/Projects/cnc/{vuf-portal,backoffice-vuf,b0-vuf-apis}`, one tab each | `claude` |
-
-- Idempotent: looks workspaces up by label and only creates the missing ones.
-- Ends focused on `dotfiles`; in `CNC` the active tab is `vuf-portal`.
+- Idempotent: if a `home` workspace exists, `hw` only focuses it.
+- Fails without creating anything when `~/Projects/home` is missing.
 - Run from outside a herdr pane: attaches the client afterward. Run from inside
   one (`$HERDR_ENV` set): no nested attach.
-- To change the set, edit the three `_hw_workspace` calls in `hw`.
-- A repo outside the list: `prefix shift+c` (new workspace).
+- A project by hand: `prefix shift+c` (new workspace).
 
 ## Updating herdr
 
