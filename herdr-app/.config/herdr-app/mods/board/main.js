@@ -2,7 +2,7 @@
 
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex, InputState, Input } from "gpui-base";
-import { agents, spaces, terminals, run, theme, props, shared, setWindowTitle } from "herdr";
+import { agents, spaces, terminals, run, theme, props, shared, setWindowTitle, setAgentOrder, nextCommand } from "herdr";
 
 const COLUMNS = [
   { id: "blocked", label: "Needs you", match: (s) => s === "blocked" },
@@ -60,6 +60,22 @@ export default class Board extends View {
     this.title = null;
     this.search = InputState.new({ placeholder: "Filter agents…" });
     this.search.on("change", (_e, cx) => { this.query = this.search.value().trim().toLowerCase(); cx.notify(); });
+    // Keyboard: the sidebar copy takes the keys when pane.go or board.focus reaches it.
+    this.typing = false;
+    this.cursor = null;
+    this.nav = [];
+    this.undo = null;
+    this.search.on("focus", (_e, cx) => { this.typing = true; cx.notify(); });
+    this.search.on("blur", (_e, cx) => { this.typing = false; cx.notify(); });
+    if (props()?.vertical) {
+      this.handle = cx.focus_handle();
+      cx.spawn(async (cx) => {
+        for (;;) {
+          const c = await nextCommand();
+          if (String(c).includes("focus")) { this.handle.focus(); cx.notify(); }
+        }
+      });
+    }
     cx.timer.every(30000, (cx) => cx.notify());
   }
 
@@ -78,6 +94,62 @@ export default class Board extends View {
     localStorage.setItem("changed", JSON.stringify(this.changed));
   }
 
+
+  snapshot() {
+    return { pins: [...this.pins], settled: { ...this.settled } };
+  }
+
+  // One handler for every key the focused board understands.
+  onKey(e, cx) {
+    if (this.typing) {
+      if (e.key === "escape") { this.handle.focus(); cx.notify(); }
+      return;
+    }
+    if (e.modifiers.control || e.modifiers.alt || e.modifiers.platform) return;
+    const k = e.key;
+    const nav = this.nav;
+    let i = nav.findIndex((n) => n.key === this.cursor);
+    const go = (to) => { this.cursor = nav[to]?.key ?? null; cx.notify(); };
+    const cur = nav[i];
+    const fold = (id, open) => {
+      open ? this.folded.delete(id) : this.folded.add(id);
+      this.save();
+      cx.notify();
+    };
+    if (!nav.length) return;
+    if (k === "down" || k === "j") go(i < 0 ? 0 : (i + 1) % nav.length);
+    else if (k === "up" || k === "k") go(i < 0 ? nav.length - 1 : (i + nav.length - 1) % nav.length);
+    else if (k === "home") go(0);
+    else if (k === "end") go(nav.length - 1);
+    else if (k === "enter" || k === "space" || k === " ") {
+      if (!cur) return;
+      if (cur.kind === "head") fold(cur.id, this.folded.has(cur.id));
+      else run("pane.focus", { pane: cur.a.pane });
+    } else if (k === "right" && cur?.kind === "head") fold(cur.id, true);
+    else if (k === "left") {
+      if (cur?.kind === "head") fold(cur.id, false);
+      else if (cur) { for (let j = i - 1; j >= 0; j--) if (nav[j].kind === "head") { go(j); break; } }
+    } else if ((k === "p" || k === "s") && cur?.kind === "row") {
+      const a = cur.a;
+      if (k === "s" && (a.status === "working" || a.status === "blocked")) return;
+      this.undo = this.snapshot();
+      if (k === "p") {
+        const on = this.pins.includes(a.address);
+        this.pins = on ? this.pins.filter((x) => x !== a.address) : [...this.pins, a.address];
+        if (!on) delete this.settled[a.address];
+      } else if (this.settled[a.address]) delete this.settled[a.address];
+      else { this.settled[a.address] = true; this.pins = this.pins.filter((x) => x !== a.address); }
+      this.save();
+      cx.notify();
+    } else if (k === "u" && this.undo) {
+      this.pins = this.undo.pins;
+      this.settled = this.undo.settled;
+      this.undo = null;
+      this.save();
+      cx.notify();
+    } else if (k === "/") { this.search.focus(); }
+    else if (k === "escape") { run("pane.go", { direction: "right" }); }
+  }
 
   save() {
     localStorage.setItem("pins", JSON.stringify(this.pins));
@@ -118,9 +190,14 @@ export default class Board extends View {
     ];
     for (const g of groups) if (g.id !== "pinned") g.items.sort((x, y) => seen(y) - seen(x) || y.seq - x.seq);
 
+    // alt-up / alt-down (agent.prev / agent.next) walk the board top to bottom.
+    setAgentOrder(groups.flatMap((g) => g.items.map((a) => a.address)));
+    const nav = [];
+    const focused = Boolean(this.handle?.is_focused());
+
     const iconBtn = (id, file, tip, on) => div().id(id).flex_none().p(3).rounded(5).text_color(t.dim).cursor_pointer()
       .hover((s) => s.bg(t.hover).text_color(t.foreground)).tooltip(tip)
-      .on_click((_e, cx) => { cx.stop_propagation(); on(); this.save(); cx.notify(); })
+      .on_click((_e, cx) => { cx.stop_propagation(); this.undo = this.snapshot(); on(); this.save(); cx.notify(); })
       .child(svg(`mods/workspace-chrome/${file}.svg`).size(13));
 
     const row = (a, g) => {
@@ -140,9 +217,13 @@ export default class Board extends View {
       const isPinned = this.pins.includes(a.address);
       const done = a.status !== "working" && a.status !== "blocked";
       const hot = this.hovered === a.address;
+      const key = `row:${a.address}`;
+      nav.push({ key, kind: "row", a });
+      const cursor = focused && this.cursor === key;
       return h_flex().id(`vrow-${a.address}`).flex_none().px(10).py(8).gap(9).rounded(8).items_start()
         .bg(a.focused ? t.selected : t.chrome)
         .border_l(3).border_color(g.color)
+        .when(cursor, (el) => el.bg(t.raised).border_t(1).border_b(1).border_r(1).border_color(t.accent))
         .cursor_pointer().hover((s) => s.bg(a.focused ? t.selected : t.hover))
         .on_hover((on, cx) => { if (on) this.hovered = a.address; else if (this.hovered === a.address) this.hovered = null; cx.notify(); })
         .on_click(() => run("pane.focus", { pane: a.pane }))
@@ -182,7 +263,7 @@ export default class Board extends View {
     }
     const usageLines = [...per.entries()].map(([acc, e]) => (e.five !== "" ? `${acc} · 5h ${e.five}%${e.week !== "" ? ` · 7d ${e.week}%` : ""}` : `${acc} · $${e.cost.toFixed(2)} · ${e.n} sessions`));
 
-    return v_flex().size_full().min_h(0).bg(t.chrome).border_t(1).border_color(t.border)
+    const root = v_flex().size_full().min_h(0).bg(t.chrome).border_t(1).border_color(t.border)
       .child(v_flex().px(16).pt(12).pb(6).flex_none().gap(6)
         .child(h_flex().items_center().gap(8)
           .child(div().text_size(11.5).font_medium().text_color(t.dim).child("Agents"))
@@ -202,14 +283,19 @@ export default class Board extends View {
         if (g.id === "pinned" && g.items.length === 0) return [];
         if (g.id === "settled" && g.items.length === 0) return [];
         const open = !this.folded.has(g.id);
+        nav.push({ key: `head:${g.id}`, kind: "head", id: g.id });
         const header = h_flex().id(`vhead-${g.id}`).px(8).mt(6).h(30).flex_none().gap(6).items_center().rounded(6)
           .text_size(11.5).font_medium().cursor_pointer().hover((s) => s.bg(t.hover))
+          .when(focused && this.cursor === `head:${g.id}`, (el) => el.bg(t.raised).border(1).border_color(t.accent))
           .on_click((_e, cx) => { open ? this.folded.add(g.id) : this.folded.delete(g.id); this.save(); cx.notify(); })
           .child(svg(`mods/workspace-chrome/chevron-${open ? "down" : "right"}.svg`).size(11).flex_none().text_color(t.dim))
           .child(div().text_color(g.color).child(g.label))
           .child(div().px(6).rounded(8).bg(g.items.length ? g.color + "26" : t.hover).text_color(g.items.length ? g.color : t.dim).child(String(g.items.length)));
         return [header, ...(!open ? [] : g.items.length ? g.items.map((a) => row(a, g)) : [div().px(26).py(4).text_size(11.5).text_color(t.dim).child("Nothing here")])];
       })));
+    this.nav = nav;
+    if (this.handle) root.track_focus(this.handle).on_key_down((e, cx) => this.onKey(e, cx));
+    return root;
   }
 
   card(t, a, now, col) {
