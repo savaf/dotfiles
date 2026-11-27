@@ -100,39 +100,24 @@ function ccw() {
   CLAUDE_CONFIG_DIR="$home" command claude "$@"
 }
 
-# Workspaces de trabajo en herdr: un panel de claude por repo, a pantalla completa.
-#   $1 = label del workspace   $2 = comando del panel   $3.. = directorios (una tab por directorio)
-# Si el workspace ya existe no hace nada. Las tabs llevan el basename del directorio.
-function _hw_workspace() {
-  local label="$1" cmd="$2" dir created ws pane tab first=1
-  shift 2
-  herdr workspace list 2>/dev/null \
-    | jq -e --arg n "$label" '.result.workspaces[]? | select(.label == $n)' >/dev/null && return
-  for dir in "$@"; do
-    if (( first )); then
-      created=$(herdr workspace create --cwd "$dir" --label "$label" --no-focus)
-      ws=$(jq -r '.result.workspace.workspace_id' <<<"$created")
-      tab=$(jq -r '.result.tab.tab_id' <<<"$created")
-      herdr tab rename "$tab" "${dir:t}" >/dev/null
-      first=0
-    else
-      created=$(herdr tab create --workspace "$ws" --cwd "$dir" --label "${dir:t}" --no-focus)
-    fi
-    pane=$(jq -r '.result.root_pane.pane_id' <<<"$created")
-    herdr pane run "$pane" "$cmd"
-  done
-}
-
 # usage: hw   (sin argumentos)
-#   Abre en herdr los workspaces de trabajo que falten, en este orden:
-#     dotfiles, SlipStream (urbn, con ccw) y CNC (una tab por repo).
-#   herdr no tiene grupos de workspaces: CNC es un workspace con una tab por repo.
-#   Idempotente; termina enfocando dotfiles. Fuera de herdr attachea el cliente.
+#   Abre en herdr un solo workspace, `home`, con un claude en el Home Repo, y lo enfoca.
+#   Ese agente abre los de cada proyecto cuando los necesita (ver su AGENTS.md).
+#   Idempotente. Fuera de herdr attachea el cliente.
 function hw() {
-  _hw_workspace dotfiles    claude                  ~/dotfiles
-  _hw_workspace SlipStream  ccw                     ~/Projects/urbn/SlipStream
-  _hw_workspace CNC         claude                  ~/Projects/cnc/{vuf-portal,backoffice-vuf,b0-vuf-apis}
-
-  herdr workspace focus "$(herdr workspace list | jq -r '.result.workspaces[] | select(.label == "dotfiles") | .workspace_id')" >/dev/null
+  local dir=~/Projects/home ws created
+  if [[ ! -d "$dir" ]]; then
+    echo "hw: falta $dir (clona git@github.com:savaf/home.git)." >&2
+    return 1
+  fi
+  ws=$(herdr workspace list 2>/dev/null \
+    | jq -r 'first(.result.workspaces[]? | select(.label == "home") | .workspace_id) // empty')
+  if [[ -z "$ws" ]]; then
+    created=$(herdr workspace create --cwd "$dir" --label home --no-focus) || return
+    ws=$(jq -r '.result.workspace.workspace_id' <<<"$created")
+    herdr pane run "$(jq -r '.result.root_pane.pane_id' <<<"$created")" claude
+  fi
+  herdr workspace focus "$ws" >/dev/null
   [[ -z "${HERDR_ENV:-}" ]] && herdr
+  return 0
 }
