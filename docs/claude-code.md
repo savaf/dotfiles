@@ -344,6 +344,10 @@ that fits its job. Bodies load only when an agent runs, so this costs no per-req
 | Hard bug, perf regression | `diagnosing-bugs` |
 | Fuzzy plan or design | `grilling`, then `domain-modeling` |
 | Pre-merge review | `code-review`; over-engineering only: `ponytail-review` |
+| Small diff in shared code | `blast-radius` (pstack) |
+| Merge conflicts | `fix-merge-conflicts` (pstack) |
+| Prose for humans | `humanizer` |
+| Frontend design or polish | `impeccable` |
 
 | Agent | Wired to |
 |---|---|
@@ -418,7 +422,7 @@ trae una opción sin definir: `/plugin configure <plugin>@better-claude`.
 `mattpocock-skills@claude-plugins-official` plugin: enabling both lists every skill twice
 (`tdd` and `mattpocock-skills:tdd`). Per repo, run `/setup-matt-pocock-skills` once (issue
 tracker, triage labels, `docs/agents/`); `code-review` and `triage` need it.
-Solo se instalan `ponytail`, `mattpocock/skills` (todos, sin lista explícita) y las skills propias. Los plugins de la cuenta (`design`, `engineering`, `productivity`, `figma`,
+Solo se instalan `ponytail`, `mattpocock/skills` (todos, sin lista explícita), dos skills de `pstack-claude` (`blast-radius` y `fix-merge-conflicts`, fijadas a un commit) y las skills propias. Los plugins de la cuenta (`design`, `engineering`, `productivity`, `figma`,
 `humanizer`, `brightdata-plugin`) y `cloudflare` están a `false` en `enabledPlugins`.
 Re-enable a single one with `mv ~/.claude/skills-disabled/<skill> ~/.claude/skills/`.
 
