@@ -45,7 +45,8 @@ git check-ignore -q .scratch/ && echo scratch-ignored
 - Base = `--base <branch>`, else the current branch. A base that is protected, or equals the default branch: stop and ask for a feature branch.
 - `.scratch/` must be git-ignored. Not ignored: ask before adding it to `.gitignore`.
 - Read `AGENTS.md` and `docs/agents/issue-tracker.md` to learn where tickets live. Every tracker the repo configured is valid; use its operations below.
-- `test "${HERDR_ENV:-}" = 1` and `herdr status` shows the server running. Outside a herdr pane: stop.
+- Pick the host: `HC_TERMINAL_ID` set → desktop app (`herdr-app` + `hc`, see `references/desktop.md`); else `HERDR_ENV=1` with `herdr status` running → TUI (`references/batch.md`). Neither: stop. Never mix the two command sets.
+- Resume: read `.scratch/horde/results.tsv` and list the repo's worktrees under `~/.herdr/worktrees/`. A ticket with a worktree and no `merged` row is unfinished: offer to resume it (reuse the worktree, read its last row, continue from the next round) before picking new tickets.
 - GitHub tracker only: `gh auth status` must pass.
 - Missing `.claude/settings.json`: run `ai-project-init`. It must set `AI_GUARD_PROTECT_BRANCHES` to the default branch and allow the repo's test, lint, build commands. A missing permission blocks a builder and interrupts the user.
 - Note whether `.claude/settings.json` is tracked (`git ls-files --error-unmatch .claude/settings.json`). A worktree only has the tracked copy; section 4 copies an untracked one in.
@@ -92,7 +93,7 @@ The check writer never builds; the builder never writes checks. That split is th
 
 ## 5. Launch builders
 
-Launch, monitor, and plateau restarts: `references/batch.md`. Merge each passed ticket branch into the base yourself, one at a time, tests green after each. No push. After each merge, close every pane of that ticket (`references/batch.md`, Close panes). A ticket that did not pass keeps its panes open.
+Launch, monitor, and plateau restarts: `references/batch.md` (TUI) or `references/desktop.md` (desktop app). Merge each passed ticket branch into the base yourself, one at a time, tests green after each, and only if its `HEAD` still equals the `reviewed_sha` of its last `pass` row (otherwise back to the review gate). No push. After each merge, close every pane of that ticket (`references/batch.md`, Close panes). A ticket that did not pass keeps its panes open.
 
 ### Prompt
 
@@ -117,7 +118,7 @@ When a builder settles in `idle` or `done`:
 2. Frozen set untouched: `git diff --quiet <CHECKS_SHA> HEAD -- <frozen set>` and `git status --short -- <frozen set>` empty. A change fails the round as `checks-modified`; revert those files before the next round.
 3. Run the repo's test and lint commands in that checkout yourself. A claim is not evidence.
 4. Run `git diff <base>...HEAD` and dispatch the reviewers **in parallel, in one message**: `architecture-reviewer` always, `security-reviewer` when the diff touches auth, secrets, input parsing, network, or privileged calls. Each gets the diff inside `<diff>` tags and the ticket body inside `<ticket>` tags, nothing from the builder's session.
-5. Gate: checks green, frozen set intact, 0 `blocker` and 0 `issue` findings (see `~/.claude/docs/review-output.md`).
+5. Gate: checks green, frozen set intact, `git rev-parse HEAD` of the worktree recorded as `reviewed_sha`, 0 `blocker` and 0 `issue` findings (see `~/.claude/docs/review-output.md`).
 6. Log the round (section 7).
 7. Gate fails, round < 3: pick the builder for the next round.
    - Same `failure` as the previous round: **plateau**. Start a fresh builder with a summary of what failed (`references/batch.md`, Plateau restart).
@@ -129,10 +130,10 @@ When a builder settles in `idle` or `done`:
 `.scratch/horde/results.tsv` in the base checkout, append-only, one row per round, across every run. Write it yourself; builders never touch it. Create it with this header row:
 
 ```text
-ts	ticket	round	builder	checks	gate	findings	failure	action	minutes	tokens_in	tokens_out	cost_usd
+ts	ticket	round	builder	checks	gate	findings	failure	action	minutes	tokens_in	tokens_out	cost_usd	reviewed_sha
 ```
 
-A log created before the last four columns existed keeps its 9-column header; new rows still append the four fields (empty if unknown) and the header is never rewritten. Readers go by column name and treat a missing column as empty.
+A log created before the last five columns existed keeps its older header; new rows still append the five fields (empty if unknown) and the header is never rewritten. Readers go by column name and treat a missing column as empty.
 
 | Column | Value |
 |---|---|
@@ -149,6 +150,7 @@ A log created before the last four columns existed keeps its 9-column header; ne
 | `tokens_in` | Input + cache read + cache creation tokens of this round, all models. Empty if unknown |
 | `tokens_out` | Output tokens of this round, all models. Empty if unknown |
 | `cost_usd` | Cost of this round in USD. Empty if unknown |
+| `reviewed_sha` | `git rev-parse HEAD` of the builder worktree when the gate ran; the merge needs `HEAD` to equal it. Empty on rows from before this column |
 
 `tokens_in`, `tokens_out` and `cost_usd` come only from `scripts/usage.mjs` (the builder session's transcript). It prints them empty when the transcript has no reliable cost record. Never estimate them from pane text or the status bar.
 
