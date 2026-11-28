@@ -18,7 +18,10 @@ cost less than many thin ones.
   Deletion over addition.
 - Feature or fix with tests: `tdd`. Hard bug or perf regression: `diagnosing-bugs`.
 - Fuzzy plan or design: `grilling`; record terms and decisions with `domain-modeling`.
-- Before merging: `code-review`; over-engineering only: `ponytail-review`.
+- Before merging: `code-review`; over-engineering only: `ponytail-review`. A small diff that
+  touches shared code: `blast-radius`. Merge conflicts: `fix-merge-conflicts`.
+- Prose for humans (PR bodies, docs, release notes): `humanizer`. Frontend design or polish:
+  `impeccable`.
 - Delegate: Explore finds, Plan designs, reviewers read the diff, contrarian then
   feedback-resolver weigh options.
 - Research (including `wayfinder:research` tickets): `researcher`. PR review: `pr-reviewer`.
